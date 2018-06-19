@@ -5,6 +5,7 @@ package example
 import (
 	"fmt"
 	"net/http"
+	"time"
 )
 
 func foo() int {
@@ -17,6 +18,7 @@ func foo() int {
 			n += 2
 		} else {
 			n += 3
+			time.Sleep(12)
 		}
 
 		n++
@@ -27,7 +29,8 @@ func foo() int {
 	}
 
 	n++
-	_ = n
+
+	n += bar()
 
 	bar()
 	bar()
@@ -41,10 +44,12 @@ func foo() int {
 		n = 0
 		fmt.Println(n)
 		func() {}()
+		func() {time.Sleep(90)}()
 	}
 
 	var x = 0
 	x++
+	time.Sleep(time.Duration(5)*time.Nanoseconds)
 
 	return n
 }
@@ -65,6 +70,7 @@ func statementRemoveStringArrayMap() map[string][]string {
 	hash := "ok"
 	var hdr = make(map[string][]string)
 
+	time.Sleep(0)
 	hdr["Hash"] = []string{hash}
 
 	return hdr

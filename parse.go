@@ -17,6 +17,7 @@ import (
 func ParseFile(file string) (*ast.File, *token.FileSet, error) {
 	data, err := ioutil.ReadFile(file)
 	if err != nil {
+		fmt.Println("error in ParseFile")
 		return nil, nil, err
 	}
 
@@ -30,6 +31,7 @@ func ParseSource(data interface{}) (*ast.File, *token.FileSet, error) {
 
 	src, err := parser.ParseFile(fset, "", data, parser.ParseComments|parser.AllErrors)
 	if err != nil {
+		fmt.Println("error in ParseSource")
 		return nil, nil, err
 	}
 
@@ -63,6 +65,7 @@ func ParseAndTypeCheckFile(file string) (*ast.File, *token.FileSet, *types.Packa
 
 	prog, err := conf.Load()
 	if err != nil {
+		fmt.Println("error in ParseAndTypeCheckFile")
 		return nil, nil, nil, nil, fmt.Errorf("Could not load package of file %q: %v", file, err)
 	}
 

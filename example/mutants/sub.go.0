@@ -1,0 +1,8 @@
+package sub
+
+func baz() int {
+	i := 1
+	_, _, _ = i, i, i
+
+	return i
+}

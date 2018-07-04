@@ -459,9 +459,12 @@ func mutate(opts *options, mutators []mutatorItem, mutationBlackList map[string]
 	}
 
 	getRedundantCandidates()
+	fmt.Printf("Live muatants: %s\n", liveMutants)
+	fmt.Println(testsToMutants)
 	return mutationID
 }
 
+var liveMutants = make([]string, 0)
 
 func mutateExec(opts *options, pkg *types.Package, file string, mutationFile string, execs []string) (execExitCode int) {
 	if len(execs) == 0 {
@@ -509,15 +512,7 @@ func customTestMutateExec(opts *options, pkg *types.Package, file string, mutati
 		panic(err)
 	}
 
-	relevantMutationFileName := regexp.MustCompile(`\/?[\w-]*\/[\w-]*\/([\w.-]*)`)
-	matches := relevantMutationFileName.FindStringSubmatch(mutationFile)
-	prettyMutationFileName := matches[1]
-
-	if _, err := os.Stat(MUTATION_FOLDER); os.IsNotExist(err) {
-		os.Mkdir(MUTATION_FOLDER, os.ModePerm)
-	}
-
-	err = osutil.CopyFile(mutationFile, MUTATION_FOLDER + prettyMutationFileName)
+	err = moveIntoMutantsFolder(MUTATION_FOLDER, mutationFile)
 	if err != nil {
 		panic(err)
 	}
@@ -543,17 +538,25 @@ func customTestMutateExec(opts *options, pkg *types.Package, file string, mutati
 
 	putFailedTestsInMap(mutationFile, test)
 
+	execExitCode = determinePassOrFail(opts, diff, mutationFile, execExitCode)
+
+	return execExitCode
+}
+
+func determinePassOrFail(opts *options, diff []byte, mutationFile string, execExitCode int) (int) {
 	switch execExitCode {
 	case 0: // Tests passed -> FAIL
 		fmt.Printf("%s\n", diff)
 
-		execExitCode = 1
+
+		return 1
+		liveMutants = append(liveMutants, mutationFile)
 	case 1: // Tests failed -> PASS
 		if opts.General.Debug {
 			fmt.Printf("%s\n", diff)
 		}
 
-		execExitCode = 0
+		return 0
 	case 2: // Did not compile -> SKIP
 		if opts.General.Verbose {
 			fmt.Println("Mutation did not compile")
@@ -562,11 +565,11 @@ func customTestMutateExec(opts *options, pkg *types.Package, file string, mutati
 		if opts.General.Debug {
 			fmt.Printf("%s\n", diff)
 		}
+		return 2
 	default: // Unknown exit code -> SKIP
 		fmt.Println("Unknown exit code")
 		fmt.Printf("%s\n", diff)
 	}
-
 	return execExitCode
 }
 
@@ -601,15 +604,7 @@ func customMutateExec(opts *options, pkg *types.Package, file string, mutationFi
 		panic(err)
 	}
 
-	relevantMutationFileName := regexp.MustCompile(`\/?[\w-]*\/[\w-]*\/([\w.-]*)`)
-	matches := relevantMutationFileName.FindStringSubmatch(mutationFile)
-	prettyMutationFileName := matches[1]
-
-	if _, err := os.Stat(MUTATION_FOLDER); os.IsNotExist(err) {
-		os.Mkdir(MUTATION_FOLDER, os.ModePerm)
-	}
-
-	err = osutil.CopyFile(mutationFile, MUTATION_FOLDER + prettyMutationFileName)
+	err = moveIntoMutantsFolder(MUTATION_FOLDER, mutationFile)
 	if err != nil {
 		panic(err)
 	}
@@ -635,31 +630,23 @@ func customMutateExec(opts *options, pkg *types.Package, file string, mutationFi
 
 	putFailedTestsInMap(mutationFile, test)
 
-	switch execExitCode {
-	case 0: // Tests passed -> FAIL
-		fmt.Printf("%s\n", diff)
-
-		execExitCode = 1
-	case 1: // Tests failed -> PASS
-		if opts.General.Debug {
-			fmt.Printf("%s\n", diff)
-		}
-
-		execExitCode = 0
-	case 2: // Did not compile -> SKIP
-		if opts.General.Verbose {
-			fmt.Println("Mutation did not compile")
-		}
-
-		if opts.General.Debug {
-			fmt.Printf("%s\n", diff)
-		}
-	default: // Unknown exit code -> SKIP
-		fmt.Println("Unknown exit code")
-		fmt.Printf("%s\n", diff)
-	}
+	execExitCode = determinePassOrFail(opts, diff, mutationFile, execExitCode)
 
 	return execExitCode
+}
+
+func moveIntoMutantsFolder(folder string, file string) error {
+	relevantMutationFileName := regexp.MustCompile(`\/?([\w-]*\/)*([\w.-]*)`)
+	matches := relevantMutationFileName.FindStringSubmatch(file)
+	CAPTURING_GROUP_INDEX := 2
+	prettyMutationFileName := matches[CAPTURING_GROUP_INDEX]
+	fmt.Println(prettyMutationFileName)
+
+	if _, err := os.Stat(folder); os.IsNotExist(err) {
+		os.Mkdir(folder, os.ModePerm)
+	}
+
+	return osutil.CopyFile(file, folder + prettyMutationFileName)
 }
 
 func scriptMutateExec(opts *options, pkg *types.Package, file string, mutationFile string, execs []string) (execExitCode int) {

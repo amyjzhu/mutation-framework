@@ -2,29 +2,8 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="975b4f24-3c28-4402-9db0-321448b555a3" name="Default" comment="">
-      <change beforePath="" afterPath="$PROJECT_DIR$/mutator/statement/removetimeout_test.go" />
-      <change beforePath="" afterPath="$PROJECT_DIR$/osutil/copy.go" />
-      <change beforePath="" afterPath="$PROJECT_DIR$/osutil/copy_test.go" />
-      <change beforePath="" afterPath="$PROJECT_DIR$/testdata/statement/remove_timeout_many.go" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
       <change beforePath="$PROJECT_DIR$/cmd/go-mutesting/main.go" afterPath="$PROJECT_DIR$/cmd/go-mutesting/main.go" />
-      <change beforePath="$PROJECT_DIR$/parse.go" afterPath="$PROJECT_DIR$/parse.go" />
-      <change beforePath="$PROJECT_DIR$/testdata/statement/remove.go.0.go" afterPath="" />
-      <change beforePath="$PROJECT_DIR$/testdata/statement/remove.go.1.go" afterPath="" />
-      <change beforePath="$PROJECT_DIR$/testdata/statement/remove.go.10.go" afterPath="" />
-      <change beforePath="$PROJECT_DIR$/testdata/statement/remove.go.11.go" afterPath="" />
-      <change beforePath="$PROJECT_DIR$/testdata/statement/remove.go.12.go" afterPath="" />
-      <change beforePath="$PROJECT_DIR$/testdata/statement/remove.go.13.go" afterPath="" />
-      <change beforePath="$PROJECT_DIR$/testdata/statement/remove.go.14.go" afterPath="" />
-      <change beforePath="$PROJECT_DIR$/testdata/statement/remove.go.15.go" afterPath="" />
-      <change beforePath="$PROJECT_DIR$/testdata/statement/remove.go.16.go" afterPath="" />
-      <change beforePath="$PROJECT_DIR$/testdata/statement/remove.go.2.go" afterPath="" />
-      <change beforePath="$PROJECT_DIR$/testdata/statement/remove.go.3.go" afterPath="" />
-      <change beforePath="$PROJECT_DIR$/testdata/statement/remove.go.4.go" afterPath="" />
-      <change beforePath="$PROJECT_DIR$/testdata/statement/remove.go.5.go" afterPath="" />
-      <change beforePath="$PROJECT_DIR$/testdata/statement/remove.go.6.go" afterPath="" />
-      <change beforePath="$PROJECT_DIR$/testdata/statement/remove.go.7.go" afterPath="" />
-      <change beforePath="$PROJECT_DIR$/testdata/statement/remove.go.8.go" afterPath="" />
-      <change beforePath="$PROJECT_DIR$/testdata/statement/remove.go.9.go" afterPath="" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
@@ -38,11 +17,21 @@
       <file leaf-file-name="main.go" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/cmd/go-mutesting/main.go">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="929">
-              <caret line="510" column="0" lean-forward="true" selection-start-line="510" selection-start-column="0" selection-end-line="510" selection-end-column="0" />
+            <state relative-caret-position="7018">
+              <caret line="468" column="34" lean-forward="false" selection-start-line="468" selection-start-column="34" selection-end-line="468" selection-end-column="34" />
               <folding>
                 <element signature="e#14#608#0" expanded="true" />
               </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="new2.sh" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/scripts/exec/new2.sh">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="1218">
+              <caret line="42" column="0" lean-forward="false" selection-start-line="42" selection-start-column="0" selection-end-line="42" selection-end-column="0" />
+              <folding />
             </state>
           </provider>
         </entry>
@@ -51,7 +40,7 @@
         <entry file="file://$PROJECT_DIR$/osutil/copy.go">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="232">
-              <caret line="11" column="19" lean-forward="true" selection-start-line="11" selection-start-column="19" selection-end-line="11" selection-end-column="19" />
+              <caret line="11" column="19" lean-forward="false" selection-start-line="11" selection-start-column="19" selection-end-line="11" selection-end-column="19" />
               <folding />
             </state>
           </provider>
@@ -61,17 +50,7 @@
         <entry file="file://$PROJECT_DIR$/Makefile">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="319">
-              <caret line="11" column="10" lean-forward="true" selection-start-line="11" selection-start-column="10" selection-end-line="11" selection-end-column="10" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="exec.go" pinned="false" current-in-tab="false">
-        <entry file="file://C:/Go/src/os/exec/exec.go">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="3683">
-              <caret line="139" column="5" lean-forward="false" selection-start-line="139" selection-start-column="5" selection-end-line="139" selection-end-column="5" />
+              <caret line="11" column="10" lean-forward="false" selection-start-line="11" selection-start-column="10" selection-end-line="11" selection-end-column="10" />
               <folding />
             </state>
           </provider>
@@ -127,16 +106,6 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="preserve-mutants-test-package.sh" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/scripts/exec/preserve-mutants-test-package.sh">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="783">
-              <caret line="27" column="48" lean-forward="false" selection-start-line="27" selection-start-column="48" selection-end-line="27" selection-end-column="48" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
     </leaf>
   </component>
   <component name="FileTemplateManagerImpl">
@@ -157,6 +126,7 @@
       <find>loader</find>
       <find>dif</find>
       <find>diff</find>
+      <find>O</find>
     </findStrings>
   </component>
   <component name="GOROOT" path="C:\Go" />
@@ -203,7 +173,6 @@
       <foldersAlwaysOnTop value="true" />
     </navigator>
     <panes>
-      <pane id="Scope" />
       <pane id="Scratches" />
       <pane id="ProjectPane">
         <subPane>
@@ -241,6 +210,17 @@
             <path>
               <item name="go-mutesting" type="b2602c69:ProjectViewProjectNode" />
               <item name="go-mutesting" type="462c0819:PsiDirectoryNode" />
+              <item name="scripts" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="go-mutesting" type="b2602c69:ProjectViewProjectNode" />
+              <item name="go-mutesting" type="462c0819:PsiDirectoryNode" />
+              <item name="scripts" type="462c0819:PsiDirectoryNode" />
+              <item name="exec" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="go-mutesting" type="b2602c69:ProjectViewProjectNode" />
+              <item name="go-mutesting" type="462c0819:PsiDirectoryNode" />
               <item name="test" type="462c0819:PsiDirectoryNode" />
             </path>
             <path>
@@ -258,12 +238,13 @@
           <select />
         </subPane>
       </pane>
+      <pane id="Scope" />
     </panes>
   </component>
   <component name="PropertiesComponent">
     <property name="nodejs_interpreter_path.stuck_in_default_project" value="undefined stuck path" />
     <property name="go.sdk.automatically.set" value="true" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/../../getlantern/lantern/src/github.com/getlantern" />
     <property name="DefaultGoTemplateProperty" value="Go File" />
   </component>
   <component name="RecentsManager">
@@ -289,9 +270,8 @@
   </component>
   <component name="ToolWindowManager">
     <frame x="-12" y="-12" width="3224" height="1754" extended-state="6" />
-    <editor active="true" />
     <layout>
-      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.128125" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
+      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.06375" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="true" content_ui="tabs" />
       <window_info id="Database" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
@@ -323,13 +303,6 @@
     <watches-manager />
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/mutator/statement/removetimeout.go">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="899">
-          <caret line="38" column="5" lean-forward="false" selection-start-line="38" selection-start-column="5" selection-end-line="39" selection-end-column="1" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/mutator/statement/removetimeout_test.go">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="464">
@@ -583,7 +556,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="145">
           <caret line="8" column="5" lean-forward="false" selection-start-line="8" selection-start-column="5" selection-end-line="8" selection-end-column="5" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -591,7 +563,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="203">
           <caret line="7" column="55" lean-forward="false" selection-start-line="7" selection-start-column="55" selection-end-line="7" selection-end-column="55" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -599,7 +570,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="783">
           <caret line="27" column="48" lean-forward="false" selection-start-line="27" selection-start-column="48" selection-end-line="27" selection-end-column="48" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -627,14 +597,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://C:/Go/src/os/exec/exec.go">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="3683">
-          <caret line="139" column="5" lean-forward="false" selection-start-line="139" selection-start-column="5" selection-end-line="139" selection-end-column="5" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/scripts/exec/test.sh">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="58">
@@ -654,7 +616,23 @@
     <entry file="file://$PROJECT_DIR$/osutil/copy.go">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="232">
-          <caret line="11" column="19" lean-forward="true" selection-start-line="11" selection-start-column="19" selection-end-line="11" selection-end-column="19" />
+          <caret line="11" column="19" lean-forward="false" selection-start-line="11" selection-start-column="19" selection-end-line="11" selection-end-column="19" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/scripts/exec/new2.sh">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1218">
+          <caret line="42" column="0" lean-forward="false" selection-start-line="42" selection-start-column="0" selection-end-line="42" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://C:/Go/src/os/exec/exec.go">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="29">
+          <caret line="139" column="5" lean-forward="false" selection-start-line="139" selection-start-column="5" selection-end-line="139" selection-end-column="5" />
           <folding />
         </state>
       </provider>
@@ -662,15 +640,15 @@
     <entry file="file://$PROJECT_DIR$/Makefile">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="319">
-          <caret line="11" column="10" lean-forward="true" selection-start-line="11" selection-start-column="10" selection-end-line="11" selection-end-column="10" />
+          <caret line="11" column="10" lean-forward="false" selection-start-line="11" selection-start-column="10" selection-end-line="11" selection-end-column="10" />
           <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/cmd/go-mutesting/main.go">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="929">
-          <caret line="510" column="0" lean-forward="true" selection-start-line="510" selection-start-column="0" selection-end-line="510" selection-end-column="0" />
+        <state relative-caret-position="7018">
+          <caret line="468" column="34" lean-forward="false" selection-start-line="468" selection-start-column="34" selection-end-line="468" selection-end-column="34" />
           <folding>
             <element signature="e#14#608#0" expanded="true" />
           </folding>

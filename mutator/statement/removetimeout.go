@@ -4,7 +4,7 @@ import (
 	"go/ast"
 	"go/types"
 
-	"github.com/zimmski/go-mutesting/mutator"
+	"github.com/amyjzhu/mutation-framework/mutator"
 	"go/token"
 	"fmt"
 )

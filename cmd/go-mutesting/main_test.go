@@ -33,7 +33,7 @@ func TestMainFromOtherDirectory(t *testing.T) {
 	testMain(
 		t,
 		"../..",
-		[]string{"--debug", "--exec-timeout", "1", "github.com/zimmski/go-mutesting/example"},
+		[]string{"--debug", "--exec-timeout", "1", "github.com/amyjzhu/mutation-framework/example"},
 		returnOk,
 		"The mutation score is 0.500000 (8 passed, 8 failed, 8 duplicated, 0 skipped, total is 16)",
 	)

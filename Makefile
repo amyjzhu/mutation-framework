@@ -1,7 +1,7 @@
 .PHONY: all clean clean-coverage generate install install-dependencies install-tools lint test test-verbose test-verbose-with-coverage
 
 export ARGS := $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))
-export PKG := github.com/zimmski/go-mutesting
+export PKG := github.com/amyjzhu/mutation-framework
 export ROOT_DIR := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
 
 export TEST_TIMEOUT_IN_SECONDS := 240
@@ -15,6 +15,7 @@ else
 	PKG_TEST := $(PKG)/...
 endif
 
+dev install-tools install-dependencies install
 all: install-tools install-dependencies install lint test
 
 clean:

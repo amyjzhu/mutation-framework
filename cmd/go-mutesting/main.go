@@ -21,13 +21,13 @@ import (
 	"github.com/jessevdk/go-flags"
 	"github.com/zimmski/go-tool/importing"
 
-	"github.com/zimmski/go-mutesting"
-	"github.com/zimmski/go-mutesting/astutil"
-	"github.com/zimmski/go-mutesting/osutil"
-	"github.com/zimmski/go-mutesting/mutator"
-	_ "github.com/zimmski/go-mutesting/mutator/branch"
-	_ "github.com/zimmski/go-mutesting/mutator/expression"
-	_ "github.com/zimmski/go-mutesting/mutator/statement"
+	"github.com/amyjzhu/mutation-framework"
+	"github.com/amyjzhu/mutation-framework/astutil"
+	"github.com/amyjzhu/mutation-framework/osutil"
+	"github.com/amyjzhu/mutation-framework/mutator"
+	_ "github.com/amyjzhu/mutation-framework/mutator/branch"
+	_ "github.com/amyjzhu/mutation-framework/mutator/expression"
+	_ "github.com/amyjzhu/mutation-framework/mutator/statement"
 	"sort"
 )
 

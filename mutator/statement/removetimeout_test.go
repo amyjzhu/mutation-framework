@@ -3,7 +3,7 @@ package statement
 import (
 	"testing"
 
-	"github.com/zimmski/go-mutesting/test"
+	"github.com/amyjzhu/mutation-framework/test"
 )
 
 func TestMutatorRemoveTimeout(t *testing.T) {

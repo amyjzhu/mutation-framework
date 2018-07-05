@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/zimmski/go-mutesting"
-	"github.com/zimmski/go-mutesting/mutator"
+	"github.com/amyjzhu/mutation-framework/mutator"
 )
 
 // Mutator tests a mutator.

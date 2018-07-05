@@ -8,7 +8,7 @@
 # if calling this with --exec, you can specify only one file of tests to run
 # by adding it as a command-line param after invoking the script
 # as well as any files it needs to build.
-# e.g. $ go-mutesting --exec "/mnt/c/Users/gijin/go/src/github.com/zimmski/go-mutesting/scripts/exec/preserve-mutants-test-package.sh mainBad_test.go main.go" main.go 
+# e.g. $ go-mutesting --exec "/mnt/c/Users/gijin/go/src/github.com/amyjzhu/mutation-framework/scripts/exec/preserve-mutants-test-package.sh mainBad_test.go main.go" main.go
 # where main.go is the file to mutate
 #TODO actually properly expand arguments
 

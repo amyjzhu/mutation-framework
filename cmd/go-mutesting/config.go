@@ -4,13 +4,13 @@ import (
 	"github.com/amyjzhu/mutation-framework/mutator"
 	"encoding/json"
 	"fmt"
-	"strings"
 )
 
 type MutationConfig struct {
-	operators []mutator.Mutator
-	filesToInclude []string
-	filesToExclude []string
+	Operators []mutator.Mutator
+	FilesToInclude []string
+	FilesToExclude []string
+	Options Options
 }
 
 type Options struct {
@@ -19,16 +19,15 @@ type Options struct {
 }
 
 func (mutator *mutator.Mutator) UnmarshalJSON(data []byte) error {
-	var roll string
+	var mutatorName string
+	err := json.Unmarshal(data , &mutatorName)
+	// do I have to do this or can I simply
+	//mutatorName := string(data)
 
-	err := json.Unmarshal(data , &roll);
+	mutator, err := mutator.New(mutatorName)
+
 	if err != nil {
-		fmt.Println("issue")
-		return err
+		panic(err)
 	}
-
-	parts := strings.Split(roll, "d")
-	dr.die = getInt(parts[1])
-	dr.rolls = getInt(parts[0])
 	return nil
 }

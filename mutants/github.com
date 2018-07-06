@@ -9,7 +9,7 @@ func foo() int {
 		} else if i*1 == 2-1 {
 			n += 2
 		} else {
-			n += 3
+			_ = n
 		}
 
 		n++
@@ -49,7 +49,7 @@ func bar() int {
 
 func baz() int {
 	i := 1
-	i = i + i
+	_, _, _ = i, i, i
 
 	return i
 }

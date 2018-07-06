@@ -372,15 +372,15 @@ func execWithoutMutating(opts *options, execs []string)  {
 				msg := fmt.Sprintf("%q with checksum %s", filename, "none haha")
 
 				switch execExitCode {
-				case 0:
+				case execPassed:
 					fmt.Printf("PASS %s\n", msg)
 
 					stats.passed++
-				case 1:
+				case execFailed:
 					fmt.Printf("FAIL %s\n", msg)
 
 					stats.failed++
-				case 2:
+				case execSkipped:
 					fmt.Printf("SKIP %s\n", msg)
 
 					stats.skipped++
@@ -430,15 +430,15 @@ func mutate(opts *options, mutators []mutatorItem, mutationBlackList map[string]
 					msg := fmt.Sprintf("%q with checksum %s", mutationFile, checksum)
 
 					switch execExitCode {
-					case 0:
+					case execPassed:
 						fmt.Printf("PASS %s\n", msg)
 
 						stats.passed++
-					case 1:
+					case execFailed:
 						fmt.Printf("FAIL %s\n", msg)
 
 						stats.failed++
-					case 2:
+					case execSkipped:
 						fmt.Printf("SKIP %s\n", msg)
 
 						stats.skipped++
@@ -487,13 +487,13 @@ func customTestMutateExec(opts *options, pkg *types.Package, file string, mutati
 
 	diff, err := exec.Command("diff", "-u", file, mutationFile).CombinedOutput()
 	if err == nil {
-		execExitCode = 0
+		execExitCode = execPassed
 	} else if e, ok := err.(*exec.ExitError); ok {
 		execExitCode = e.Sys().(syscall.WaitStatus).ExitStatus()
 	} else {
 		panic(err)
 	}
-	if execExitCode != 0 && execExitCode != 1 {
+	if execExitCode != execPassed && execExitCode != 1 {
 		fmt.Printf("%s\n", diff)
 
 		panic("Could not execute diff on mutation file")
@@ -525,7 +525,7 @@ func customTestMutateExec(opts *options, pkg *types.Package, file string, mutati
 	test, err := exec.Command(execs[0], execs[1:]...).CombinedOutput()
 
 	if err == nil {
-		execExitCode = 0
+		execExitCode = execPassed
 	} else if e, ok := err.(*exec.ExitError); ok {
 		execExitCode = e.Sys().(syscall.WaitStatus).ExitStatus()
 	} else {
@@ -549,14 +549,14 @@ func determinePassOrFail(opts *options, diff []byte, mutationFile string, execEx
 		fmt.Printf("%s\n", diff)
 
 
-		return 1
+		return execFailed
 		liveMutants = append(liveMutants, mutationFile)
 	case 1: // Tests failed -> PASS
 		if opts.General.Debug {
 			fmt.Printf("%s\n", diff)
 		}
 
-		return 0
+		return execPassed
 	case 2: // Did not compile -> SKIP
 		if opts.General.Verbose {
 			fmt.Println("Mutation did not compile")
@@ -565,7 +565,7 @@ func determinePassOrFail(opts *options, diff []byte, mutationFile string, execEx
 		if opts.General.Debug {
 			fmt.Printf("%s\n", diff)
 		}
-		return 2
+		return execSkipped
 	default: // Unknown exit code -> SKIP
 		fmt.Println("Unknown exit code")
 		fmt.Printf("%s\n", diff)
@@ -579,13 +579,13 @@ func customMutateExec(opts *options, pkg *types.Package, file string, mutationFi
 
 	diff, err := exec.Command("diff", "-u", file, mutationFile).CombinedOutput()
 	if err == nil {
-		execExitCode = 0
+		execExitCode = execPassed
 	} else if e, ok := err.(*exec.ExitError); ok {
 		execExitCode = e.Sys().(syscall.WaitStatus).ExitStatus()
 	} else {
 		panic(err)
 	}
-	if execExitCode != 0 && execExitCode != 1 {
+	if execExitCode != execPassed && execExitCode != 1 {
 		fmt.Printf("%s\n", diff)
 
 		panic("Could not execute diff on mutation file")
@@ -617,7 +617,7 @@ func customMutateExec(opts *options, pkg *types.Package, file string, mutationFi
 	test, err := exec.Command("go", "test", "-timeout", fmt.Sprintf("%ds", opts.Exec.Timeout), pkgName).CombinedOutput()
 
 	if err == nil {
-		execExitCode = 0
+		execExitCode = execPassed
 	} else if e, ok := err.(*exec.ExitError); ok {
 		execExitCode = e.Sys().(syscall.WaitStatus).ExitStatus()
 	} else {
@@ -680,7 +680,7 @@ func scriptMutateExec(opts *options, pkg *types.Package, file string, mutationFi
 	//err = execCommand.Wait()
 
 	if err == nil {
-		execExitCode = 0
+		execExitCode = execPassed
 	} else if e, ok := err.(*exec.ExitError); ok {
 		execExitCode = e.Sys().(syscall.WaitStatus).ExitStatus()
 	} else {
@@ -752,7 +752,8 @@ func getTestKey(tests []string) string {
 }
 
 func main() {
-	os.Exit(mainCmd(os.Args[1:]))
+	//os.Exit(mainCmd(os.Args[1:]))
+	test()
 }
 
 func saveAST(mutationBlackList map[string]struct{}, file string, fset *token.FileSet, node ast.Node) (string, bool, error) {

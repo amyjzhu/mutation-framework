@@ -9,7 +9,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/zimmski/go-mutesting"
+	"github.com/amyjzhu/mutation-framework"
 	"github.com/amyjzhu/mutation-framework/mutator"
 )
 

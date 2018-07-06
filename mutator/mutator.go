@@ -48,3 +48,4 @@ func Register(name string, mutator Mutator) {
 
 	mutatorLookup[name] = mutator
 }
+

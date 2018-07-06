@@ -24,6 +24,15 @@ func ParseFile(file string) (*ast.File, *token.FileSet, error) {
 	return ParseSource(data)
 }
 
+func LoadFile(file string) (data []byte, err error) {
+	data, err = ioutil.ReadFile(file)
+	if err != nil {
+		fmt.Println("error in ParseFile")
+		return nil, err
+	}
+	return data, nil
+}
+
 // ParseSource parses the given source and returns the corresponding ast.File node and its file set for positional information.
 // If a fatal error is encountered the error return argument is not nil.
 func ParseSource(data interface{}) (*ast.File, *token.FileSet, error) {

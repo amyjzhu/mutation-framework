@@ -15,7 +15,7 @@ else
 	PKG_TEST := $(PKG)/...
 endif
 
-dev install-tools install-dependencies install
+dev: install-tools install-dependencies install
 all: install-tools install-dependencies install lint test
 
 clean:

@@ -1,0 +1,15 @@
+{
+  "operators": [
+    "statement/remove"
+  ],
+  "files_to_include": [
+    "primary.go", "secondary.go"
+  ],
+  "files_to_exclude": [
+    ""
+  ],
+  "options": {
+    "composition": 1,
+    "verbose": false
+  }
+}

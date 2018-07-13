@@ -35,6 +35,7 @@ func initialize() {
 		[]Operator{Operator{&expectedMutator, "mutator/mock"}},
 		[]string{"primary.go", "secondary.go"},
 		[]string{},
+		"",
 		Options{1, false, false, false, "mutants/",10},
 		Scripts{"go test", ""}}
 }
@@ -68,12 +69,23 @@ func TestYamlConfig(t *testing.T) {
 	assert.Equal(t, expectedString, actualString)
 }
 
+// TODO tests are highly dependent on file structure
 func TestWildcardConfig(t *testing.T) {
 	wildcardConfig, err:= getConfig("../../testdata/config/wildcard_config.json")
 	assert.Nil(t, err)
 
+	expectedIncludedFiles := []string{"cmd/go-mutesting/config.go",
+		"cmd/go-mutesting/config_test.go",
+		"cmd/go-mutesting/main.go",
+		"cmd/go-mutesting/main_test.go"}
 
+	assert.ElementsMatch(t, wildcardConfig.FilesToInclude, expectedIncludedFiles)
 
+	expectedExcludedFiles := []string{"mutator/mutation.go",
+		"mutator/mutator.go",
+		"mutator/mutator_test.go"}
+
+	assert.ElementsMatch(t, wildcardConfig.FilesToExclude, expectedExcludedFiles)
 }
 
 func TestDefaultMutantFunctionality(t *testing.T) {
@@ -96,4 +108,49 @@ func TestMutantFolderFormatting(t *testing.T) {
 
 	appendMutantFolderSlashOrReplaceWithDefault(&expectedConfig)
 	assert.Equal(t, "deep fried pickles/", expectedConfig.Options.MutantFolder)
+}
+
+func TestConcatAndAddSlashIfNeeded(t *testing.T) {
+	assert.Equal(t, "hello/world", concatAddingSlashIfNeeded("hello", "world"))
+	assert.Equal(t, "hello/world", concatAddingSlashIfNeeded("hello/", "world"))
+	assert.Equal(t, "hello/world", concatAddingSlashIfNeeded("hello/", "/world"))
+	assert.Equal(t, "hello/world", concatAddingSlashIfNeeded("hello", "/world"))
+}
+
+func getIsValidWildCardValue(piece string) bool {
+	result, _ := isValidWildCard(piece)
+	return result
+}
+
+func TestIsValidWildCard(t *testing.T) {
+	assert.True(t, getIsValidWildCardValue("dsjfsd*.go"))
+	assert.True(t, getIsValidWildCardValue("*"))
+	assert.True(t, getIsValidWildCardValue("*_test"))
+	assert.False(t, getIsValidWildCardValue("*_test**"))
+	assert.False(t, getIsValidWildCardValue("fskjdfsdf"))
+}
+
+func TestGetParentDirectory(t *testing.T) {
+	pathPieces := []string{"apple", "banana", "watermelon", "chive"}
+	actualPath := getParentDirectory(pathPieces, 1)
+	expectedPath := "apple/"
+	assert.Equal(t, expectedPath, actualPath)
+
+	actualPath = getParentDirectory(pathPieces, 2)
+	expectedPath = "apple/banana/"
+	assert.Equal(t, expectedPath, actualPath)
+
+
+	actualPath = getParentDirectory(pathPieces, 3)
+	expectedPath = "apple/banana/watermelon/"
+	assert.Equal(t, expectedPath, actualPath)
+
+
+	actualPath = getParentDirectory(pathPieces, -1)
+	expectedPath = ""
+	assert.Equal(t, expectedPath, actualPath)
+
+	actualPath = getParentDirectory(pathPieces, 0)
+	expectedPath = ""
+	assert.Equal(t, expectedPath, actualPath)
 }

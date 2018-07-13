@@ -541,7 +541,6 @@ func putFailedTestsInMap(mutationFile string, testOutput []byte) {
 	if (exists) {
 		newValue = append(existingMutants, mutationFile)
 	} else {
-		newValue = []string{mutationFile}
 	}
 
 	testsToMutants[testsKey] = newValue

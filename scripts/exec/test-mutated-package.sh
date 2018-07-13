@@ -34,7 +34,7 @@ if [ -n "$TEST_RECURSIVE" ]; then
 	TEST_RECURSIVE="/..."
 fi
 
-GOMUTESTING_TEST=$(go test -timeout $(printf '%ds' $MUTATE_TIMEOUT) $MUTATE_PACKAGE$TEST_RECURSIVE 2>&1)
+GOMUTESTING_TEST=$(go test -count=1 -timeout $(printf '%ds' $MUTATE_TIMEOUT) $MUTATE_PACKAGE$TEST_RECURSIVE 2>&1)
 export GOMUTESTING_RESULT=$?
 
 if [ "$MUTATE_DEBUG" = true ] ; then

@@ -1,0 +1,16 @@
+---
+operators:
+  - mutator/mock
+files_to_include:
+  - primary.go
+  - secondary.go
+files_to_exclude: []
+options:
+  composition: 1
+  verbose: false
+  mutate_only: false
+  exec_only: false
+  timeout: 10
+scripts:
+  test: go test
+...

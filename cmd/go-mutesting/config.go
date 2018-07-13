@@ -5,13 +5,15 @@ import (
 	"encoding/json"
 	"github.com/amyjzhu/mutation-framework"
 	"fmt"
+	"regexp"
+	"github.com/ghodss/yaml"
 )
 
 // Cannot extend types in other packages
 // So this is an embedded type for unmarshalling JSON
 type Operator struct {
 	MutationOperator *mutator.Mutator
-	MutatorName      string
+	Name             string
 }
 
 type MutationConfig struct {
@@ -19,12 +21,24 @@ type MutationConfig struct {
 	FilesToInclude []string `json:"files_to_include"`
 	FilesToExclude []string `json:"files_to_exclude"`
 	Options Options `json:"options"`
+	Scripts Scripts `json:"scripts"`
 }
 
 type Options struct {
-	Composition int `json:"composition"`
-	Verbose bool `json:"verbose"`
+	Composition  int    `json:"composition"`
+	Verbose      bool   `json:"verbose"`
+	MutateOnly   bool   `json:"mutate_only"`
+	ExecOnly     bool   `json:"exec_only"`
+	MutantFolder string `json:"mutant_folder"`
+	Timeout      uint   `json:"timeout"`
 }
+
+type Scripts struct {
+	Test    string `json:"test"`
+	CleanUp string `json:"clean_up"`
+} // todo required group
+
+const DEFAULT_MUTATION_FOLDER = "mutants/"
 
 func (operator *Operator) UnmarshalJSON(data []byte) error {
 	var mutatorName string
@@ -39,13 +53,13 @@ func (operator *Operator) UnmarshalJSON(data []byte) error {
 	}
 
 	operator.MutationOperator = &mutationOperator
-	operator.MutatorName = mutatorName
+	operator.Name = mutatorName
 
 	return nil
 }
 
 func (operator *Operator) MarshalJSON() ([]byte, error) {
-	return []byte(fmt.Sprintf("\"%s\"", operator.MutatorName)), nil
+	return []byte(fmt.Sprintf("\"%s\"", operator.Name)), nil
 }
 
 func getConfig(configFilePath string) (*MutationConfig, error) {
@@ -56,15 +70,42 @@ func getConfig(configFilePath string) (*MutationConfig, error) {
 	}
 
 	var config MutationConfig
+
+	if !isJson(data) {
+		data, err = convertFromYaml(data)
+	}
+
 	err = json.Unmarshal([]byte(data), &config)
 
 	if err != nil {
 		return nil, err
 	}
 
+	appendMutantFolderSlashOrReplaceWithDefault(&config)
+
 	return &config, nil
 }
 
+func appendMutantFolderSlashOrReplaceWithDefault(config *MutationConfig) {
+	mutantFolderPath := config.Options.MutantFolder
+	if mutantFolderPath == "" {
+		config.Options.MutantFolder = DEFAULT_MUTATION_FOLDER
+	} else {
+		if mutantFolderPath[len(mutantFolderPath)-1:] != "/" {
+			config.Options.MutantFolder = mutantFolderPath + "/"
+		}
+	}
+}
+
+func convertFromYaml(yamlData []byte) ([]byte, error) {
+	return yaml.YAMLToJSON(yamlData)
+}
+
+func isJson(data []byte) bool {
+	jsonPattern := regexp.MustCompile(`[\s]*{.*`)
+	return jsonPattern.Match(data)
+
+}
 
 func (config *MutationConfig) getString() (string, error) {
 	result, err := json.Marshal(config)
@@ -77,6 +118,6 @@ func (config *MutationConfig) getString() (string, error) {
 
 func test() {
 	fmt.Println(mutator.List())
-	config, _ := getConfig("testdata/config/sample_config.json")
+	config, _ := getConfig("testdata/config/sample_config.yaml")
 	fmt.Println(config.getString())
 }

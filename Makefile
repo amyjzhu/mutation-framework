@@ -43,11 +43,15 @@ install-tools:
 	go get -u -v github.com/onsi/ginkgo/ginkgo/...
 	go get -u -v github.com/modocache/gover/...
 	go get -u -v github.com/mattn/goveralls/...
+
+	# yaml
+	go get -u -v github.com/ghodss/yaml/...
+
 lint:
 	$(ROOT_DIR)/scripts/lint.sh
 test:
 	go test -race -test.timeout "$(TEST_TIMEOUT_IN_SECONDS)s" $(PKG_TEST)
 test-verbose:
-	go test -race -test.timeout "$(TEST_TIMEOUT_IN_SECONDS)s" -v $(PKG_TEST)
+	go test -count=1 -race -test.timeout "$(TEST_TIMEOUT_IN_SECONDS)s" -v $(PKG_TEST)
 test-verbose-with-coverage:
 	ginkgo -r -v -cover -race -skipPackage="testdata"

@@ -27,7 +27,7 @@ func ParseFile(file string) (*ast.File, *token.FileSet, error) {
 func LoadFile(file string) (data []byte, err error) {
 	data, err = ioutil.ReadFile(file)
 	if err != nil {
-		fmt.Println("error in ParseFile")
+		fmt.Println("error in LoadFile")
 		return nil, err
 	}
 	return data, nil

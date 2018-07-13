@@ -13,16 +13,13 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"regexp"
 	"strings"
 	"syscall"
 
 	"github.com/jessevdk/go-flags"
-	"github.com/zimmski/go-tool/importing"
 
 	"github.com/amyjzhu/mutation-framework"
-	"github.com/amyjzhu/mutation-framework/astutil"
 	"github.com/amyjzhu/mutation-framework/osutil"
 	"github.com/amyjzhu/mutation-framework/mutator"
 	_ "github.com/amyjzhu/mutation-framework/mutator/branch"
@@ -44,47 +41,31 @@ const (
 	execSkipped = 2
 )
 
-type options struct {
+type Args struct {
 	General struct {
 		Debug                bool `long:"debug" description:"Debug log output"`
-		DoNotRemoveTmpFolder bool `long:"do-not-remove-tmp-folder" description:"Do not remove the tmp folder where all mutations are saved to"`
 		Help                 bool `long:"help" description:"Show this help message"`
 		Verbose              bool `long:"verbose" description:"Verbose log output"`
-	} `group:"General options"`
+		ConfigPath 		string `long:"config" descriptionL:"Path to mutation config file" required:"true"`
+		ListMutators    bool     `long:"list-mutators" description:"List all available mutators"`
+	} `group:"General Args"`
 
 	Files struct {
 		Blacklist []string `long:"blacklist" description:"List of MD5 checksums of mutations which should be ignored. Each checksum must end with a new line character."`
 		ListFiles bool     `long:"list-files" description:"List found files"`
 		PrintAST  bool     `long:"print-ast" description:"Print the ASTs of all given files and exit"`
-	} `group:"File options"`
-
-	Mutator struct {
-		DisableMutators []string `long:"disable" description:"Disable mutator by their name or using * as a suffix pattern"`
-		ListMutators    bool     `long:"list-mutators" description:"List all available mutators"`
-	} `group:"Mutator options"`
-
-	Filter struct {
-		Match string `long:"match" description:"Only functions are mutated that confirm to the arguments regex"`
-	} `group:"Filter options"`
+	} `group:"File Args"`
 
 	Exec struct {
-		Exec    string `long:"exec" description:"Execute this command for every mutation (by default the built-in exec command is used)"`
-		NoExec  bool   `long:"no-exec" description:"Skip the built-in exec command and just generate the mutations"`
-		Timeout uint   `long:"exec-timeout" description:"Sets a timeout for the command execution (in seconds)" default:"10"`
-		NoMutate bool  `long:"no-mutate" description:"Does not mutate the files, only executes existing mutations"`
-		CustomTest bool `long:"custom-test" description:"If true, executes exec as test commend"`
-	} `group:"Exec options"`
-
-	Test struct {
-		Recursive bool `long:"test-recursive" description:"Defines if the executer should test recursively"`
-	} `group:"Test options"`
-
-	Remaining struct {
-		Targets []string `description:"Packages, directories and files even with patterns (by default the current directory)"`
-	} `positional-args:"true" required:"true"`
+		Composition int `long:"composition" description:"Describe how many nodes should contain the mutation"`
+		MutateOnly bool   `long:"mutate-only" description:"Skip the built-in exec command and just generate the mutations"`
+		Timeout    uint   `long:"exec-timeout" description:"Sets a timeout for the command execution (in seconds)" default:"10"`
+		ExecOnly   bool   `long:"no-mutate" description:"Does not mutate the files, only executes existing mutations"`
+		CustomTest string   `string:"custom-test" description:"Specifies location of test script"`
+	} `group:"Exec Args"`
 }
 
-func checkArguments(args []string, opts *options) (bool, int) {
+func checkArguments(args []string, opts *Args) (bool, int) {
 	p := flags.NewNamedParser("go-mutesting", flags.None)
 
 	p.ShortDescription = "Mutation testing for Go source code"
@@ -100,7 +81,7 @@ func checkArguments(args []string, opts *options) (bool, int) {
 		p.WriteHelp(os.Stdout)
 
 		return true, returnHelp
-	} else if opts.Mutator.ListMutators {
+	} else if opts.General.ListMutators {
 		for _, name := range mutator.List() {
 			fmt.Println(name)
 		}
@@ -123,13 +104,13 @@ func checkArguments(args []string, opts *options) (bool, int) {
 	return false, 0
 }
 
-func debug(opts *options, format string, args ...interface{}) {
-	if opts.General.Debug {
+func debug(config *MutationConfig, format string, args ...interface{}) {
+	if config.Options.Verbose {
 		fmt.Printf(format+"\n", args...)
 	}
 }
 
-func verbose(opts *options, format string, args ...interface{}) {
+func verbose(opts *Args, format string, args ...interface{}) {
 	if opts.General.Verbose || opts.General.Debug {
 		fmt.Printf(format+"\n", args...)
 	}
@@ -167,242 +148,128 @@ func (ms *mutationStats) Total() int {
 	return ms.passed + ms.failed + ms.skipped
 }
 
-func mainCmd(args []string) int {
-	var opts = &options{}
-	var mutationBlackList = map[string]struct{}{}
 
+func mainCmd(args []string) int {
+	// get config path
+	// get overrides
+	var opts = &Args{}
 	if exit, exitCode := checkArguments(args, opts); exit {
 		return exitCode
 	}
 
-	files := importing.FilesOfArgs(opts.Remaining.Targets)
-	if len(files) == 0 {
-		return exitError("Could not find any suitable Go source files")
-	}
-
-	if opts.Files.ListFiles {
-		for _, file := range files {
-			fmt.Println(file)
-		}
-
-		return returnOk
-	} else if opts.Files.PrintAST {
-		for _, file := range files {
-			fmt.Println(file)
-
-			src, _, err := mutesting.ParseFile(file)
-			if err != nil {
-				return exitError("Could not open file %q: %v", file, err)
-			}
-
-			mutesting.PrintWalk(src)
-
-			fmt.Println()
-		}
-
-		return returnOk
-	}
-
-	if len(opts.Files.Blacklist) > 0 {
-		for _, f := range opts.Files.Blacklist {
-			c, err := ioutil.ReadFile(f)
-			if err != nil {
-				return exitError("Cannot read blacklist file %q: %v", f, err)
-			}
-
-			for _, line := range strings.Split(string(c), "\n") {
-				if line == "" {
-					continue
-				}
-
-				if len(line) != 32 {
-					return exitError("%q is not a MD5 checksum", line)
-				}
-
-				mutationBlackList[line] = struct{}{}
-			}
-		}
-	}
-
-	var mutators []mutatorItem
-
-	var execs []string
-	if opts.Exec.Exec != "" {
-		execs = strings.Split(opts.Exec.Exec, " ")
-	}
-
-	if (opts.Exec.NoMutate) {
-		execWithoutMutating(opts, execs)
-		return returnOk
-	}
-
-MUTATOR:
-	for _, name := range mutator.List() {
-		if len(opts.Mutator.DisableMutators) > 0 {
-			for _, d := range opts.Mutator.DisableMutators {
-				pattern := strings.HasSuffix(d, "*")
-
-				if (pattern && strings.HasPrefix(name, d[:len(d)-2])) || (!pattern && name == d) {
-					continue MUTATOR
-				}
-			}
-		}
-
-		debug(opts, "Enable mutator %q", name)
-
-		m, _ := mutator.New(name)
-		mutators = append(mutators, mutatorItem{
-			Name:    name,
-			Mutator: m,
-		})
-	}
-
-	tmpDir, err := ioutil.TempDir("", "go-mutesting-")
+	pathToConfig := opts.General.ConfigPath
+	mutationConfig, err := getConfig(pathToConfig)
 	if err != nil {
-		panic(err)
+		exitError(err.Error())
 	}
-	debug(opts, "Save mutations into %q", tmpDir)
 
+	consolidateArgsIntoConfig(opts, mutationConfig)
+	operators := retrieveMutationOperators(mutationConfig)
+	files := getCandidateFiles(mutationConfig)
+
+	return mutateFiles(mutationConfig, files, operators)
+}
+
+func consolidateArgsIntoConfig(opts *Args, config *MutationConfig) {
+	if opts.Exec.CustomTest != "" {
+		config.Scripts.Test = opts.Exec.CustomTest // TODO fix for arguments
+	}
+
+	if opts.Exec.ExecOnly {
+		config.Options.ExecOnly = true
+	}
+
+	if opts.Exec.MutateOnly {
+		config.Options.MutateOnly = true
+	}
+
+	if opts.General.Verbose {
+		config.Options.Verbose = true
+	}
+
+	if opts.Exec.Composition != 0 {
+		config.Options.Composition = opts.Exec.Composition
+	}
+
+	if opts.Exec.Timeout != 0 {
+		config.Options.Timeout = opts.Exec.Timeout
+	}
+}
+
+func retrieveMutationOperators(config *MutationConfig) []mutator.Mutator {
+	var operators []mutator.Mutator
+	for _, operator := range config.Operators {
+		operators = append(operators, *operator.MutationOperator)
+	}
+	return operators
+}
+
+func getCandidateFiles(config *MutationConfig) []string {
+	var filesToMutate = make(map[string]struct{},0)
+
+	if len(config.FilesToInclude) == 0 {
+		// TODO add all files
+	}
+
+	for _, file := range config.FilesToInclude {
+		filesToMutate[file] = struct{}{}
+	}
+
+	// TODO exclude is more powerful than include
+	for _, excludeFile := range config.FilesToExclude {
+		delete(filesToMutate, excludeFile)
+	}
+
+	fileNames := make([]string, len(filesToMutate))
+	i := 0
+	for name := range filesToMutate {
+		fileNames[i] = name
+		i++
+	}
+	return fileNames
+}
+
+func mutateFiles(config *MutationConfig, files []string, operators []mutator.Mutator) int {
 	stats := &mutationStats{}
 
 	for _, file := range files {
-		debug(opts, "Mutate %q", file)
+		debug(config, "Mutate %q", file)
 
 		src, fset, pkg, info, err := mutesting.ParseAndTypeCheckFile(file)
 		if err != nil {
 			return exitError(err.Error())
 		}
 
-		err = os.MkdirAll(tmpDir+"/"+filepath.Dir(file), 0755)
+		err = os.MkdirAll(config.Options.MutantFolder, 0755)
 		if err != nil {
 			panic(err)
 		}
 
-		tmpFile := tmpDir + "/" + file
+		mutantFile := config.Options.MutantFolder + file
 
-		originalFile := fmt.Sprintf("%s.original", tmpFile)
+		originalFile := fmt.Sprintf("%s.original", mutantFile)
 		err = osutil.CopyFile(file, originalFile)
 		if err != nil {
 			panic(err)
 		}
-		debug(opts, "Save original into %q", originalFile)
+		debug(config, "Save original into %q", originalFile)
 
 		mutationID := 0
 
-		if opts.Filter.Match != "" {
-			m, err := regexp.Compile(opts.Filter.Match)
-			if err != nil {
-				return exitError("Match regex is not valid: %v", err)
-			}
-
-			for _, f := range astutil.Functions(src) {
-				if m.MatchString(f.Name.Name) {
-					mutationID = mutate(opts, mutators, mutationBlackList, mutationID, pkg, info, file, fset, src, f, tmpFile, execs, stats)
-				}
-			}
-		} else {
-			mutationID = mutate(opts, mutators, mutationBlackList, mutationID, pkg, info, file, fset, src, src, tmpFile, execs, stats)
-		}
+		// TODO match function names instead
+		mutationID = mutate(config, mutationID, pkg, info, file, fset, src, src, mutantFile, stats)
 	}
 
-	if !opts.General.DoNotRemoveTmpFolder {
-		err = os.RemoveAll(tmpDir)
-		if err != nil {
-			panic(err)
-		}
-		debug(opts, "Remove %q", tmpDir)
-	}
-
-	printStats(opts, stats)
+	printStats(config, stats)
 
 	return returnOk
 }
 
-func printStats(opts *options, stats *mutationStats) {
-	if !opts.Exec.NoExec {
-		fmt.Printf("The mutation score is %f (%d passed, %d failed, %d duplicated, %d skipped, total is %d)\n", stats.Score(), stats.passed, stats.failed, stats.duplicated, stats.skipped, stats.Total())
-	} else {
-		fmt.Println("Cannot do a mutation testing summary since no exec command was executed.")
-	}
-}
+func mutate(config *MutationConfig, mutationID int, pkg *types.Package, info *types.Info, file string, fset *token.FileSet, src ast.Node, node ast.Node, tmpFile string, stats *mutationStats) int {
+	for _, m := range config.Operators {
+		debug(config, "Mutator %s", m.Name)
 
-func execWithoutMutating(opts *options, execs []string)  {
-	fmt.Println("Not mutating!")
-	// TODO configurable
-	files, err := ioutil.ReadDir("mutants/")
-	if err != nil {
-		panic(err)
-	}
-
-	/*ex, err := os.Executable()
-	if err != nil {
-		panic(err)
-	}
-	currentDir := filepath.Dir(ex)*/
-	currentDir := "/mnt/c/Users/gijin/go/src/github.com/amyjzhu/mutation-test/"
-	fmt.Println(currentDir)
-
-
-	stats := &mutationStats{}
-	// TODO configurable/autodetected
-
-	// get files in mutants/ folder
-	for _, file := range files {
-		filename := file.Name()
-		filePath := currentDir + "mutants/" + filename // TODO don't hardcode
-		if ok, _ := regexp.MatchString(`.*\.go\.[\d]*`, filename); ok {
-			if !opts.Exec.NoExec {
-				// TODO inefficient, should hash to main file name
-				_, _, pkg, _, _ := mutesting.ParseAndTypeCheckFile(filePath)
-				//pkg := types.NewPackage("$GOPATH/src/bitbucket.org/bestchai/dinv/examples/mutation-ricartagrawala", "ricartagrawala")
-//				pkg.SetImports([]*types.Package{&{}, })
-// goddammit, I try to get out of parsing the file, but for some reason I still need to know the package why
-// well, I only need the package path to pass to the command, so it should be okay...
-
-				originalFileNamePattern := regexp.MustCompile(`(.*\.go)\.[\d]*`)
-				originalFileName := originalFileNamePattern.FindStringSubmatch(filename)[1]
-				fmt.Println(originalFileName)
-
-				// TODO following code would not work for multi-package projects
-				execExitCode := mutateExec(opts, pkg, currentDir + originalFileName, filePath, execs)
-
-				debug(opts, "Exited with %d", execExitCode)
-
-				//msg := fmt.Sprintf("%q with checksum %s", mutationFile, checksum)
-				msg := fmt.Sprintf("%q with checksum %s", filename, "none haha")
-
-				switch execExitCode {
-				case execPassed:
-					fmt.Printf("PASS %s\n", msg)
-
-					stats.passed++
-				case execFailed:
-					fmt.Printf("FAIL %s\n", msg)
-
-					stats.failed++
-				case execSkipped:
-					fmt.Printf("SKIP %s\n", msg)
-
-					stats.skipped++
-				default:
-					fmt.Printf("UNKOWN exit code for %s\n", msg)
-				}
-			} else {
-				fmt.Println("You are not mutating the files nor executing them. What do you want?")
-			}
-		}
-	}
-
-	getRedundantCandidates()
-	printStats(opts, stats)
-
-}
-
-func mutate(opts *options, mutators []mutatorItem, mutationBlackList map[string]struct{}, mutationID int, pkg *types.Package, info *types.Info, file string, fset *token.FileSet, src ast.Node, node ast.Node, tmpFile string, execs []string, stats *mutationStats) int {
-	for _, m := range mutators {
-		debug(opts, "Mutator %s", m.Name)
-
-		changed := mutesting.MutateWalk(pkg, info, node, m.Mutator)
+		changed := mutesting.MutateWalk(pkg, info, node, *m.MutationOperator)
 
 		for {
 			_, ok := <-changed
@@ -411,21 +278,22 @@ func mutate(opts *options, mutators []mutatorItem, mutationBlackList map[string]
 				break
 			}
 
+			mutationBlackList := make(map[string]struct{},0) //TODO implement real blacklisting
 			mutationFile := fmt.Sprintf("%s.%d", tmpFile, mutationID)
 			checksum, duplicate, err := saveAST(mutationBlackList, mutationFile, fset, src)
 			if err != nil {
 				fmt.Printf("INTERNAL ERROR %s\n", err.Error())
 			} else if duplicate {
-				debug(opts, "%q is a duplicate, we ignore it", mutationFile)
+				debug(config, "%q is a duplicate, we ignore it", mutationFile)
 
 				stats.duplicated++
 			} else {
-				debug(opts, "Save mutation into %q with checksum %s", mutationFile, checksum)
+				debug(config, "Save mutation into %q with checksum %s", mutationFile, checksum)
 
-				if !opts.Exec.NoExec {
-					execExitCode := mutateExec(opts, pkg, file, mutationFile, execs)
+				if !config.Options.MutateOnly {
+					execExitCode := mutateExec(config, pkg, file, mutationFile)
 
-					debug(opts, "Exited with %d", execExitCode)
+					debug(config, "Exited with %d", execExitCode)
 
 					msg := fmt.Sprintf("%q with checksum %s", mutationFile, checksum)
 
@@ -443,7 +311,7 @@ func mutate(opts *options, mutators []mutatorItem, mutationBlackList map[string]
 
 						stats.skipped++
 					default:
-						fmt.Printf("UNKOWN exit code for %s\n", msg)
+						fmt.Printf("UNKNOWN exit code for %s\n", msg)
 					}
 				}
 			}
@@ -464,26 +332,32 @@ func mutate(opts *options, mutators []mutatorItem, mutationBlackList map[string]
 	return mutationID
 }
 
-var liveMutants = make([]string, 0)
-
-func mutateExec(opts *options, pkg *types.Package, file string, mutationFile string, execs []string) (execExitCode int) {
-	if len(execs) == 0 {
-		//defaultMutateExec(opts, pkg, file, mutationFile)
-		return customMutateExec(opts, pkg, file, mutationFile)
+func printStats(config *MutationConfig, stats *mutationStats) {
+	if !config.Options.MutateOnly {
+		fmt.Printf("The mutation score is %f (%d passed, %d failed, %d duplicated, %d skipped, total is %d)\n", stats.Score(), stats.passed, stats.failed, stats.duplicated, stats.skipped, stats.Total())
+	} else {
+		fmt.Println("Cannot do a mutation testing summary since no exec command was executed.")
 	}
-
-	fmt.Println(opts.Exec.CustomTest)
-	if opts.Exec.CustomTest {
-		return customTestMutateExec(opts, pkg, file, mutationFile, execs)
-	}
-
-	fmt.Printf("Script mutate %s", execs)
-	return scriptMutateExec(opts, pkg, file, mutationFile, execs)
 }
 
-func customTestMutateExec(opts *options, pkg *types.Package, file string, mutationFile string, execs []string) (execExitCode int) {
+
+
+var liveMutants = make([]string, 0)
+
+func mutateExec(config *MutationConfig, pkg *types.Package, file string, mutationFile string) (execExitCode int) {
+	if config.Scripts.Test != "" {
+		return customTestMutateExec(config, pkg, file, mutationFile, config.Scripts.Test)
+	}
+
+	//if len(execs) == 0 {
+		//defaultMutateExec(opts, pkg, file, mutationFile)
+		return customMutateExec(config, pkg, file, mutationFile)
+	//}
+}
+
+func customTestMutateExec(config *MutationConfig, pkg *types.Package, file string, mutationFile string, testCommand string) (execExitCode int) {
 	const MUTATION_FOLDER = "mutants/"
-	debug(opts, "Execute built-in exec command with custom test script for mutation")
+	debug(config, "Execute built-in exec command with custom test script for mutation")
 
 	diff, err := exec.Command("diff", "-u", file, mutationFile).CombinedOutput()
 	if err == nil {
@@ -493,7 +367,7 @@ func customTestMutateExec(opts *options, pkg *types.Package, file string, mutati
 	} else {
 		panic(err)
 	}
-	if execExitCode != execPassed && execExitCode != 1 {
+	if execExitCode != execPassed && execExitCode != execFailed {
 		fmt.Printf("%s\n", diff)
 
 		panic("Could not execute diff on mutation file")
@@ -517,12 +391,10 @@ func customTestMutateExec(opts *options, pkg *types.Package, file string, mutati
 		panic(err)
 	}
 
-	pkgName := pkg.Path()
-	if opts.Test.Recursive {
-		pkgName += "/..."
-	}
 
-	test, err := exec.Command(execs[0], execs[1:]...).CombinedOutput()
+	execWithArgs := strings.Split(testCommand, " ")
+
+	test, err := exec.Command(execWithArgs[0], execWithArgs[1:]...).CombinedOutput()
 
 	if err == nil {
 		execExitCode = execPassed
@@ -532,18 +404,16 @@ func customTestMutateExec(opts *options, pkg *types.Package, file string, mutati
 		panic(err)
 	}
 
-	if opts.General.Debug {
-		fmt.Printf("%s\n", test)
-	}
+	debug(config, "%s\n", test)
 
 	putFailedTestsInMap(mutationFile, test)
 
-	execExitCode = determinePassOrFail(opts, diff, mutationFile, execExitCode)
+	execExitCode = determinePassOrFail(config, diff, mutationFile, execExitCode)
 
 	return execExitCode
 }
 
-func determinePassOrFail(opts *options, diff []byte, mutationFile string, execExitCode int) (int) {
+func determinePassOrFail(config *MutationConfig, diff []byte, mutationFile string, execExitCode int) (int) {
 	switch execExitCode {
 	case 0: // Tests passed -> FAIL
 		fmt.Printf("%s\n", diff)
@@ -552,19 +422,13 @@ func determinePassOrFail(opts *options, diff []byte, mutationFile string, execEx
 		return execFailed
 		liveMutants = append(liveMutants, mutationFile)
 	case 1: // Tests failed -> PASS
-		if opts.General.Debug {
-			fmt.Printf("%s\n", diff)
-		}
+		debug(config,"%s\n", diff)
 
 		return execPassed
 	case 2: // Did not compile -> SKIP
-		if opts.General.Verbose {
-			fmt.Println("Mutation did not compile")
-		}
+		debug(config, "Mutation did not compile")
+		debug(config, "%s\n", diff)
 
-		if opts.General.Debug {
-			fmt.Printf("%s\n", diff)
-		}
 		return execSkipped
 	default: // Unknown exit code -> SKIP
 		fmt.Println("Unknown exit code")
@@ -573,9 +437,8 @@ func determinePassOrFail(opts *options, diff []byte, mutationFile string, execEx
 	return execExitCode
 }
 
-func customMutateExec(opts *options, pkg *types.Package, file string, mutationFile string) (execExitCode int) {
-	const MUTATION_FOLDER = "mutants/"
-	debug(opts, "Execute custom exec command for mutation")
+func customMutateExec(config *MutationConfig, pkg *types.Package, file string, mutationFile string) (execExitCode int) {
+	debug(config, "Execute custom exec command for mutation")
 
 	diff, err := exec.Command("diff", "-u", file, mutationFile).CombinedOutput()
 	if err == nil {
@@ -585,7 +448,7 @@ func customMutateExec(opts *options, pkg *types.Package, file string, mutationFi
 	} else {
 		panic(err)
 	}
-	if execExitCode != execPassed && execExitCode != 1 {
+	if execExitCode != execPassed && execExitCode != execFailed {
 		fmt.Printf("%s\n", diff)
 
 		panic("Could not execute diff on mutation file")
@@ -604,17 +467,14 @@ func customMutateExec(opts *options, pkg *types.Package, file string, mutationFi
 		panic(err)
 	}
 
-	err = moveIntoMutantsFolder(MUTATION_FOLDER, mutationFile)
+	err = moveIntoMutantsFolder(config.Options.MutantFolder, mutationFile)
 	if err != nil {
 		panic(err)
 	}
 
 	pkgName := pkg.Path()
-	if opts.Test.Recursive {
-		pkgName += "/..."
-	}
 
-	test, err := exec.Command("go", "test", "-timeout", fmt.Sprintf("%ds", opts.Exec.Timeout), pkgName).CombinedOutput()
+	test, err := exec.Command("go", "test", "-timeout", fmt.Sprintf("%ds", config.Options.Timeout), pkgName).CombinedOutput()
 
 	if err == nil {
 		execExitCode = execPassed
@@ -624,17 +484,16 @@ func customMutateExec(opts *options, pkg *types.Package, file string, mutationFi
 		panic(err)
 	}
 
-	if opts.General.Debug {
-		fmt.Printf("%s\n", test)
-	}
+	debug(config, "%s\n", test)
 
 	putFailedTestsInMap(mutationFile, test)
 
-	execExitCode = determinePassOrFail(opts, diff, mutationFile, execExitCode)
+	execExitCode = determinePassOrFail(config, diff, mutationFile, execExitCode)
 
 	return execExitCode
 }
 
+// TODO may not be necessary anymore
 func moveIntoMutantsFolder(folder string, file string) error {
 	relevantMutationFileName := regexp.MustCompile(`\/?([\w-]*\/)*([\w.-]*)`)
 	matches := relevantMutationFileName.FindStringSubmatch(file)
@@ -648,53 +507,6 @@ func moveIntoMutantsFolder(folder string, file string) error {
 
 	return osutil.CopyFile(file, folder + prettyMutationFileName)
 }
-
-func scriptMutateExec(opts *options, pkg *types.Package, file string, mutationFile string, execs []string) (execExitCode int) {
-	debug(opts, "Execute %q for mutation", opts.Exec.Exec)
-
-	execCommand := exec.Command(execs[0], execs[1:]...)
-
-	execCommand.Stderr = os.Stderr
-	//execCommand.Stdout = os.Stdout
-
-	execCommand.Env = append(os.Environ(), []string{
-		"MUTATE_CHANGED=" + mutationFile,
-		fmt.Sprintf("MUTATE_DEBUG=%t", opts.General.Debug),
-		"MUTATE_ORIGINAL=" + file,
-		"MUTATE_PACKAGE=" + pkg.Path(),
-		fmt.Sprintf("MUTATE_TIMEOUT=%d", opts.Exec.Timeout),
-		fmt.Sprintf("MUTATE_VERBOSE=%t", opts.General.Verbose),
-	}...)
-	if opts.Test.Recursive {
-		execCommand.Env = append(execCommand.Env, "TEST_RECURSIVE=true")
-	}
-
-	testOutput, err := execCommand.Output()
-	/*err := execCommand.Start()
-	if err != nil {
-		panic(err)
-	}*/
-
-	// TODO timeout here
-
-	//err = execCommand.Wait()
-
-	if err == nil {
-		execExitCode = execPassed
-	} else if e, ok := err.(*exec.ExitError); ok {
-		execExitCode = e.Sys().(syscall.WaitStatus).ExitStatus()
-	} else {
-		fmt.Println(err)
-		panic(err)
-	}
-
-	fmt.Printf("%s", testOutput)
-	putFailedTestsInMap(mutationFile, testOutput)
-	getRedundantCandidates()
-
-	return execExitCode
-}
-
 
 func getFailedTests(output []byte) []string {
 	testOutput := string(output[:])
@@ -753,10 +565,11 @@ func getTestKey(tests []string) string {
 
 func main() {
 	//os.Exit(mainCmd(os.Args[1:]))
+	 fmt.Println("Running config test instead of real program")
 	test()
 }
 
-func saveAST(mutationBlackList map[string]struct{}, file string, fset *token.FileSet, node ast.Node) (string, bool, error) {
+func saveAST(mutationBlackList map[string]struct{}, file string, fset *token.FileSet, node ast.Node) (string, bool, error) { // TODO blacklists -- don't currently have this capability
 	var buf bytes.Buffer
 
 	h := md5.New()

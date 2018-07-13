@@ -7,5 +7,6 @@ import (
 )
 
 func TestFoo(t *testing.T) {
-	Equal(t, foo(), 16)
+	//Equal(t, 16, foo()) // this is the correct quantity
+	Equal(t, 16, foo())
 }

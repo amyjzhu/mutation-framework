@@ -239,6 +239,7 @@ func expandWildCardFile(path string) []string {
 	return []string{}
 }
 
+// TODO remove code duplication
 func getCurrentPath(index int, pathPieces []string) string {
 	path := ""
 	for i := 0; i <= index; i++ {
@@ -248,115 +249,18 @@ func getCurrentPath(index int, pathPieces []string) string {
 	return path
 }
 
-
-/*func expandWildCardRecursive(pathIndex int, pathPieces []string) []string {
-	if pathIndex >= len(pathPieces) {
-		return []string{}
+// Returns one directory up
+// e.g. mushroom/*.go/
+//                ^^^ we focus on this piece, but return mushroom/
+func getParentPath(pathPieces []string, index int) string {
+	path := ""
+	for i := 0; i < index; i++ {
+		path += pathPieces[i]
+		path += "/"
 	}
-
-	parentDir := getParentPath(pathPieces, pathIndex)
-	if isDirectory(parentDir) {
-		return expandWildCardDirectory(pathIndex, pathPieces)
-	} else {
-		return expandWildCardFile(parentDir)
-	}
+	return path
 }
 
-func expandWildCardDirectory(pathIndex int, pathPieces []string) []string {
-	if pathIndex > len(pathPieces) {
-		return []string{}
-	}
-
-	pathPiece := pathPieces[pathIndex]
-	if valid, glob := isValidWildCard(pathPiece); valid {
-		fileNames, dirNames := getAllFilesInPath(getParentPath(pathPieces, pathIndex))
-
-		if len(glob) > 1 {
-			fileNames = filterFileNames(glob, fileNames)
-			dirNames = filterFileNames(glob, dirNames)
-		}
-
-		var allPaths []string
-		for _, dir := range dirNames {
-			newPathPieces := pathPieces
-			newPathPieces[pathIndex] = dir
-			allPaths = append(allPaths,
-				expandWildCardRecursive(pathIndex+1, newPathPieces)...)
-		}
-
-		for _, file := range fileNames {
-			path := getParentPath(pathPieces, pathIndex) + file
-			allPaths = append(allPaths, expandWildCardFile(path)...)
-		}
-
-		return allPaths
-	}
-
-	return expandWildCardRecursive(pathIndex+1, pathPieces)
-}
-
-func expandWildCardFile(path string) []string {
-	if exists(path) {
-		return []string{path}
-	}
-	return []string{}
-}
-*/
-/*
-func expandWildCardRecursive(pathIndex int, pathPieces []string) []string {
-	if pathIndex >= len(pathPieces) {
-		// only add regular non-directory files
-		currentPath := getParentPath(pathPieces, pathIndex)
-		if isDirectory(currentPath) || !exists(currentPath) {
-			return []string{}
-		} else {
-			return []string{currentPath}
-		}
-	}
-
-	pathPiece := pathPieces[pathIndex]
-	if valid, globPattern := isValidWildCard(pathPiece); valid {
-		fileNames := getAllFilesInPath(getParentPath(pathPieces, pathIndex))
-
-		if len(globPattern) > 1 {
-			fileNames = filterFileNames(globPattern, fileNames)
-		}
-
-		// we have all the file names, now need to traverse each tree
-		var completePaths []string
-		for _, name := range fileNames {
-			// replace the wildcard piece with real folder
-			newPathPieces := pathPieces
-			newPathPieces[pathIndex] = name
-			// TODO should filter here to check that the path actually exists
-			// eg. mutation/remove.go then don't want mutator.go/remove.go
-// need to check if it's a file...
-path := getParentPath(newPathPieces, pathIndex+1)
-// previously just returned the replacement
-if isDirectory(path) {
-completePaths = append(completePaths, expandWildCardRecursive(pathIndex+1, newPathPieces)...)
-} else {
-completePaths = append(completePaths, path)
-}
-}
-return completePaths
-
-} else {
-// not a glob, so we don't need to return any expanded file paths
-// but if it is a directory, we should keep going.
-currentPath := getParentPath(pathPieces, pathIndex + 1)
-if isDirectory(currentPath) {
-return expandWildCardRecursive(pathIndex+1, pathPieces)
-}
-// not a directory, so we just return the current path
-if !exists(currentPath) {
-return []string{}
-}
-return[]string{currentPath}
-}
-}
-
- */
 func isDirectory(path string) bool {
 	if path == "" {
 		return true
@@ -410,18 +314,6 @@ func filterFileNames(globPattern string, files []string) []string {
 	}
 
 	return validFiles
-}
-
-// Returns one directory up
-// e.g. mushroom/*.go/
-//                ^^^ we focus on this piece, but return mushroom/
-func getParentPath(pathPieces []string, index int) string {
-	path := ""
-	for i := 0; i < index; i++ {
-		path += pathPieces[i]
-		path += "/"
-	}
-	return path
 }
 
 func getAllFilesInPath(path string) (fileNames []string, dirNames []string) {

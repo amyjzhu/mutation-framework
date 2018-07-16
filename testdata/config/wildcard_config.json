@@ -6,7 +6,8 @@
     "cmd/go-mutesting/*.go"
   ],
   "files_to_exclude": [
-    "/mutator/*"
+    "/mutator/*",
+    "/mutator/*/remove.go"
   ],
   "file_basepath": "/home/amy/go/src/github.com/amyjzhu/mutation-framework/",
   "options": {

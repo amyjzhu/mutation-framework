@@ -141,7 +141,8 @@ func expandWildCards(config *MutationConfig) {
 			expandedPaths = append(expandedPaths, expandWildCard(filePath)...)
 		}
 	}
-	config.FilesToInclude = append(config.FilesToInclude, expandedPaths...)
+	revisedFilesToInclude := removeWildCardPaths(config.FilesToInclude)
+	config.FilesToInclude = append(revisedFilesToInclude, expandedPaths...)
 
 	expandedPaths = []string{}
 	for _, filePath := range config.FilesToExclude {
@@ -149,7 +150,8 @@ func expandWildCards(config *MutationConfig) {
 			expandedPaths = append(expandedPaths, expandWildCard(filePath)...)
 		}
 	}
-	config.FilesToExclude = append(config.FilesToExclude, expandedPaths...)
+	revisedFilesToExclude := removeWildCardPaths(config.FilesToExclude)
+	config.FilesToExclude = append(revisedFilesToExclude, expandedPaths...)
 }
 
 func expandWildCard(path string) []string {
@@ -157,9 +159,28 @@ func expandWildCard(path string) []string {
 	return expandWildCardRecursive(0, pieces)
 }
 
+// TODO find out where this is getting added so we don't need this
+func removeWildCardPaths(paths []string) []string {
+	var nonWildCards []string
+
+	for _, file := range paths {
+		if valid, _ := isValidWildCard(file); !valid {
+			nonWildCards = append(nonWildCards, file)
+		}
+	}
+	return nonWildCards
+}
+
+// TODO refactor
 func expandWildCardRecursive(pathIndex int, pathPieces []string) []string {
 	if pathIndex >= len(pathPieces) {
-		return []string{}
+		// only add regular non-directory files
+		currentPath := getParentDirectory(pathPieces, pathIndex)
+		if isDirectory(currentPath) || !exists(currentPath) {
+			return []string{}
+		} else {
+			return []string{currentPath}
+		}
 	}
 
 	pathPiece := pathPieces[pathIndex]
@@ -173,29 +194,113 @@ func expandWildCardRecursive(pathIndex int, pathPieces []string) []string {
 		// we have all the file names, now need to traverse each tree
 		var completePaths []string
 		for _, name := range fileNames {
-			// remove the wildcard piece with real folder
+			// replace the wildcard piece with real folder
 			newPathPieces := pathPieces
 			newPathPieces[pathIndex] = name
-			completePaths = append(completePaths,
-				expandWildCardRecursive(pathIndex+1, newPathPieces)...)
+			// TODO should filter here to check that the path actually exists
+			// eg. mutation/*/remove.go then don't want mutator.go/remove.go
+			// need to check if it's a file...
+			path := getParentDirectory(newPathPieces, pathIndex+1)
+			// previously just returned the replacement
+			if isDirectory(path) {
+				completePaths = append(completePaths, expandWildCardRecursive(pathIndex+1, newPathPieces)...)
+			} else {
+				completePaths = append(completePaths, path)
+			}
 		}
 		return completePaths
+
 	} else {
 		// not a glob, so we don't need to return any expanded file paths
 		// but if it is a directory, we should keep going.
 		currentPath := getParentDirectory(pathPieces, pathIndex + 1)
-		currentFile, err := os.Stat(currentPath)
-		if err != nil {
-			fmt.Println("Unable to locate files for mutating.")
-			panic(err)
-		}
-
-		if currentFile.IsDir() {
+		if isDirectory(currentPath) {
 			return expandWildCardRecursive(pathIndex+1, pathPieces)
 		}
-
-		return[]string{getParentDirectory(pathPieces, pathIndex + 1)}
+		// not a directory, so we just return the current path
+		if !exists(currentPath) {
+			return []string{}
+		}
+		return[]string{currentPath}
 	}
+}
+
+/*
+func expandWildCardRecursive(pathIndex int, pathPieces []string) []string {
+	if pathIndex >= len(pathPieces) {
+		// only add regular non-directory files
+		currentPath := getParentDirectory(pathPieces, pathIndex)
+		if isDirectory(currentPath) || !exists(currentPath) {
+			return []string{}
+		} else {
+			return []string{currentPath}
+		}
+	}
+
+	pathPiece := pathPieces[pathIndex]
+	if valid, globPattern := isValidWildCard(pathPiece); valid {
+		fileNames := getAllFilesInPath(getParentDirectory(pathPieces, pathIndex))
+
+		if len(globPattern) > 1 {
+			fileNames = filterFileNames(globPattern, fileNames)
+		}
+
+		// we have all the file names, now need to traverse each tree
+		var completePaths []string
+		for _, name := range fileNames {
+			// replace the wildcard piece with real folder
+			newPathPieces := pathPieces
+			newPathPieces[pathIndex] = name
+			// TODO should filter here to check that the path actually exists
+			// eg. mutation/remove.go then don't want mutator.go/remove.go
+// need to check if it's a file...
+path := getParentDirectory(newPathPieces, pathIndex+1)
+// previously just returned the replacement
+if isDirectory(path) {
+completePaths = append(completePaths, expandWildCardRecursive(pathIndex+1, newPathPieces)...)
+} else {
+completePaths = append(completePaths, path)
+}
+}
+return completePaths
+
+} else {
+// not a glob, so we don't need to return any expanded file paths
+// but if it is a directory, we should keep going.
+currentPath := getParentDirectory(pathPieces, pathIndex + 1)
+if isDirectory(currentPath) {
+return expandWildCardRecursive(pathIndex+1, pathPieces)
+}
+// not a directory, so we just return the current path
+if !exists(currentPath) {
+return []string{}
+}
+return[]string{currentPath}
+}
+}
+
+ */
+func isDirectory(path string) bool {
+	currentFile, err := os.Stat(path)
+	if err != nil {
+		return false
+	}
+
+	return currentFile.IsDir()
+}
+
+func exists(path string) bool {
+	_, err := os.Stat(path)
+
+	if err != nil {
+		_, err = os.Stat(path[:len(path)-1])
+		if err != nil && os.IsNotExist(err) {
+			// eg. mutator/branch/remove.go does not exist
+			return false
+		}
+	}
+
+	return true
 }
 
 // Does not properly account for slashes
@@ -211,7 +316,7 @@ func isValidWildCard(piece string) (bool, string) {
 }
 
 func filterFileNames(globPattern string, files []string) []string {
-	validFileName := `(@\"^[\w\-. ]+$)*\"`
+	validFileName := `[\w\-. ]+` // should it be + or *? since replacing *
 	validFilePattern := strings.Replace(globPattern, "*", validFileName, -1)
 	validFileRegex := regexp.MustCompile(validFilePattern)
 

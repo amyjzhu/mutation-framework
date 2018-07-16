@@ -26,6 +26,7 @@ func mockMutator(pkg *types.Package, info *types.Info, node ast.Node) []mutator.
 	return nil
 }
 
+// TODO it should be that empty slices are initialized instead of null
 func initialize() {
 
 	expectedMutator = mockMutator
@@ -34,7 +35,8 @@ func initialize() {
 	expectedConfig = MutationConfig{
 		[]Operator{Operator{&expectedMutator, "mutator/mock"}},
 		[]string{"primary.go", "secondary.go"},
-		[]string{},
+		//[]string{},
+		nil,
 		"",
 		Options{1, false, false, false, "mutants/",10},
 		Scripts{"go test", ""}}
@@ -69,21 +71,26 @@ func TestYamlConfig(t *testing.T) {
 	assert.Equal(t, expectedString, actualString)
 }
 
-// TODO tests are highly dependent on file structure
+// TODO tests are highly dependent on file structure of OS
+// TODO get working directory perhaps
 func TestWildcardConfig(t *testing.T) {
 	wildcardConfig, err:= getConfig("../../testdata/config/wildcard_config.json")
 	assert.Nil(t, err)
 
-	expectedIncludedFiles := []string{"cmd/go-mutesting/config.go",
-		"cmd/go-mutesting/config_test.go",
-		"cmd/go-mutesting/main.go",
-		"cmd/go-mutesting/main_test.go"}
+	expectedIncludedFiles := []string{
+		"/home/amy/go/src/github.com/amyjzhu/mutation-framework/cmd/go-mutesting/config.go",
+		"/home/amy/go/src/github.com/amyjzhu/mutation-framework/cmd/go-mutesting/config_test.go",
+		"/home/amy/go/src/github.com/amyjzhu/mutation-framework/cmd/go-mutesting/main.go",
+		"/home/amy/go/src/github.com/amyjzhu/mutation-framework/cmd/go-mutesting/main_test.go"}
 
 	assert.ElementsMatch(t, wildcardConfig.FilesToInclude, expectedIncludedFiles)
 
-	expectedExcludedFiles := []string{"mutator/mutation.go",
-		"mutator/mutator.go",
-		"mutator/mutator_test.go"}
+	expectedExcludedFiles := []string{
+		"/home/amy/go/src/github.com/amyjzhu/mutation-framework/mutator/mutation.go",
+		"/home/amy/go/src/github.com/amyjzhu/mutation-framework/mutator/mutator.go",
+		"/home/amy/go/src/github.com/amyjzhu/mutation-framework/mutator/mutator_test.go",
+		"/home/amy/go/src/github.com/amyjzhu/mutation-framework/mutator/expression/remove.go",
+		"/home/amy/go/src/github.com/amyjzhu/mutation-framework/mutator/statement/remove.go"}
 
 	assert.ElementsMatch(t, wildcardConfig.FilesToExclude, expectedExcludedFiles)
 }

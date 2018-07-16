@@ -139,25 +139,25 @@ func TestIsValidWildCard(t *testing.T) {
 
 func TestGetParentDirectory(t *testing.T) {
 	pathPieces := []string{"apple", "banana", "watermelon", "chive"}
-	actualPath := getParentDirectory(pathPieces, 1)
+	actualPath := getParentPath(pathPieces, 1)
 	expectedPath := "apple/"
 	assert.Equal(t, expectedPath, actualPath)
 
-	actualPath = getParentDirectory(pathPieces, 2)
+	actualPath = getParentPath(pathPieces, 2)
 	expectedPath = "apple/banana/"
 	assert.Equal(t, expectedPath, actualPath)
 
 
-	actualPath = getParentDirectory(pathPieces, 3)
+	actualPath = getParentPath(pathPieces, 3)
 	expectedPath = "apple/banana/watermelon/"
 	assert.Equal(t, expectedPath, actualPath)
 
 
-	actualPath = getParentDirectory(pathPieces, -1)
+	actualPath = getParentPath(pathPieces, -1)
 	expectedPath = ""
 	assert.Equal(t, expectedPath, actualPath)
 
-	actualPath = getParentDirectory(pathPieces, 0)
+	actualPath = getParentPath(pathPieces, 0)
 	expectedPath = ""
 	assert.Equal(t, expectedPath, actualPath)
 }

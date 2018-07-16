@@ -174,62 +174,139 @@ func removeWildCardPaths(paths []string) []string {
 // TODO refactor
 func expandWildCardRecursive(pathIndex int, pathPieces []string) []string {
 	if pathIndex >= len(pathPieces) {
-		// only add regular non-directory files
-		currentPath := getParentDirectory(pathPieces, pathIndex)
-		if isDirectory(currentPath) || !exists(currentPath) {
-			return []string{}
-		} else {
-			return []string{currentPath}
-		}
+		return []string{}
 	}
+	currentPath := getCurrentPath(pathIndex, pathPieces)
+	parentPath := getParentPath(pathPieces, pathIndex)
 
-	pathPiece := pathPieces[pathIndex]
-	if valid, globPattern := isValidWildCard(pathPiece); valid {
-		fileNames := getAllFilesInPath(getParentDirectory(pathPieces, pathIndex))
+	if isDirectory(parentPath) {
 
-		if len(globPattern) > 1 {
-			fileNames = filterFileNames(globPattern, fileNames)
+		pathPiece := pathPieces[pathIndex]
+		if valid, glob := isValidWildCard(pathPiece); valid {
+			fileNames, dirNames := getAllFilesInPath(parentPath)
+
+			// is there something to filter?
+			if len(glob) > 1 {
+				fileNames = filterFileNames(glob, fileNames)
+				dirNames = filterFileNames(glob, dirNames)
+			}
+
+			var allPaths []string
+			for _, dir := range dirNames {
+				newPathPieces := pathPieces
+				// replace wildcard character with real folders
+				newPathPieces[pathIndex] = dir
+				allPaths = append(allPaths,
+					expandWildCardRecursive(pathIndex, newPathPieces)...)
+			}
+
+			// only add files if we're at the last piece
+			if pathIndex == len(pathPieces) - 1 {
+				for _, file := range fileNames {
+					path := getParentPath(pathPieces, pathIndex) + file
+					allPaths = append(allPaths, expandWildCardFile(path)...)
+				}
+			}
+
+			return allPaths
 		}
 
-		// we have all the file names, now need to traverse each tree
-		var completePaths []string
-		for _, name := range fileNames {
-			// replace the wildcard piece with real folder
-			newPathPieces := pathPieces
-			newPathPieces[pathIndex] = name
-			// TODO should filter here to check that the path actually exists
-			// eg. mutation/*/remove.go then don't want mutator.go/remove.go
-			// need to check if it's a file...
-			path := getParentDirectory(newPathPieces, pathIndex+1)
-			// previously just returned the replacement
-			if isDirectory(path) {
-				completePaths = append(completePaths, expandWildCardRecursive(pathIndex+1, newPathPieces)...)
-			} else {
-				completePaths = append(completePaths, path)
+		// if we don't have globs and are not a directory, add as well
+		if !isDirectory(currentPath) {
+			if exists(currentPath) {
+				return []string{currentPath[:len(currentPath)-1]}
 			}
 		}
-		return completePaths
 
+		// if we don't have globs are are a directory, keep going
+		return expandWildCardRecursive(pathIndex+1, pathPieces)
+	}
+
+	// normal path, but doesn't exist
+	if !exists(currentPath) {
+		return []string{}
+	}
+
+	// normal path
+	return []string{currentPath[:len(currentPath)-1]}
+
+}
+
+func expandWildCardFile(path string) []string {
+	if exists(path) {
+		return []string{path}
+	}
+	return []string{}
+}
+
+func getCurrentPath(index int, pathPieces []string) string {
+	path := ""
+	for i := 0; i <= index; i++ {
+		path += pathPieces[i]
+		path += "/"
+	}
+	return path
+}
+
+
+/*func expandWildCardRecursive(pathIndex int, pathPieces []string) []string {
+	if pathIndex >= len(pathPieces) {
+		return []string{}
+	}
+
+	parentDir := getParentPath(pathPieces, pathIndex)
+	if isDirectory(parentDir) {
+		return expandWildCardDirectory(pathIndex, pathPieces)
 	} else {
-		// not a glob, so we don't need to return any expanded file paths
-		// but if it is a directory, we should keep going.
-		currentPath := getParentDirectory(pathPieces, pathIndex + 1)
-		if isDirectory(currentPath) {
-			return expandWildCardRecursive(pathIndex+1, pathPieces)
-		}
-		// not a directory, so we just return the current path
-		if !exists(currentPath) {
-			return []string{}
-		}
-		return[]string{currentPath}
+		return expandWildCardFile(parentDir)
 	}
 }
 
+func expandWildCardDirectory(pathIndex int, pathPieces []string) []string {
+	if pathIndex > len(pathPieces) {
+		return []string{}
+	}
+
+	pathPiece := pathPieces[pathIndex]
+	if valid, glob := isValidWildCard(pathPiece); valid {
+		fileNames, dirNames := getAllFilesInPath(getParentPath(pathPieces, pathIndex))
+
+		if len(glob) > 1 {
+			fileNames = filterFileNames(glob, fileNames)
+			dirNames = filterFileNames(glob, dirNames)
+		}
+
+		var allPaths []string
+		for _, dir := range dirNames {
+			newPathPieces := pathPieces
+			newPathPieces[pathIndex] = dir
+			allPaths = append(allPaths,
+				expandWildCardRecursive(pathIndex+1, newPathPieces)...)
+		}
+
+		for _, file := range fileNames {
+			path := getParentPath(pathPieces, pathIndex) + file
+			allPaths = append(allPaths, expandWildCardFile(path)...)
+		}
+
+		return allPaths
+	}
+
+	return expandWildCardRecursive(pathIndex+1, pathPieces)
+}
+
+func expandWildCardFile(path string) []string {
+	if exists(path) {
+		return []string{path}
+	}
+	return []string{}
+}
+*/
 /*
 func expandWildCardRecursive(pathIndex int, pathPieces []string) []string {
 	if pathIndex >= len(pathPieces) {
 		// only add regular non-directory files
-		currentPath := getParentDirectory(pathPieces, pathIndex)
+		currentPath := getParentPath(pathPieces, pathIndex)
 		if isDirectory(currentPath) || !exists(currentPath) {
 			return []string{}
 		} else {
@@ -239,7 +316,7 @@ func expandWildCardRecursive(pathIndex int, pathPieces []string) []string {
 
 	pathPiece := pathPieces[pathIndex]
 	if valid, globPattern := isValidWildCard(pathPiece); valid {
-		fileNames := getAllFilesInPath(getParentDirectory(pathPieces, pathIndex))
+		fileNames := getAllFilesInPath(getParentPath(pathPieces, pathIndex))
 
 		if len(globPattern) > 1 {
 			fileNames = filterFileNames(globPattern, fileNames)
@@ -254,7 +331,7 @@ func expandWildCardRecursive(pathIndex int, pathPieces []string) []string {
 			// TODO should filter here to check that the path actually exists
 			// eg. mutation/remove.go then don't want mutator.go/remove.go
 // need to check if it's a file...
-path := getParentDirectory(newPathPieces, pathIndex+1)
+path := getParentPath(newPathPieces, pathIndex+1)
 // previously just returned the replacement
 if isDirectory(path) {
 completePaths = append(completePaths, expandWildCardRecursive(pathIndex+1, newPathPieces)...)
@@ -267,7 +344,7 @@ return completePaths
 } else {
 // not a glob, so we don't need to return any expanded file paths
 // but if it is a directory, we should keep going.
-currentPath := getParentDirectory(pathPieces, pathIndex + 1)
+currentPath := getParentPath(pathPieces, pathIndex + 1)
 if isDirectory(currentPath) {
 return expandWildCardRecursive(pathIndex+1, pathPieces)
 }
@@ -281,6 +358,11 @@ return[]string{currentPath}
 
  */
 func isDirectory(path string) bool {
+	if path == "" {
+		return true
+		// TODO I suppose this could cause everything to break
+	}
+
 	currentFile, err := os.Stat(path)
 	if err != nil {
 		return false
@@ -292,7 +374,7 @@ func isDirectory(path string) bool {
 func exists(path string) bool {
 	_, err := os.Stat(path)
 
-	if err != nil {
+	if err != nil && len(path) != 0 {
 		_, err = os.Stat(path[:len(path)-1])
 		if err != nil && os.IsNotExist(err) {
 			// eg. mutator/branch/remove.go does not exist
@@ -333,7 +415,7 @@ func filterFileNames(globPattern string, files []string) []string {
 // Returns one directory up
 // e.g. mushroom/*.go/
 //                ^^^ we focus on this piece, but return mushroom/
-func getParentDirectory(pathPieces []string, index int) string {
+func getParentPath(pathPieces []string, index int) string {
 	path := ""
 	for i := 0; i < index; i++ {
 		path += pathPieces[i]
@@ -342,20 +424,21 @@ func getParentDirectory(pathPieces []string, index int) string {
 	return path
 }
 
-func getAllFilesInPath(path string) []string {
+func getAllFilesInPath(path string) (fileNames []string, dirNames []string) {
 	fileInfo, err := ioutil.ReadDir(path)
 	if err != nil {
 		// TODO??
 	}
 
-	var names []string
 	for _, info := range fileInfo {
-		names = append(names, info.Name())
+		if info.IsDir() {
+			dirNames = append(dirNames, info.Name())
+		} else {
+			fileNames = append(fileNames, info.Name())
+		}
 	}
 
-	fmt.Println("I am in getAllFilesInPath")
-	fmt.Println(names)
-	return names
+	return fileNames, dirNames
 }
 
 func convertFromYaml(yamlData []byte) ([]byte, error) {

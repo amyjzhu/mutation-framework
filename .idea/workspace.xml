@@ -5,8 +5,6 @@
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/cmd/go-mutesting/config.go" beforeDir="false" afterPath="$PROJECT_DIR$/cmd/go-mutesting/config.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/cmd/go-mutesting/config_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/cmd/go-mutesting/config_test.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/testdata/config/sample_config.json" beforeDir="false" afterPath="$PROJECT_DIR$/testdata/config/sample_config.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/testdata/config/wildcard_config.json" beforeDir="false" afterPath="$PROJECT_DIR$/testdata/config/wildcard_config.json" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
@@ -16,7 +14,7 @@
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
   <component name="CoverageDataManager">
-    <SUITE FILE_PATH="coverage/mutation_framework$go_test_github_com_amyjzhu_mutation_framework_cmd_go_mutesting.out" NAME="go test github.com/amyjzhu/mutation-framework/cmd/go-mutesting Coverage Results" MODIFIED="1531520990951" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
+    <SUITE FILE_PATH="coverage/mutation_framework$go_test_github_com_amyjzhu_mutation_framework_cmd_go_mutesting.out" NAME="go test github.com/amyjzhu/mutation-framework/cmd/go-mutesting Coverage Results" MODIFIED="1531771353288" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
   </component>
   <component name="FileEditorManager">
     <splitter split-orientation="horizontal" split-proportion="0.45138055">
@@ -25,8 +23,8 @@
           <file leaf-file-name="main.go" pinned="false" current-in-tab="false">
             <entry file="file://$PROJECT_DIR$/cmd/go-mutesting/main.go">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="825">
-                  <caret line="531" column="36" lean-forward="true" selection-start-line="531" selection-start-column="36" selection-end-line="531" selection-end-column="36" />
+                <state relative-caret-position="7575">
+                  <caret line="531" column="36" selection-start-line="531" selection-start-column="36" selection-end-line="531" selection-end-column="36" />
                 </state>
               </provider>
             </entry>
@@ -61,7 +59,7 @@
           <file leaf-file-name="config_test.go" pinned="false" current-in-tab="false">
             <entry file="file://$PROJECT_DIR$/cmd/go-mutesting/config_test.go">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="-320">
+                <state relative-caret-position="1005">
                   <caret line="73" column="52" selection-start-line="73" selection-start-column="52" selection-end-line="73" selection-end-column="52" />
                 </state>
               </provider>
@@ -80,7 +78,7 @@
             <entry file="file://$PROJECT_DIR$/testdata/config/wildcard_config.json">
               <provider selected="true" editor-type-id="text-editor">
                 <state relative-caret-position="135">
-                  <caret line="9" column="25" selection-start-line="9" selection-start-column="25" selection-end-line="9" selection-end-column="25" />
+                  <caret line="9" column="26" lean-forward="true" selection-start-line="9" selection-start-column="26" selection-end-line="9" selection-end-column="26" />
                 </state>
               </provider>
             </entry>
@@ -106,8 +104,8 @@
           <file leaf-file-name="config_test.go" pinned="false" current-in-tab="false">
             <entry file="file://$PROJECT_DIR$/cmd/go-mutesting/config_test.go">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="367">
-                  <caret line="81" column="90" selection-start-line="81" selection-start-column="90" selection-end-line="81" selection-end-column="90" />
+                <state relative-caret-position="472">
+                  <caret line="94" selection-start-line="94" selection-end-line="94" />
                 </state>
               </provider>
             </entry>
@@ -115,8 +113,8 @@
           <file leaf-file-name="config.go" pinned="false" current-in-tab="true">
             <entry file="file://$PROJECT_DIR$/cmd/go-mutesting/config.go">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="216">
-                  <caret line="175" column="4" lean-forward="true" selection-start-line="175" selection-start-column="4" selection-end-line="175" selection-end-column="4" />
+                <state relative-caret-position="411">
+                  <caret line="229" column="18" selection-start-line="229" selection-start-column="18" selection-end-line="229" selection-end-column="18" />
                   <folding>
                     <element signature="e#14#204#0" expanded="true" />
                   </folding>
@@ -355,34 +353,34 @@
     </recent_temporary>
   </component>
   <component name="TestHistory">
-    <history-entry file="go_test_github_com_amyjzhu_mutation-framework_cmd_go-mutesting - 2018.07.16 at 09h 13m 24s.xml">
+    <history-entry file="go_test_github_com_amyjzhu_mutation-framework_cmd_go-mutesting - 2018.07.16 at 15h 50m 19s.xml">
       <configuration name="go test github.com/amyjzhu/mutation-framework/cmd/go-mutesting" configurationId="GoTestRunConfiguration" />
     </history-entry>
-    <history-entry file="go_test_github_com_amyjzhu_mutation-framework_cmd_go-mutesting - 2018.07.16 at 09h 15m 07s.xml">
+    <history-entry file="go_test_github_com_amyjzhu_mutation-framework_cmd_go-mutesting - 2018.07.16 at 15h 59m 40s.xml">
       <configuration name="go test github.com/amyjzhu/mutation-framework/cmd/go-mutesting" configurationId="GoTestRunConfiguration" />
     </history-entry>
-    <history-entry file="go_test_github_com_amyjzhu_mutation-framework_cmd_go-mutesting - 2018.07.16 at 09h 15m 16s.xml">
+    <history-entry file="go_test_github_com_amyjzhu_mutation-framework_cmd_go-mutesting - 2018.07.16 at 16h 00m 35s.xml">
       <configuration name="go test github.com/amyjzhu/mutation-framework/cmd/go-mutesting" configurationId="GoTestRunConfiguration" />
     </history-entry>
-    <history-entry file="go_test_github_com_amyjzhu_mutation-framework_cmd_go-mutesting - 2018.07.16 at 09h 17m 16s.xml">
+    <history-entry file="go_test_github_com_amyjzhu_mutation-framework_cmd_go-mutesting - 2018.07.16 at 16h 06m 54s.xml">
       <configuration name="go test github.com/amyjzhu/mutation-framework/cmd/go-mutesting" configurationId="GoTestRunConfiguration" />
     </history-entry>
-    <history-entry file="go_test_github_com_amyjzhu_mutation-framework_cmd_go-mutesting - 2018.07.16 at 09h 17m 41s.xml">
+    <history-entry file="go_test_github_com_amyjzhu_mutation-framework_cmd_go-mutesting - 2018.07.16 at 16h 14m 48s.xml">
       <configuration name="go test github.com/amyjzhu/mutation-framework/cmd/go-mutesting" configurationId="GoTestRunConfiguration" />
     </history-entry>
-    <history-entry file="go_test_github_com_amyjzhu_mutation-framework_cmd_go-mutesting - 2018.07.16 at 09h 17m 50s.xml">
+    <history-entry file="go_test_github_com_amyjzhu_mutation-framework_cmd_go-mutesting - 2018.07.16 at 16h 14m 53s.xml">
       <configuration name="go test github.com/amyjzhu/mutation-framework/cmd/go-mutesting" configurationId="GoTestRunConfiguration" />
     </history-entry>
-    <history-entry file="go_test_github_com_amyjzhu_mutation-framework_cmd_go-mutesting - 2018.07.16 at 09h 18m 13s.xml">
+    <history-entry file="go_test_github_com_amyjzhu_mutation-framework_cmd_go-mutesting - 2018.07.16 at 16h 18m 02s.xml">
       <configuration name="go test github.com/amyjzhu/mutation-framework/cmd/go-mutesting" configurationId="GoTestRunConfiguration" />
     </history-entry>
-    <history-entry file="go_test_github_com_amyjzhu_mutation-framework_cmd_go-mutesting - 2018.07.16 at 09h 54m 09s.xml">
+    <history-entry file="go_test_github_com_amyjzhu_mutation-framework_cmd_go-mutesting - 2018.07.16 at 16h 19m 15s.xml">
       <configuration name="go test github.com/amyjzhu/mutation-framework/cmd/go-mutesting" configurationId="GoTestRunConfiguration" />
     </history-entry>
-    <history-entry file="go_test_github_com_amyjzhu_mutation-framework_cmd_go-mutesting - 2018.07.16 at 09h 58m 51s.xml">
+    <history-entry file="go_test_github_com_amyjzhu_mutation-framework_cmd_go-mutesting - 2018.07.16 at 16h 25m 14s.xml">
       <configuration name="go test github.com/amyjzhu/mutation-framework/cmd/go-mutesting" configurationId="GoTestRunConfiguration" />
     </history-entry>
-    <history-entry file="go_test_github_com_amyjzhu_mutation-framework_cmd_go-mutesting - 2018.07.16 at 10h 16m 43s.xml">
+    <history-entry file="go_test_github_com_amyjzhu_mutation-framework_cmd_go-mutesting - 2018.07.16 at 16h 30m 57s.xml">
       <configuration name="go test github.com/amyjzhu/mutation-framework/cmd/go-mutesting" configurationId="GoTestRunConfiguration" />
     </history-entry>
   </component>
@@ -394,10 +392,10 @@
       <window_info anchor="bottom" id="TODO" order="6" />
       <window_info anchor="bottom" id="Event Log" order="9" side_tool="true" weight="0.32937956" />
       <window_info anchor="right" id="Database" order="3" />
+      <window_info anchor="bottom" id="Find" order="1" weight="0.32937956" />
       <window_info anchor="bottom" id="Database Changes" order="10" show_stripe_button="false" />
       <window_info anchor="bottom" id="Run" order="2" weight="0.32937956" />
       <window_info anchor="bottom" id="Version Control" order="8" />
-      <window_info anchor="right" id="Coverage" side_tool="true" weight="0.32991913" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
       <window_info anchor="bottom" id="Terminal" order="7" />
       <window_info active="true" anchor="bottom" id="Debug" order="3" visible="true" weight="0.39963505" />
@@ -408,7 +406,7 @@
       <window_info anchor="right" id="Ant Build" order="1" weight="0.25" />
       <window_info anchor="bottom" id="Message" order="0" />
       <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
-      <window_info anchor="bottom" id="Find" order="1" weight="0.32937956" />
+      <window_info anchor="right" id="Coverage" order="4" side_tool="true" weight="0.32991913" />
     </layout>
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -422,36 +420,53 @@
       <breakpoints>
         <line-breakpoint enabled="true" type="DlvLineBreakpoint">
           <url>file://$PROJECT_DIR$/cmd/go-mutesting/config.go</url>
-          <line>349</line>
-          <properties />
+          <line>431</line>
           <option name="timeStamp" value="9" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="DlvLineBreakpoint">
           <url>file://$PROJECT_DIR$/cmd/go-mutesting/config_test.go</url>
           <line>79</line>
-          <properties />
           <option name="timeStamp" value="15" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="DlvLineBreakpoint">
           <url>file://$PROJECT_DIR$/cmd/go-mutesting/config_test.go</url>
           <line>76</line>
-          <properties />
           <option name="timeStamp" value="22" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="DlvLineBreakpoint">
           <url>file://$PROJECT_DIR$/cmd/go-mutesting/config_test.go</url>
           <line>94</line>
-          <properties />
           <option name="timeStamp" value="23" />
         </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/cmd/go-mutesting/config.go</url>
+          <line>185</line>
+          <properties />
+          <option name="timeStamp" value="36" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/cmd/go-mutesting/config.go</url>
+          <line>205</line>
+          <properties />
+          <option name="timeStamp" value="38" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/cmd/go-mutesting/config.go</url>
+          <line>230</line>
+          <properties />
+          <option name="timeStamp" value="40" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/cmd/go-mutesting/config.go</url>
+          <line>226</line>
+          <properties />
+          <option name="timeStamp" value="41" />
+        </line-breakpoint>
       </breakpoints>
-      <option name="time" value="25" />
+      <option name="time" value="42" />
     </breakpoint-manager>
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/cmd/go-mutesting/go-mutesting-bash_completion.sh">
-      <provider selected="true" editor-type-id="text-editor" />
-    </entry>
     <entry file="file://$PROJECT_DIR$/install" />
     <entry file="file://$USER_HOME$/.go/src/io/ioutil/ioutil.go">
       <provider selected="true" editor-type-id="text-editor">
@@ -610,9 +625,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="780">
           <caret line="52" column="27" selection-start-line="52" selection-start-column="27" selection-end-line="52" selection-end-column="27" />
-          <folding>
-            <element signature="e#14#95#0" expanded="true" />
-          </folding>
         </state>
       </provider>
     </entry>
@@ -654,17 +666,10 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$USER_HOME$/.go/src/runtime/panic.go">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="356">
-          <caret line="590" selection-start-line="590" selection-end-line="590" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/cmd/go-mutesting/main.go">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="825">
-          <caret line="531" column="36" lean-forward="true" selection-start-line="531" selection-start-column="36" selection-end-line="531" selection-end-column="36" />
+        <state relative-caret-position="7575">
+          <caret line="531" column="36" selection-start-line="531" selection-start-column="36" selection-end-line="531" selection-end-column="36" />
         </state>
       </provider>
     </entry>
@@ -696,13 +701,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/testdata/config/wildcard_config.json">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="135">
-          <caret line="9" column="25" selection-start-line="9" selection-start-column="25" selection-end-line="9" selection-end-column="25" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$USER_HOME$/.go/src/testing/testing.go">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="570">
@@ -717,17 +715,38 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$USER_HOME$/.go/src/runtime/panic.go">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="506">
+          <caret line="600" column="38" selection-start-line="600" selection-start-column="38" selection-end-line="600" selection-end-column="38" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$USER_HOME$/.go/src/strings/strings.go">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="210">
+          <caret line="92" selection-start-line="92" selection-end-line="92" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/testdata/config/wildcard_config.json">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="135">
+          <caret line="9" column="26" lean-forward="true" selection-start-line="9" selection-start-column="26" selection-end-line="9" selection-end-column="26" />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/cmd/go-mutesting/config_test.go">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="367">
-          <caret line="81" column="90" selection-start-line="81" selection-start-column="90" selection-end-line="81" selection-end-column="90" />
+        <state relative-caret-position="472">
+          <caret line="94" selection-start-line="94" selection-end-line="94" />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/cmd/go-mutesting/config.go">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="216">
-          <caret line="175" column="4" lean-forward="true" selection-start-line="175" selection-start-column="4" selection-end-line="175" selection-end-column="4" />
+        <state relative-caret-position="411">
+          <caret line="229" column="18" selection-start-line="229" selection-start-column="18" selection-end-line="229" selection-end-column="18" />
           <folding>
             <element signature="e#14#204#0" expanded="true" />
           </folding>

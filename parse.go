@@ -8,14 +8,17 @@ import (
 	"go/token"
 	"go/types"
 	"golang.org/x/tools/go/loader"
-	"io/ioutil"
 	"path/filepath"
+	"github.com/spf13/afero"
 )
+
+var fs = afero.NewOsFs()
+var afs = &afero.Afero{Fs: fs}
 
 // ParseFile parses the content of the given file and returns the corresponding ast.File node and its file set for positional information.
 // If a fatal error is encountered the error return argument is not nil.
 func ParseFile(file string) (*ast.File, *token.FileSet, error) {
-	data, err := ioutil.ReadFile(file)
+	data, err := afs.ReadFile(file)
 	if err != nil {
 		fmt.Println("error in ParseFile")
 		return nil, nil, err
@@ -25,7 +28,7 @@ func ParseFile(file string) (*ast.File, *token.FileSet, error) {
 }
 
 func LoadFile(file string) (data []byte, err error) {
-	data, err = ioutil.ReadFile(file)
+	data, err = afs.ReadFile(file)
 	if err != nil {
 		fmt.Println("error in LoadFile")
 		return nil, err

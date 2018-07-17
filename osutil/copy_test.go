@@ -23,6 +23,6 @@ func TestCopyFile(t *testing.T) {
 
 	assert.Equal(t, s, d)
 
-	err = os.Remove(dst)
+	err = fs.Remove(dst)
 	assert.Nil(t, err)
 }

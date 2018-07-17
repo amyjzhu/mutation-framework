@@ -34,10 +34,12 @@ func initialize() {
 
 	expectedConfig = MutationConfig{
 		false,
-		"",Mutate{false, []Operator{Operator{&expectedMutator, "mutator/mock"}},
+		"",
+		Mutate{false, []Operator{Operator{&expectedMutator, "mutator/mock"}},
 			[]string{"primary.go", "secondary.go"},
 			//[]string{},
-			nil,"mutants/"},
+			nil,"mutants/",
+			false},
 		Test{false, 10, 1},
 		Commands{"go test", "", ""}}
 }

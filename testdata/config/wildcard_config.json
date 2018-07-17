@@ -1,5 +1,5 @@
 {
-  "file_basepath": "/home/amy/go/src/github.com/amyjzhu/mutation-framework/",
+  "project_root": "/home/amy/go/src/github.com/amyjzhu/mutation-framework/",
   "test": {
     "disable": false,
     "composition": 1,

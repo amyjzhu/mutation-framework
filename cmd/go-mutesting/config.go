@@ -21,7 +21,7 @@ type Operator struct {
 
 type MutationConfig struct {
 	Verbose      bool   `json:"verbose"`
-	FileBasePath   string     `json:"file_basepath"`
+	FileBasePath   string     `json:"project_root"` // the root of project and appended to file paths
 	Mutate Mutate `json:"mutate"`
 	Test Test `json:"test"`
 	Commands       Commands   `json:"commands"`
@@ -39,6 +39,7 @@ type Mutate struct {
 	FilesToInclude []string   `json:"files_to_include"`
 	FilesToExclude []string   `json:"files_to_exclude"`
 	MutantFolder string `json:"mutant_folder"`
+	Overwrite bool `json:"overwrite"`
 }
 
 type Commands struct {
@@ -133,11 +134,17 @@ func appendMutantFolderSlashOrReplaceWithDefault(config *MutationConfig) {
 	if mutantFolderPath == "" {
 		config.Mutate.MutantFolder = DefaultMutationFolder
 	} else {
-		if mutantFolderPath[len(mutantFolderPath)-1:] != string(os.PathSeparator) {
-			config.Mutate.MutantFolder = mutantFolderPath + string(os.PathSeparator)
-		}
+		config.Mutate.MutantFolder = appendSlash(mutantFolderPath)
 	}
 }
+
+func appendSlash(path string) string {
+	if path[len(path)-1:] != string(os.PathSeparator) {
+		return path + string(os.PathSeparator)
+	}
+	return path
+}
+
 
 func expandWildCards(config *MutationConfig) {
 	var expandedPaths []string
@@ -272,7 +279,7 @@ func isDirectory(path string) bool {
 		// TODO I suppose this could cause everything to break
 	}
 
-	currentFile, err := os.Stat(path)
+	currentFile, err := fs.Stat(path)
 	if err != nil {
 		return false
 	}
@@ -281,10 +288,10 @@ func isDirectory(path string) bool {
 }
 
 func exists(path string) bool {
-	_, err := os.Stat(path)
+	_, err := fs.Stat(path)
 
 	if err != nil && len(path) != 0 {
-		_, err = os.Stat(path[:len(path)-1])
+		_, err = fs.Stat(path[:len(path)-1])
 		if err != nil && os.IsNotExist(err) {
 			// eg. mutator/branch/remove.go does not exist
 			return false

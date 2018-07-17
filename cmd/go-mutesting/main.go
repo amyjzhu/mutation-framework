@@ -105,7 +105,7 @@ func checkArguments(args []string, opts *Args) (bool, int) {
 }
 
 func debug(config *MutationConfig, format string, args ...interface{}) {
-	if config.Options.Verbose {
+	if config.Verbose {
 		fmt.Printf(format+"\n", args...)
 	}
 }
@@ -156,6 +156,7 @@ func mainCmd(args []string) int {
 	operators := retrieveMutationOperators(mutationConfig)
 	files := getCandidateFiles(mutationConfig)
 
+	defer runCleanUpCommand(mutationConfig)
 	return mutateFiles(mutationConfig, files, operators)
 }
 
@@ -165,29 +166,29 @@ func consolidateArgsIntoConfig(opts *Args, config *MutationConfig) {
 	}
 
 	if opts.Exec.ExecOnly {
-		config.Options.ExecOnly = true
+		config.Test.Disable = true
 	}
 
 	if opts.Exec.MutateOnly {
-		config.Options.MutateOnly = true
+		config.Mutate.Disable = true
 	}
 
 	if opts.General.Verbose {
-		config.Options.Verbose = true
+		config.Verbose = true
 	}
 
 	if opts.Exec.Composition != 0 {
-		config.Options.Composition = opts.Exec.Composition
+		config.Test.Composition = opts.Exec.Composition
 	}
 
 	if opts.Exec.Timeout != 0 {
-		config.Options.Timeout = opts.Exec.Timeout
+		config.Test.Timeout = opts.Exec.Timeout
 	}
 }
 
 func retrieveMutationOperators(config *MutationConfig) []mutator.Mutator {
 	var operators []mutator.Mutator
-	for _, operator := range config.Operators {
+	for _, operator := range config.Mutate.Operators {
 		operators = append(operators, *operator.MutationOperator)
 	}
 	return operators
@@ -196,16 +197,16 @@ func retrieveMutationOperators(config *MutationConfig) []mutator.Mutator {
 func getCandidateFiles(config *MutationConfig) []string {
 	var filesToMutate = make(map[string]struct{},0)
 
-	if len(config.FilesToInclude) == 0 {
+	if len(config.Mutate.FilesToInclude) == 0 {
 		// TODO add all files
 	}
 
-	for _, file := range config.FilesToInclude {
+	for _, file := range config.Mutate.FilesToInclude {
 		filesToMutate[file] = struct{}{}
 	}
 
 	// TODO exclude is more powerful than include
-	for _, excludeFile := range config.FilesToExclude {
+	for _, excludeFile := range config.Mutate.FilesToExclude {
 		delete(filesToMutate, excludeFile)
 	}
 
@@ -229,13 +230,13 @@ func mutateFiles(config *MutationConfig, files []string, operators []mutator.Mut
 			return exitError(err.Error())
 		}
 
-		err = os.MkdirAll(config.Options.MutantFolder, 0755)
+		err = os.MkdirAll(config.Mutate.MutantFolder, 0755)
 		if err != nil {
 			panic(err)
 		}
 
 		// TODO won't matter how specific the paths are once we create entire systems as artifacts
-		mutantFile := config.Options.MutantFolder + file
+		mutantFile := config.Mutate.MutantFolder + file
 		createMutantFolderPath(mutantFile)
 
 		fmt.Println(file)
@@ -270,7 +271,7 @@ func createMutantFolderPath(file string) {
 }
 
 func mutate(config *MutationConfig, mutationID int, pkg *types.Package, info *types.Info, file string, fset *token.FileSet, src ast.Node, node ast.Node, tmpFile string, stats *mutationStats) int {
-	for _, m := range config.Operators {
+	for _, m := range config.Mutate.Operators {
 		debug(config, "Mutator %s", m.Name)
 
 		changed := mutesting.MutateWalk(pkg, info, node, *m.MutationOperator)
@@ -294,7 +295,7 @@ func mutate(config *MutationConfig, mutationID int, pkg *types.Package, info *ty
 			} else {
 				debug(config, "Save mutation into %q with checksum %s", mutationFile, checksum)
 
-				if !config.Options.MutateOnly {
+				if !config.Test.Disable {
 					execExitCode := mutateExec(config, pkg, file, mutationFile)
 
 					debug(config, "Exited with %d", execExitCode)
@@ -336,8 +337,12 @@ func mutate(config *MutationConfig, mutationID int, pkg *types.Package, info *ty
 	return mutationID
 }
 
+func copyPackage(config *MutationConfig) {
+
+}
+
 func printStats(config *MutationConfig, stats *mutationStats) {
-	if !config.Options.MutateOnly {
+	if !config.Test.Disable {
 		fmt.Printf("The mutation score is %f (%d passed, %d failed, %d duplicated, %d skipped, total is %d)\n", stats.Score(), stats.passed, stats.failed, stats.duplicated, stats.skipped, stats.Total())
 	} else {
 		fmt.Println("Cannot do a mutation testing summary since no exec command was executed.")
@@ -471,14 +476,14 @@ func customMutateExec(config *MutationConfig, pkg *types.Package, file string, m
 		panic(err)
 	}
 
-	err = moveIntoMutantsFolder(config.Options.MutantFolder, mutationFile)
+	err = moveIntoMutantsFolder(config.Mutate.MutantFolder, mutationFile)
 	if err != nil {
 		panic(err)
 	}
 
 	pkgName := pkg.Path()
 
-	test, err := exec.Command("go", "test", "-timeout", fmt.Sprintf("%ds", config.Options.Timeout), pkgName).CombinedOutput()
+	test, err := exec.Command("go", "test", "-timeout", fmt.Sprintf("%ds", config.Test.Timeout), pkgName).CombinedOutput()
 
 	if err == nil {
 		execExitCode = execPassed
@@ -564,6 +569,16 @@ func getRedundantCandidates() {
 func getTestKey(tests []string) string {
 	sort.Strings(tests)
 	return strings.Join(tests, ", ")
+}
+
+func runCleanUpCommand(config *MutationConfig) {
+	if config.Commands.CleanUp != "" {
+		_, err := exec.Command(config.Commands.CleanUp).CombinedOutput()
+
+		if err != nil {
+			panic(err)
+		}
+	}
 }
 
 func main() {

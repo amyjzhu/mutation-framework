@@ -20,29 +20,34 @@ type Operator struct {
 }
 
 type MutationConfig struct {
-	Operators      []Operator `json:"operators"`
-	FilesToInclude []string   `json:"files_to_include"`
-	FilesToExclude []string   `json:"files_to_exclude"`
+	Verbose      bool   `json:"verbose"`
 	FileBasePath   string     `json:"file_basepath"`
-	Options        Options    `json:"options"`
+	Mutate Mutate `json:"mutate"`
+	Test Test `json:"test"`
 	Commands       Commands   `json:"commands"`
 }
 
-type Options struct {
-	Composition  int    `json:"composition"`
-	Verbose      bool   `json:"verbose"`
-	MutateOnly   bool   `json:"mutate_only"`
-	ExecOnly     bool   `json:"exec_only"`
-	MutantFolder string `json:"mutant_folder"`
+type Test struct {
+	Disable bool `json:"disable"`
 	Timeout      uint   `json:"timeout"`
+	Composition  int    `json:"composition"`
+}
+
+type Mutate struct {
+	Disable bool `json:"disable"`
+	Operators      []Operator `json:"operators"`
+	FilesToInclude []string   `json:"files_to_include"`
+	FilesToExclude []string   `json:"files_to_exclude"`
+	MutantFolder string `json:"mutant_folder"`
 }
 
 type Commands struct {
 	Test    string `json:"test"`
+	Build string `json:"build"`
 	CleanUp string `json:"clean_up"`
 } // todo required group
 
-const DEFAULT_MUTATION_FOLDER = "mutants/"
+const DefaultMutationFolder = "mutants/"
 
 func (operator *Operator) UnmarshalJSON(data []byte) error {
 	var mutatorName string
@@ -99,16 +104,16 @@ func appendBasepathToAllFiles(config *MutationConfig) {
 	}
 
 	var newPaths []string
-	for _, file := range config.FilesToInclude {
+	for _, file := range config.Mutate.FilesToInclude {
 		newPaths = append(newPaths, concatAddingSlashIfNeeded(basepath, file))
 	}
-	config.FilesToInclude = newPaths
+	config.Mutate.FilesToInclude = newPaths
 
 	newPaths = make([]string, 0)
-	for _, file := range config.FilesToExclude {
+	for _, file := range config.Mutate.FilesToExclude {
 		newPaths = append(newPaths, concatAddingSlashIfNeeded(basepath, file))
 	}
-	config.FilesToExclude = newPaths
+	config.Mutate.FilesToExclude = newPaths
 }
 
 func concatAddingSlashIfNeeded(parent string, child string) string {
@@ -124,34 +129,34 @@ func concatAddingSlashIfNeeded(parent string, child string) string {
 }
 
 func appendMutantFolderSlashOrReplaceWithDefault(config *MutationConfig) {
-	mutantFolderPath := config.Options.MutantFolder
+	mutantFolderPath := config.Mutate.MutantFolder
 	if mutantFolderPath == "" {
-		config.Options.MutantFolder = DEFAULT_MUTATION_FOLDER
+		config.Mutate.MutantFolder = DefaultMutationFolder
 	} else {
 		if mutantFolderPath[len(mutantFolderPath)-1:] != string(os.PathSeparator) {
-			config.Options.MutantFolder = mutantFolderPath + string(os.PathSeparator)
+			config.Mutate.MutantFolder = mutantFolderPath + string(os.PathSeparator)
 		}
 	}
 }
 
 func expandWildCards(config *MutationConfig) {
 	var expandedPaths []string
-	for _, filePath := range config.FilesToInclude {
+	for _, filePath := range config.Mutate.FilesToInclude {
 		if strings.Contains(filePath, "*") {
 			expandedPaths = append(expandedPaths, expandWildCard(filePath)...)
 		}
 	}
-	revisedFilesToInclude := removeWildCardPaths(config.FilesToInclude)
-	config.FilesToInclude = append(revisedFilesToInclude, expandedPaths...)
+	revisedFilesToInclude := removeWildCardPaths(config.Mutate.FilesToInclude)
+	config.Mutate.FilesToInclude = append(revisedFilesToInclude, expandedPaths...)
 
 	expandedPaths = []string{}
-	for _, filePath := range config.FilesToExclude {
+	for _, filePath := range config.Mutate.FilesToExclude {
 		if strings.Contains(filePath, "*") {
 			expandedPaths = append(expandedPaths, expandWildCard(filePath)...)
 		}
 	}
-	revisedFilesToExclude := removeWildCardPaths(config.FilesToExclude)
-	config.FilesToExclude = append(revisedFilesToExclude, expandedPaths...)
+	revisedFilesToExclude := removeWildCardPaths(config.Mutate.FilesToExclude)
+	config.Mutate.FilesToExclude = append(revisedFilesToExclude, expandedPaths...)
 }
 
 func expandWildCard(path string) []string {
@@ -293,9 +298,9 @@ func exists(path string) bool {
 func isValidWildCard(piece string) (bool, string) {
 	validWildCard := regexp.MustCompile(`([^\*]*\*[^\*]*)`)
 	matches := validWildCard.FindAllStringSubmatch(piece,-1)
-	CAPTURING_GROUP_INDEX := 1
+	CapturingGroupIndex := 1
 	if len(matches) == 1 {
-		return true, matches[0][CAPTURING_GROUP_INDEX]
+		return true, matches[0][CapturingGroupIndex]
 	} else {
 		return false, ""
 	}
@@ -319,7 +324,7 @@ func filterFileNames(globPattern string, files []string) []string {
 func getAllFilesInPath(path string) (fileNames []string, dirNames []string) {
 	fileInfo, err := ioutil.ReadDir(path)
 	if err != nil {
-		// TODO??
+		panic(err)
 	}
 
 	for _, info := range fileInfo {

@@ -33,13 +33,13 @@ func initialize() {
 	mutator.Register("mutator/mock", expectedMutator)
 
 	expectedConfig = MutationConfig{
-		[]Operator{Operator{&expectedMutator, "mutator/mock"}},
-		[]string{"primary.go", "secondary.go"},
-		//[]string{},
-		nil,
-		"",
-		Options{1, false, false, false, "mutants/",10},
-		Commands{"go test", ""}}
+		false,
+		"",Mutate{false, []Operator{Operator{&expectedMutator, "mutator/mock"}},
+			[]string{"primary.go", "secondary.go"},
+			//[]string{},
+			nil,"mutants/"},
+		Test{false, 10, 1},
+		Commands{"go test", "", ""}}
 }
 
 func TestJsonConfig(t *testing.T) {
@@ -83,7 +83,7 @@ func TestWildcardConfig(t *testing.T) {
 		"/home/amy/go/src/github.com/amyjzhu/mutation-framework/cmd/go-mutesting/main.go",
 		"/home/amy/go/src/github.com/amyjzhu/mutation-framework/cmd/go-mutesting/main_test.go"}
 
-	assert.ElementsMatch(t, wildcardConfig.FilesToInclude, expectedIncludedFiles)
+	assert.ElementsMatch(t, wildcardConfig.Mutate.FilesToInclude, expectedIncludedFiles)
 
 	expectedExcludedFiles := []string{
 		"/home/amy/go/src/github.com/amyjzhu/mutation-framework/mutator/mutation.go",
@@ -92,29 +92,29 @@ func TestWildcardConfig(t *testing.T) {
 		"/home/amy/go/src/github.com/amyjzhu/mutation-framework/mutator/expression/remove.go",
 		"/home/amy/go/src/github.com/amyjzhu/mutation-framework/mutator/statement/remove.go"}
 
-	assert.ElementsMatch(t, wildcardConfig.FilesToExclude, expectedExcludedFiles)
+	assert.ElementsMatch(t, wildcardConfig.Mutate.FilesToExclude, expectedExcludedFiles)
 }
 
 func TestDefaultMutantFunctionality(t *testing.T) {
 	//initialize()
-	expectedConfig.Options.MutantFolder = ""
+	expectedConfig.Mutate.MutantFolder = ""
 
 	appendMutantFolderSlashOrReplaceWithDefault(&expectedConfig)
-	assert.Equal(t, DEFAULT_MUTATION_FOLDER, expectedConfig.Options.MutantFolder)
+	assert.Equal(t, DefaultMutationFolder, expectedConfig.Mutate.MutantFolder)
 }
 
 func TestMutantFolderFormatting(t *testing.T) {
 	//initialize()
-	expectedConfig.Options.MutantFolder = "deep fried pickles"
+	expectedConfig.Mutate.MutantFolder = "deep fried pickles"
 
 	appendMutantFolderSlashOrReplaceWithDefault(&expectedConfig)
-	assert.Equal(t, "deep fried pickles/", expectedConfig.Options.MutantFolder)
+	assert.Equal(t, "deep fried pickles/", expectedConfig.Mutate.MutantFolder)
 
 
-	expectedConfig.Options.MutantFolder = "deep fried pickles/"
+	expectedConfig.Mutate.MutantFolder = "deep fried pickles/"
 
 	appendMutantFolderSlashOrReplaceWithDefault(&expectedConfig)
-	assert.Equal(t, "deep fried pickles/", expectedConfig.Options.MutantFolder)
+	assert.Equal(t, "deep fried pickles/", expectedConfig.Mutate.MutantFolder)
 }
 
 func TestConcatAndAddSlashIfNeeded(t *testing.T) {

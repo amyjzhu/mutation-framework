@@ -12,7 +12,7 @@
     "exec_only": false,
     "timeout":10
   },
-  "scripts":{
+  "commands":{
     "test": "go test",
     "clean_up":""
   }

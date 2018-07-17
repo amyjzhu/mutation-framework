@@ -20,12 +20,12 @@ type Operator struct {
 }
 
 type MutationConfig struct {
-	Operators []Operator `json:"operators"`
-	FilesToInclude []string `json:"files_to_include"`
-	FilesToExclude []string `json:"files_to_exclude"`
-	FileBasePath string `json:"file_basepath"`
-	Options Options `json:"options"`
-	Scripts Scripts `json:"scripts"`
+	Operators      []Operator `json:"operators"`
+	FilesToInclude []string   `json:"files_to_include"`
+	FilesToExclude []string   `json:"files_to_exclude"`
+	FileBasePath   string     `json:"file_basepath"`
+	Options        Options    `json:"options"`
+	Commands       Commands   `json:"commands"`
 }
 
 type Options struct {
@@ -37,7 +37,7 @@ type Options struct {
 	Timeout      uint   `json:"timeout"`
 }
 
-type Scripts struct {
+type Commands struct {
 	Test    string `json:"test"`
 	CleanUp string `json:"clean_up"`
 } // todo required group
@@ -112,14 +112,14 @@ func appendBasepathToAllFiles(config *MutationConfig) {
 }
 
 func concatAddingSlashIfNeeded(parent string, child string) string {
-	parentSuffixedWithSlash := strings.HasSuffix(parent, "/")
-	childPrefixedWithSlash := strings.HasPrefix(child, "/")
+	parentSuffixedWithSlash := strings.HasSuffix(parent, string(os.PathSeparator))
+	childPrefixedWithSlash := strings.HasPrefix(child, string(os.PathSeparator))
 	if parentSuffixedWithSlash && childPrefixedWithSlash {
 		return parent + child[1:]
 	} else if parentSuffixedWithSlash || childPrefixedWithSlash {
 		return parent + child
 	} else {
-		return parent + "/" + child
+		return parent + string(os.PathSeparator) + child
 	}
 }
 
@@ -128,8 +128,8 @@ func appendMutantFolderSlashOrReplaceWithDefault(config *MutationConfig) {
 	if mutantFolderPath == "" {
 		config.Options.MutantFolder = DEFAULT_MUTATION_FOLDER
 	} else {
-		if mutantFolderPath[len(mutantFolderPath)-1:] != "/" {
-			config.Options.MutantFolder = mutantFolderPath + "/"
+		if mutantFolderPath[len(mutantFolderPath)-1:] != string(os.PathSeparator) {
+			config.Options.MutantFolder = mutantFolderPath + string(os.PathSeparator)
 		}
 	}
 }
@@ -155,7 +155,7 @@ func expandWildCards(config *MutationConfig) {
 }
 
 func expandWildCard(path string) []string {
-	pieces := strings.Split(path, "/")
+	pieces := strings.Split(path, string(os.PathSeparator))
 	return expandWildCardRecursive(0, pieces)
 }
 
@@ -244,7 +244,7 @@ func getCurrentPath(index int, pathPieces []string) string {
 	path := ""
 	for i := 0; i <= index; i++ {
 		path += pathPieces[i]
-		path += "/"
+		path += string(os.PathSeparator)
 	}
 	return path
 }
@@ -256,7 +256,7 @@ func getParentPath(pathPieces []string, index int) string {
 	path := ""
 	for i := 0; i < index; i++ {
 		path += pathPieces[i]
-		path += "/"
+		path += string(os.PathSeparator)
 	}
 	return path
 }

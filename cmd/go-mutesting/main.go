@@ -110,21 +110,10 @@ func debug(config *MutationConfig, format string, args ...interface{}) {
 	}
 }
 
-func verbose(opts *Args, format string, args ...interface{}) {
-	if opts.General.Verbose || opts.General.Debug {
-		fmt.Printf(format+"\n", args...)
-	}
-}
-
 func exitError(format string, args ...interface{}) int {
 	fmt.Fprintf(os.Stderr, format+"\n", args...)
 
 	return returnError
-}
-
-type mutatorItem struct {
-	Name    string
-	Mutator mutator.Mutator
 }
 
 type mutationStats struct {
@@ -172,7 +161,7 @@ func mainCmd(args []string) int {
 
 func consolidateArgsIntoConfig(opts *Args, config *MutationConfig) {
 	if opts.Exec.CustomTest != "" {
-		config.Scripts.Test = opts.Exec.CustomTest // TODO fix for arguments
+		config.Commands.Test = opts.Exec.CustomTest // TODO fix for arguments
 	}
 
 	if opts.Exec.ExecOnly {
@@ -245,8 +234,11 @@ func mutateFiles(config *MutationConfig, files []string, operators []mutator.Mut
 			panic(err)
 		}
 
+		// TODO won't matter how specific the paths are once we create entire systems as artifacts
 		mutantFile := config.Options.MutantFolder + file
+		createMutantFolderPath(mutantFile)
 
+		fmt.Println(file)
 		originalFile := fmt.Sprintf("%s.original", mutantFile)
 		err = osutil.CopyFile(file, originalFile)
 		if err != nil {
@@ -263,6 +255,18 @@ func mutateFiles(config *MutationConfig, files []string, operators []mutator.Mut
 	printStats(config, stats)
 
 	return returnOk
+}
+
+func createMutantFolderPath(file string) {
+	if strings.Contains(file, string(os.PathSeparator)) {
+		paths := strings.Split(file, string(os.PathSeparator))
+		paths = paths[:len(paths)-1]
+		parentPath := strings.Join(paths, string(os.PathSeparator))
+		err := os.MkdirAll(parentPath, 0755)
+		if err != nil {
+			panic(err)
+		}
+	}
 }
 
 func mutate(config *MutationConfig, mutationID int, pkg *types.Package, info *types.Info, file string, fset *token.FileSet, src ast.Node, node ast.Node, tmpFile string, stats *mutationStats) int {
@@ -345,8 +349,8 @@ func printStats(config *MutationConfig, stats *mutationStats) {
 var liveMutants = make([]string, 0)
 
 func mutateExec(config *MutationConfig, pkg *types.Package, file string, mutationFile string) (execExitCode int) {
-	if config.Scripts.Test != "" {
-		return customTestMutateExec(config, pkg, file, mutationFile, config.Scripts.Test)
+	if config.Commands.Test != "" {
+		return customTestMutateExec(config, pkg, file, mutationFile, config.Commands.Test)
 	}
 
 	//if len(execs) == 0 {
@@ -563,9 +567,9 @@ func getTestKey(tests []string) string {
 }
 
 func main() {
-	//os.Exit(mainCmd(os.Args[1:]))
-	 fmt.Println("Running config test instead of real program")
-	test()
+	os.Exit(mainCmd(os.Args[1:]))
+	// fmt.Println("Running config test instead of real program")
+	//test()
 }
 
 func saveAST(mutationBlackList map[string]struct{}, file string, fset *token.FileSet, node ast.Node) (string, bool, error) { // TODO blacklists -- don't currently have this capability

@@ -39,7 +39,7 @@ func initialize() {
 		nil,
 		"",
 		Options{1, false, false, false, "mutants/",10},
-		Scripts{"go test", ""}}
+		Commands{"go test", ""}}
 }
 
 func TestJsonConfig(t *testing.T) {

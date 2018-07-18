@@ -12,11 +12,7 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
-	"os/exec"
-	"regexp"
 	"strings"
-	"syscall"
-
 	"github.com/jessevdk/go-flags"
 
 	"github.com/amyjzhu/mutation-framework"
@@ -25,7 +21,6 @@ import (
 	_ "github.com/amyjzhu/mutation-framework/mutator/branch"
 	_ "github.com/amyjzhu/mutation-framework/mutator/expression"
 	_ "github.com/amyjzhu/mutation-framework/mutator/statement"
-	"sort"
 	"github.com/spf13/afero"
 	"path/filepath"
 )
@@ -161,7 +156,9 @@ func mainCmd(args []string) int {
 	files := mutationConfig.getRelativeAndAbsoluteFiles()
 
 	defer runCleanUpCommand(mutationConfig)
-	return mutateFiles(mutationConfig, files, operators)
+	stats, exitCode := mutateFiles(mutationConfig, files, operators)
+	exitCode = runMutants(mutationConfig, mutantPaths, stats)
+	return exitCode
 }
 
 func consolidateArgsIntoConfig(opts *Args, config *MutationConfig) {
@@ -198,7 +195,7 @@ func retrieveMutationOperators(config *MutationConfig) []mutator.Mutator {
 	return operators
 }
 
-func mutateFiles(config *MutationConfig, files map[string]string, operators []mutator.Mutator) int {
+func mutateFiles(config *MutationConfig, files map[string]string, operators []mutator.Mutator) (*mutationStats, int) {
 	stats := &mutationStats{}
 
 	for rel, abs := range files {
@@ -207,7 +204,7 @@ func mutateFiles(config *MutationConfig, files map[string]string, operators []mu
 		src, fset, pkg, info, err := mutesting.ParseAndTypeCheckFile(abs)
 		if err != nil {
 			fmt.Printf("There was an error compiling %s. Is the file correct?\n", abs)
-			return exitError(err.Error())
+			return nil, exitError(err.Error())
 		}
 
 		err = fs.MkdirAll(config.Mutate.MutantFolder, 0755)
@@ -232,9 +229,9 @@ func mutateFiles(config *MutationConfig, files map[string]string, operators []mu
 		mutationID = mutate(config, mutationID, pkg, info, abs, rel, fset, src, src, mutantFile, stats)
 	}
 
-	printStats(config, stats)
+	//printStats(config, stats)
 
-	return returnOk
+	return stats, returnOk
 }
 
 func createMutantFolderPath(file string) {
@@ -247,6 +244,14 @@ func createMutantFolderPath(file string) {
 			panic(err)
 		}
 	}
+}
+
+type MutantInfo struct {
+	pkg *types.Package
+	info *types.Info
+	absFile string
+	mutationFile string
+	checksum string
 }
 
 func mutate(config *MutationConfig, mutationID int, pkg *types.Package, info *types.Info, file string, relPath string, fset *token.FileSet, src ast.Node, node ast.Node, tmpFile string, stats *mutationStats) int {
@@ -267,47 +272,26 @@ func mutate(config *MutationConfig, mutationID int, pkg *types.Package, info *ty
 			//mutationFile := fmt.Sprintf("%s.%d", tmpFile, mutationID)
 			mutationFileName := fmt.Sprintf("%s.%d", relPath, mutationID)
 
-			mutationFile := fmt.Sprintf("%s%s", config.FileBasePath, tmpFile)
+			//mutationFile := fmt.Sprintf("%s%s", config.FileBasePath, tmpFile)
 			//fmt.Printf("mutationFileName: %s mutationFile:%s\n", mutationFileName, mutationFile)
-			err := copyProject(config, mutationFileName)
+			mutantPath, err := copyProject(config, mutationFileName)
 			if err != nil {
 				fmt.Printf("INTERNAL ERROR %s\n", err.Error())
 			}
 
-			checksum, duplicate, err := saveAST(mutationBlackList, mutationFile, fset, src)
+			mutatedFilePath := filepath.Clean(mutantPath) + "/" + relPath
+			checksum, duplicate, err := saveAST(mutationBlackList, mutatedFilePath, fset, src)
 			if err != nil {
 				fmt.Printf("INTERNAL ERROR %s\n", err.Error())
 			} else if duplicate {
-				debug(config, "%q is a duplicate, we ignore it", mutationFile)
+				debug(config, "%q is a duplicate, we ignore it", mutatedFilePath)
 
 				stats.duplicated++
 			} else {
-				debug(config, "Save mutation into %q with checksum %s", mutationFile, checksum)
-
-				if !config.Test.Disable {
-					execExitCode := mutateExec(config, pkg, file, mutationFile)
-
-					debug(config, "Exited with %d", execExitCode)
-
-					msg := fmt.Sprintf("%q with checksum %s", mutationFile, checksum)
-
-					switch execExitCode {
-					case execPassed:
-						fmt.Printf("PASS %s\n", msg)
-
-						stats.passed++
-					case execFailed:
-						fmt.Printf("FAIL %s\n", msg)
-
-						stats.failed++
-					case execSkipped:
-						fmt.Printf("SKIP %s\n", msg)
-
-						stats.skipped++
-					default:
-						fmt.Printf("UNKNOWN exit code for %s\n", msg)
-					}
-				}
+				debug(config, "Save mutation into %q with checksum %s", mutatedFilePath, checksum)
+				mutantInfo := MutantInfo{pkg, info, file, mutatedFilePath, checksum}
+				runExecution(config, mutantInfo, stats)
+				mutantPaths = append(mutantPaths, mutantInfo)
 			}
 
 			changed <- true
@@ -326,8 +310,9 @@ func mutate(config *MutationConfig, mutationID int, pkg *types.Package, info *ty
 	return mutationID
 }
 
-// TODO converting to project root too early fails because files should be relatively specified
-func copyProject(config *MutationConfig, name string) error {
+var mutantPaths []MutantInfo
+
+func copyProject(config *MutationConfig, name string) (string, error) {
 	projectRoot := config.FileBasePath
 
 	dir, err := os.Getwd()
@@ -341,10 +326,10 @@ func copyProject(config *MutationConfig, name string) error {
 	projectName := config.FileBasePath + config.Mutate.MutantFolder +
 		pathParts[len(pathParts)-1] + "_" + name
 
-	return copy(config.Mutate.Overwrite, dir, projectName, config.Mutate.MutantFolder)
+	return projectName,
+	copy(config.Mutate.Overwrite, dir, projectName, config.Mutate.MutantFolder)
 }
 
-// TODO prevent recursive dependency search
 func copy(overwrite bool, source string, dest string, mutantFolder string) error {
 	destFile, err := fs.Open(dest)
 	if !os.IsNotExist(err) {
@@ -399,247 +384,6 @@ func copy(overwrite bool, source string, dest string, mutantFolder string) error
 
 func doNotCopyDir(dir os.FileInfo, innerFolder string) bool {
 	return dir.Name() == filepath.Clean(innerFolder) || dir.Name() == ".git"
-}
-
-func printStats(config *MutationConfig, stats *mutationStats) {
-	if !config.Test.Disable {
-		fmt.Printf("The mutation score is %f (%d passed, %d failed, %d duplicated, %d skipped, total is %d)\n", stats.Score(), stats.passed, stats.failed, stats.duplicated, stats.skipped, stats.Total())
-	} else {
-		fmt.Println("Cannot do a mutation testing summary since no exec command was executed.")
-	}
-}
-
-var liveMutants = make([]string, 0)
-
-func mutateExec(config *MutationConfig, pkg *types.Package, file string, mutationFile string) (execExitCode int) {
-	if config.Commands.Test != "" {
-		return customTestMutateExec(config, pkg, file, mutationFile, config.Commands.Test)
-	}
-
-	//if len(execs) == 0 {
-		//defaultMutateExec(opts, pkg, file, mutationFile)
-		return customMutateExec(config, pkg, file, mutationFile)
-	//}
-}
-
-func customTestMutateExec(config *MutationConfig, pkg *types.Package, file string, mutationFile string, testCommand string) (execExitCode int) {
-	const MUTATION_FOLDER = "mutants/"
-	debug(config, "Execute built-in exec command with custom test script for mutation")
-
-	diff, err := exec.Command("diff", "-u", file, mutationFile).CombinedOutput()
-	if err == nil {
-		execExitCode = execPassed
-	} else if e, ok := err.(*exec.ExitError); ok {
-		execExitCode = e.Sys().(syscall.WaitStatus).ExitStatus()
-	} else {
-		panic(err)
-	}
-	if execExitCode != execPassed && execExitCode != execFailed {
-		fmt.Printf("%s\n", diff)
-
-		panic("Could not execute diff on mutation file")
-	}
-
-	defer func() {
-		_ = fs.Rename(file+".tmp", file)
-	}()
-
-	err = fs.Rename(file, file+".tmp")
-	if err != nil {
-		panic(err)
-	}
-
-	fmt.Printf("Mutationfile: %s, file: %s", mutationFile, file)
-
-	err = osutil.CopyFile(mutationFile, file)
-	if err != nil {
-		panic(err)
-	}
-
-	err = moveIntoMutantsFolder(MUTATION_FOLDER, mutationFile)
-	if err != nil {
-		panic(err)
-	}
-
-
-	execWithArgs := strings.Split(testCommand, " ")
-
-	test, err := exec.Command(execWithArgs[0], execWithArgs[1:]...).CombinedOutput()
-
-	if err == nil {
-		execExitCode = execPassed
-	} else if e, ok := err.(*exec.ExitError); ok {
-		execExitCode = e.Sys().(syscall.WaitStatus).ExitStatus()
-	} else {
-		panic(err)
-	}
-
-	debug(config, "%s\n", test)
-
-	putFailedTestsInMap(mutationFile, test)
-
-	execExitCode = determinePassOrFail(config, diff, mutationFile, execExitCode)
-
-	return execExitCode
-}
-
-func determinePassOrFail(config *MutationConfig, diff []byte, mutationFile string, execExitCode int) (int) {
-	switch execExitCode {
-	case 0: // Tests passed -> FAIL
-		fmt.Printf("%s\n", diff)
-
-
-		return execFailed
-		liveMutants = append(liveMutants, mutationFile)
-	case 1: // Tests failed -> PASS
-		debug(config,"%s\n", diff)
-
-		return execPassed
-	case 2: // Did not compile -> SKIP
-		debug(config, "Mutation did not compile")
-		debug(config, "%s\n", diff)
-
-		return execSkipped
-	default: // Unknown exit code -> SKIP
-		fmt.Println("Unknown exit code")
-		fmt.Printf("%s\n", diff)
-	}
-	return execExitCode
-}
-
-func customMutateExec(config *MutationConfig, pkg *types.Package, file string, mutationFile string) (execExitCode int) {
-	debug(config, "Execute custom exec command for mutation")
-
-	diff, err := exec.Command("diff", "-u", file, mutationFile).CombinedOutput()
-	if err == nil {
-		execExitCode = execPassed
-	} else if e, ok := err.(*exec.ExitError); ok {
-		execExitCode = e.Sys().(syscall.WaitStatus).ExitStatus()
-	} else {
-		panic(err)
-	}
-	if execExitCode != execPassed && execExitCode != execFailed {
-		fmt.Printf("%s\n", diff)
-
-		panic("Could not execute diff on mutation file")
-	}
-
-	defer func() {
-		_ = fs.Rename(file+".tmp", file)
-	}()
-
-	err = fs.Rename(file, file+".tmp")
-	if err != nil {
-		panic(err)
-	}
-	err = osutil.CopyFile(mutationFile, file)
-	if err != nil {
-		panic(err)
-	}
-
-	err = moveIntoMutantsFolder(config.Mutate.MutantFolder, mutationFile)
-	if err != nil {
-		panic(err)
-	}
-
-	pkgName := pkg.Path()
-
-	test, err := exec.Command("go", "test", "-timeout", fmt.Sprintf("%ds", config.Test.Timeout), pkgName).CombinedOutput()
-
-	if err == nil {
-		execExitCode = execPassed
-	} else if e, ok := err.(*exec.ExitError); ok {
-		execExitCode = e.Sys().(syscall.WaitStatus).ExitStatus()
-	} else {
-		panic(err)
-	}
-
-	debug(config, "%s\n", test)
-
-	putFailedTestsInMap(mutationFile, test)
-
-	execExitCode = determinePassOrFail(config, diff, mutationFile, execExitCode)
-
-	return execExitCode
-}
-
-// TODO may not be necessary anymore
-func moveIntoMutantsFolder(folder string, file string) error {
-	relevantMutationFileName := regexp.MustCompile(`\/?([\w-]*\/)*([\w.-]*)`)
-	matches := relevantMutationFileName.FindStringSubmatch(file)
-	CAPTURING_GROUP_INDEX := 2
-	prettyMutationFileName := matches[CAPTURING_GROUP_INDEX]
-	fmt.Println(prettyMutationFileName)
-
-	if _, err := fs.Stat(folder); os.IsNotExist(err) {
-		fs.Mkdir(folder, os.ModePerm)
-	}
-
-	return osutil.CopyFile(file, folder + prettyMutationFileName)
-}
-
-func getFailedTests(output []byte) []string {
-	testOutput := string(output[:])
-
-	// use capturing group to get the name of the Test
-	testNameRegex := regexp.MustCompile(`FAIL:?[\s]*([\w]*)`)
-	matches := testNameRegex.FindAllStringSubmatch(testOutput, -1)
-
-	failedTests := make([]string, 0)
-	for _, match := range matches {
-		// FindAllStringSubmatch puts the capturing group in 2nd position
-		failedTests = append(failedTests, match[1])
-	}
-
-	return failedTests
-
-}
-
-var testsToMutants = make(map[string][]string)
-
-func putFailedTestsInMap(mutationFile string, testOutput []byte) {
-	failedTests := getFailedTests(testOutput)
-	// if they don't fail, don't add
-
-	if len(failedTests) == 0 {
-		return
-	}
-	// does it have to be deduplicated? I feel like no
-	testsKey := getTestKey(failedTests)
-	existingMutants, exists := testsToMutants[testsKey]
-	var newValue []string
-	if (exists) {
-		newValue = append(existingMutants, mutationFile)
-	} else {
-	}
-
-	testsToMutants[testsKey] = newValue
-}
-
-func getRedundantCandidates() {
-//	fmt.Println(testsToMutants)
-	for _, mutants := range testsToMutants {
-		if len(mutants) > 1 {
-			fmt.Println(len(mutants))
-			fmt.Printf("Potential duplicates: %s", mutants)
-			fmt.Println(testsToMutants)
-		}
-	}
-}
-
-func getTestKey(tests []string) string {
-	sort.Strings(tests)
-	return strings.Join(tests, ", ")
-}
-
-func runCleanUpCommand(config *MutationConfig) {
-	if config.Commands.CleanUp != "" {
-		_, err := exec.Command(config.Commands.CleanUp).CombinedOutput()
-
-		if err != nil {
-			panic(err)
-		}
-	}
 }
 
 func main() {

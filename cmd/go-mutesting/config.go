@@ -143,7 +143,7 @@ func checkNilImportantFields(config *MutationConfig) error {
 
 	for _, file := range append(config.Mutate.FilesToInclude, config.Mutate.FilesToExclude...) {
 		if strings.HasPrefix(file, string(os.PathSeparator)) {
-			fmt.Printf("Did you intend for %s to have path separator prefix?\n", file)
+			debug(config, "Did you intend for %s to have path separator prefix?\n", file)
 		}
 	}
 

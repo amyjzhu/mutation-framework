@@ -83,7 +83,8 @@ func TestWildcardConfig(t *testing.T) {
 		"cmd/go-mutesting/config.go",
 		"cmd/go-mutesting/config_test.go",
 		"cmd/go-mutesting/main.go",
-		"cmd/go-mutesting/main_test.go"}
+		"cmd/go-mutesting/main_test.go",
+		"cmd/go-mutesting/test_runner.go"}
 
 	assert.ElementsMatch(t, wildcardConfig.Mutate.FilesToInclude, expectedIncludedFiles)
 

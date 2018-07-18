@@ -204,7 +204,6 @@ func getCandidateFiles(config *MutationConfig) []string {
 		// TODO add all files
 	}
 
-	fmt.Println(config)
 	for _, file := range config.Mutate.FilesToInclude {
 		filesToMutate[file] = struct{}{}
 	}
@@ -222,13 +221,10 @@ func getCandidateFiles(config *MutationConfig) []string {
 		i++
 	}
 
-	fmt.Println(fileNames)
 	return fileNames
 }
 
 func mutateFiles(config *MutationConfig, files []string, operators []mutator.Mutator) int {
-	fmt.Println("Inside mutatefiles")
-	fmt.Println(files)
 	stats := &mutationStats{}
 
 	for _, file := range files {
@@ -239,7 +235,6 @@ func mutateFiles(config *MutationConfig, files []string, operators []mutator.Mut
 			return exitError(err.Error())
 		}
 
-		fmt.Println("before mkdirall with afero")
 		err = fs.MkdirAll(config.Mutate.MutantFolder, 0755)
 		if err != nil {
 			panic(err)
@@ -249,7 +244,6 @@ func mutateFiles(config *MutationConfig, files []string, operators []mutator.Mut
 		mutantFile := config.Mutate.MutantFolder + file
 		createMutantFolderPath(mutantFile)
 
-		fmt.Println(file)
 		originalFile := fmt.Sprintf("%s.original", mutantFile)
 		err = osutil.CopyFile(file, originalFile)
 		if err != nil {
@@ -281,7 +275,6 @@ func createMutantFolderPath(file string) {
 }
 
 func mutate(config *MutationConfig, mutationID int, pkg *types.Package, info *types.Info, file string, fset *token.FileSet, src ast.Node, node ast.Node, tmpFile string, stats *mutationStats) int {
-	fmt.Println("inside mutate")
 	for _, m := range config.Mutate.Operators {
 		debug(config, "Mutator %s", m.Name)
 
@@ -296,11 +289,9 @@ func mutate(config *MutationConfig, mutationID int, pkg *types.Package, info *ty
 
 			mutationBlackList := make(map[string]struct{},0) //TODO implement real blacklisting
 
-			fmt.Println("before copying")
 			//mutationFile := fmt.Sprintf("%s.%d", tmpFile, mutationID)
 			mutationFileName := fmt.Sprintf("%s.%d", tmpFile, mutationID)
 			mutationFile := fmt.Sprintf("%s%s", appendSlash(config.FileBasePath), tmpFile)
-			fmt.Printf("mutation file is %s mutationfilename is %s\n", mutationFile, mutationFileName)
 
 			err := copyProject(config, mutationFileName)
 			if err != nil {
@@ -359,6 +350,8 @@ func mutate(config *MutationConfig, mutationID int, pkg *types.Package, info *ty
 	return mutationID
 }
 
+// TODO converting to project root too early fails because files should be relatively specified
+// TODO also, getting infinite loops even though filtering mutation_folder name...
 func copyProject(config *MutationConfig, name string) error {
 	projectRoot := config.FileBasePath
 
@@ -367,11 +360,10 @@ func copyProject(config *MutationConfig, name string) error {
 		panic (err)
 	}
 
-	// TODO use projectROot instead of dir
 	pathParts := strings.Split(projectRoot, string(os.PathSeparator))
 	projectName := config.FileBasePath + "/" + pathParts[len(pathParts)-1] + "_" + name
 
-	return copy(config.Mutate.Overwrite, dir, projectName, config.FileBasePath)
+	return copy(config.Mutate.Overwrite, dir, projectName, config.Mutate.MutantFolder)
 }
 
 // TODO prevent recursive dependency search
@@ -428,6 +420,7 @@ func copy(overwrite bool, source string, dest string, mutantFolder string) error
 }
 
 func doNotCopyDir(dir os.FileInfo, innerFolder string) bool {
+	fmt.Println(innerFolder)
 	return dir.Name() == innerFolder || dir.Name() == ".git"
 }
 

@@ -72,8 +72,8 @@ func (operator *Operator) MarshalJSON() ([]byte, error) {
 	return []byte(fmt.Sprintf("\"%s\"", operator.Name)), nil
 }
 
+// TODO not convinced about infalibility of config; write more tests
 func getConfig(configFilePath string) (*MutationConfig, error) {
-	// TODO return error instead of panic maybe?
 	data, err := mutesting.LoadFile(configFilePath)
 	if err != nil {
 		return nil, err
@@ -91,11 +91,57 @@ func getConfig(configFilePath string) (*MutationConfig, error) {
 		return nil, err
 	}
 
-	appendBasepathToAllFiles(&config)
-	appendMutantFolderSlashOrReplaceWithDefault(&config)
-	expandWildCards(&config)
-
 	return &config, nil
+}
+
+func (config *MutationConfig) UnmarshalJSON(data []byte) error {
+	type unfurlConfig MutationConfig
+
+	err := json.Unmarshal(data, (*unfurlConfig)(config))
+
+	if err != nil {
+		return err
+	}
+
+	err = checkNilImportantFields(config)
+	if err != nil {
+		return err
+	}
+
+	appendBasepathToAllFiles(config)
+	appendMutantFolderSlashOrReplaceWithDefault(config)
+	expandWildCards(config)
+
+	configString, err := config.toString()
+	if err != nil {
+		return err
+	}
+
+	debug(config, configString)
+
+	return nil
+}
+
+func (config *MutationConfig) toString() (string, error) {
+	configString, err := json.Marshal(config)
+	if err != nil {
+		return "", err
+	}
+	return string(configString), nil
+}
+
+func checkNilImportantFields(config *MutationConfig) error {
+	if !config.Mutate.Disable &&
+		(len(config.Mutate.FilesToExclude) == 0 &&
+			len(config.Mutate.FilesToInclude) == 0) {
+				fmt.Println("Mutate files are empty. Is your config correct?")
+	}
+
+	if config.FileBasePath == "" {
+		return fmt.Errorf("project root is not set")
+	}
+
+	return nil
 }
 
 func appendBasepathToAllFiles(config *MutationConfig) {
@@ -139,6 +185,10 @@ func appendMutantFolderSlashOrReplaceWithDefault(config *MutationConfig) {
 }
 
 func appendSlash(path string) string {
+	if path == "" {
+		return "/"
+	}
+
 	if path[len(path)-1:] != string(os.PathSeparator) {
 		return path + string(os.PathSeparator)
 	}

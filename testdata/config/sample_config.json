@@ -17,5 +17,6 @@
   "commands":{
     "test": "go test",
     "clean_up":""
-  }
+  },
+  "project_root":"/home/"
 }

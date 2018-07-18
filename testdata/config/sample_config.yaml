@@ -1,4 +1,5 @@
 ---
+project_root: /home/
 test:
   composition: 1
   disable: false

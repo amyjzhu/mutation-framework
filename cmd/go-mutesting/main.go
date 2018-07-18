@@ -27,6 +27,7 @@ import (
 	_ "github.com/amyjzhu/mutation-framework/mutator/statement"
 	"sort"
 	"github.com/spf13/afero"
+	"path/filepath"
 )
 
 const (
@@ -157,7 +158,7 @@ func mainCmd(args []string) int {
 
 	consolidateArgsIntoConfig(opts, mutationConfig)
 	operators := retrieveMutationOperators(mutationConfig)
-	files := mutationConfig.getAbsoluteIncludedFiles()
+	files := mutationConfig.getRelativeAndAbsoluteFiles()
 
 	defer runCleanUpCommand(mutationConfig)
 	return mutateFiles(mutationConfig, files, operators)
@@ -169,11 +170,11 @@ func consolidateArgsIntoConfig(opts *Args, config *MutationConfig) {
 	}
 
 	if opts.Exec.ExecOnly {
-		config.Test.Disable = true
+		config.Mutate.Disable = true
 	}
 
 	if opts.Exec.MutateOnly {
-		config.Mutate.Disable = true
+		config.Test.Disable = true
 	}
 
 	if opts.General.Verbose {
@@ -197,15 +198,15 @@ func retrieveMutationOperators(config *MutationConfig) []mutator.Mutator {
 	return operators
 }
 
-func mutateFiles(config *MutationConfig, files []string, operators []mutator.Mutator) int {
+func mutateFiles(config *MutationConfig, files map[string]string, operators []mutator.Mutator) int {
 	stats := &mutationStats{}
 
-	for _, file := range files {
-		debug(config, "Mutate %q", file)
+	for rel, abs := range files {
+		debug(config, "Mutate %q", abs)
 
-		src, fset, pkg, info, err := mutesting.ParseAndTypeCheckFile(file)
+		src, fset, pkg, info, err := mutesting.ParseAndTypeCheckFile(abs)
 		if err != nil {
-			fmt.Printf("There was an error compiling %s. Is the file correct? \n", file)
+			fmt.Printf("There was an error compiling %s. Is the file correct?\n", abs)
 			return exitError(err.Error())
 		}
 
@@ -215,11 +216,11 @@ func mutateFiles(config *MutationConfig, files []string, operators []mutator.Mut
 		}
 
 		// TODO won't matter how specific the paths are once we create entire systems as artifacts
-		mutantFile := config.Mutate.MutantFolder + file
+		mutantFile := config.Mutate.MutantFolder + rel
 		createMutantFolderPath(mutantFile)
 
 		originalFile := fmt.Sprintf("%s.original", mutantFile)
-		err = osutil.CopyFile(file, originalFile)
+		err = osutil.CopyFile(abs, originalFile)
 		if err != nil {
 			panic(err)
 		}
@@ -228,7 +229,7 @@ func mutateFiles(config *MutationConfig, files []string, operators []mutator.Mut
 		mutationID := 0
 
 		// TODO match function names instead
-		mutationID = mutate(config, mutationID, pkg, info, file, fset, src, src, mutantFile, stats)
+		mutationID = mutate(config, mutationID, pkg, info, abs, rel, fset, src, src, mutantFile, stats)
 	}
 
 	printStats(config, stats)
@@ -248,7 +249,7 @@ func createMutantFolderPath(file string) {
 	}
 }
 
-func mutate(config *MutationConfig, mutationID int, pkg *types.Package, info *types.Info, file string, fset *token.FileSet, src ast.Node, node ast.Node, tmpFile string, stats *mutationStats) int {
+func mutate(config *MutationConfig, mutationID int, pkg *types.Package, info *types.Info, file string, relPath string, fset *token.FileSet, src ast.Node, node ast.Node, tmpFile string, stats *mutationStats) int {
 	for _, m := range config.Mutate.Operators {
 		debug(config, "Mutator %s", m.Name)
 
@@ -264,9 +265,10 @@ func mutate(config *MutationConfig, mutationID int, pkg *types.Package, info *ty
 			mutationBlackList := make(map[string]struct{},0) //TODO implement real blacklisting
 
 			//mutationFile := fmt.Sprintf("%s.%d", tmpFile, mutationID)
-			mutationFileName := fmt.Sprintf("%s.%d", tmpFile, mutationID)
-			mutationFile := fmt.Sprintf("%s%s", config.FileBasePath, tmpFile)
+			mutationFileName := fmt.Sprintf("%s.%d", relPath, mutationID)
 
+			mutationFile := fmt.Sprintf("%s%s", config.FileBasePath, tmpFile)
+			//fmt.Printf("mutationFileName: %s mutationFile:%s\n", mutationFileName, mutationFile)
 			err := copyProject(config, mutationFileName)
 			if err != nil {
 				fmt.Printf("INTERNAL ERROR %s\n", err.Error())
@@ -333,8 +335,9 @@ func copyProject(config *MutationConfig, name string) error {
 		panic (err)
 	}
 
-	fmt.Println(name)
+	fmt.Printf("mutant name is %s\n", name)
 	pathParts := strings.Split(projectRoot, string(os.PathSeparator))
+	fmt.Printf("pathparts is %s\n", pathParts)
 	projectName := config.FileBasePath + config.Mutate.MutantFolder +
 		pathParts[len(pathParts)-1] + "_" + name
 
@@ -343,15 +346,16 @@ func copyProject(config *MutationConfig, name string) error {
 
 // TODO prevent recursive dependency search
 func copy(overwrite bool, source string, dest string, mutantFolder string) error {
-	fmt.Printf("my current source and dest are: %s, %s \n", source, dest)
 	destFile, err := fs.Open(dest)
 	if !os.IsNotExist(err) {
 		if overwrite {
 			fmt.Println("Overwriting destination mutants if they already exist.")
-		} else {
+		} else if err != nil {
+			fmt.Println(err)
 			return fmt.Errorf("source file %s does not exist", source)
 		}
 	}
+
 	if destFile != nil {
 		destFile.Close()
 	}
@@ -363,13 +367,12 @@ func copy(overwrite bool, source string, dest string, mutantFolder string) error
 			return err
 		}
 
-		files, err := ioutil.ReadDir(source)
+		files, err := afero.ReadDir(fs,source)
 		if err != nil {
 			return err
 		}
 
 		for _, entry := range files {
-			fmt.Println("at " + entry.Name())
 			newSource := source + string(os.PathSeparator) + entry.Name()
 			newDest := dest + string(os.PathSeparator) + entry.Name()
 
@@ -395,8 +398,7 @@ func copy(overwrite bool, source string, dest string, mutantFolder string) error
 }
 
 func doNotCopyDir(dir os.FileInfo, innerFolder string) bool {
-	fmt.Println(innerFolder)
-	return dir.Name() == innerFolder || dir.Name() == ".git"
+	return dir.Name() == filepath.Clean(innerFolder) || dir.Name() == ".git"
 }
 
 func printStats(config *MutationConfig, stats *mutationStats) {
@@ -406,8 +408,6 @@ func printStats(config *MutationConfig, stats *mutationStats) {
 		fmt.Println("Cannot do a mutation testing summary since no exec command was executed.")
 	}
 }
-
-
 
 var liveMutants = make([]string, 0)
 

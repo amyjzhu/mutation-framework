@@ -141,6 +141,12 @@ func checkNilImportantFields(config *MutationConfig) error {
 		return fmt.Errorf("project root is not set")
 	}
 
+	for _, file := range append(config.Mutate.FilesToInclude, config.Mutate.FilesToExclude...) {
+		if strings.HasPrefix(file, string(os.PathSeparator)) {
+			fmt.Printf("Did you intend for %s to have path separator prefix?\n", file)
+		}
+	}
+
 	return nil
 }
 
@@ -203,21 +209,14 @@ func (config *MutationConfig) getIncludedFiles() []string {
 	return fileNames
 }
 
-func (config *MutationConfig) getAbsoluteIncludedFiles() []string {
+func (config *MutationConfig) getRelativeAndAbsoluteFiles() (fileMap map[string]string) {
+	fileMap = make(map[string]string)
 	files := config.getIncludedFiles()
-	return appendBasepathToAllFiles(config.FileBasePath, files...)
-}
-
-func appendBasepathToAllFiles(basepath string, files ...string) []string {
-	if basepath == "" {
-		return files
-	}
-
-	var newPaths []string
 	for _, file := range files {
-		newPaths = append(newPaths, concatAddingSlashIfNeeded(basepath, file))
+		fileMap[file] = concatAddingSlashIfNeeded(config.FileBasePath, file)
 	}
-	return newPaths
+
+	return
 }
 
 func expandWildCards(config *MutationConfig) {

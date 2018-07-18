@@ -3,7 +3,7 @@
   "test": {
     "disable": false,
     "composition": 1,
-    "timeout":10
+    "timeout": 10
   },
   "mutate": {
     "disable": false,
@@ -19,8 +19,8 @@
     ]
   },
   "verbose": false,
-  "commands":{
+  "commands": {
     "test": "go test",
-    "clean_up":""
+    "clean_up": ""
   }
 }

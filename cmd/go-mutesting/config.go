@@ -8,8 +8,8 @@ import (
 	"regexp"
 	"github.com/ghodss/yaml"
 	"strings"
-	"io/ioutil"
 	"os"
+	"io/ioutil"
 )
 
 // Cannot extend types in other packages
@@ -108,9 +108,9 @@ func (config *MutationConfig) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	appendBasepathToAllFiles(config)
 	appendMutantFolderSlashOrReplaceWithDefault(config)
 	expandWildCards(config)
+	config.FileBasePath = appendSlash(config.FileBasePath)
 
 	configString, err := config.toString()
 	if err != nil {
@@ -144,25 +144,6 @@ func checkNilImportantFields(config *MutationConfig) error {
 	return nil
 }
 
-func appendBasepathToAllFiles(config *MutationConfig) {
-	basepath := config.FileBasePath
-	if basepath == "" {
-		return
-	}
-
-	var newPaths []string
-	for _, file := range config.Mutate.FilesToInclude {
-		newPaths = append(newPaths, concatAddingSlashIfNeeded(basepath, file))
-	}
-	config.Mutate.FilesToInclude = newPaths
-
-	newPaths = make([]string, 0)
-	for _, file := range config.Mutate.FilesToExclude {
-		newPaths = append(newPaths, concatAddingSlashIfNeeded(basepath, file))
-	}
-	config.Mutate.FilesToExclude = newPaths
-}
-
 func concatAddingSlashIfNeeded(parent string, child string) string {
 	parentSuffixedWithSlash := strings.HasSuffix(parent, string(os.PathSeparator))
 	childPrefixedWithSlash := strings.HasPrefix(child, string(os.PathSeparator))
@@ -186,7 +167,7 @@ func appendMutantFolderSlashOrReplaceWithDefault(config *MutationConfig) {
 
 func appendSlash(path string) string {
 	if path == "" {
-		return "/"
+		return "/" // TODO path separator
 	}
 
 	if path[len(path)-1:] != string(os.PathSeparator) {
@@ -195,12 +176,56 @@ func appendSlash(path string) string {
 	return path
 }
 
+func (config *MutationConfig) getIncludedFiles() []string {
+	var filesToMutate = make(map[string]struct{},0)
+
+	if len(config.Mutate.FilesToInclude) == 0 {
+		// TODO add all files
+	}
+
+	for _, file := range config.Mutate.FilesToInclude {
+		filesToMutate[file] = struct{}{}
+	}
+
+	fmt.Println(filesToMutate)
+	// TODO exclude is more powerful than include
+	for _, excludeFile := range config.Mutate.FilesToExclude {
+		delete(filesToMutate, excludeFile)
+	}
+
+	fileNames := make([]string, len(filesToMutate))
+	i := 0
+	for name := range filesToMutate {
+		fileNames[i] = name
+		i++
+	}
+
+	return fileNames
+}
+
+func (config *MutationConfig) getAbsoluteIncludedFiles() []string {
+	files := config.getIncludedFiles()
+	return appendBasepathToAllFiles(config.FileBasePath, files...)
+}
+
+func appendBasepathToAllFiles(basepath string, files ...string) []string {
+	if basepath == "" {
+		return files
+	}
+
+	var newPaths []string
+	for _, file := range files {
+		newPaths = append(newPaths, concatAddingSlashIfNeeded(basepath, file))
+	}
+	return newPaths
+}
 
 func expandWildCards(config *MutationConfig) {
 	var expandedPaths []string
 	for _, filePath := range config.Mutate.FilesToInclude {
 		if strings.Contains(filePath, "*") {
-			expandedPaths = append(expandedPaths, expandWildCard(filePath)...)
+			expandedPaths = append(expandedPaths,
+				expandWildCard(filePath, config.FileBasePath)...)
 		}
 	}
 	revisedFilesToInclude := removeWildCardPaths(config.Mutate.FilesToInclude)
@@ -209,16 +234,17 @@ func expandWildCards(config *MutationConfig) {
 	expandedPaths = []string{}
 	for _, filePath := range config.Mutate.FilesToExclude {
 		if strings.Contains(filePath, "*") {
-			expandedPaths = append(expandedPaths, expandWildCard(filePath)...)
+			expandedPaths = append(expandedPaths,
+				expandWildCard(filePath, config.FileBasePath)...)
 		}
 	}
 	revisedFilesToExclude := removeWildCardPaths(config.Mutate.FilesToExclude)
 	config.Mutate.FilesToExclude = append(revisedFilesToExclude, expandedPaths...)
 }
 
-func expandWildCard(path string) []string {
+func expandWildCard(path string, basepath string) []string {
 	pieces := strings.Split(path, string(os.PathSeparator))
-	return expandWildCardRecursive(0, pieces)
+	return expandWildCardRecursive(0, pieces, basepath)
 }
 
 // TODO find out where this is getting added so we don't need this
@@ -234,7 +260,62 @@ func removeWildCardPaths(paths []string) []string {
 }
 
 // TODO refactor
-func expandWildCardRecursive(pathIndex int, pathPieces []string) []string {
+func expandWildCardRecursive(pathIndex int, pathPieces []string, basepath string) []string {
+
+	// Function closures
+	isDirectory := func(path string) bool {
+		if path == "" {
+			return true
+			// TODO I suppose this could cause everything to break
+		}
+
+		currentFile, err := fs.Stat(basepath + path)
+		if err != nil {
+			return false
+		}
+
+		return currentFile.IsDir()
+	}
+
+	exists := func(path string) bool {
+		_, err := fs.Stat(basepath + path)
+
+		if err != nil && len(path) != 0 {
+			_, err = fs.Stat(basepath + path[:len(path)-1])
+			if err != nil && os.IsNotExist(err) {
+				// eg. mutator/branch/remove.go does not exist
+				return false
+			}
+		}
+
+		return true
+	}
+
+	getAllFilesInPath := func(path string) (fileNames []string, dirNames []string) {
+		fileInfo, err := ioutil.ReadDir(basepath + path)
+		if err != nil {
+			panic(err)
+		}
+
+		for _, info := range fileInfo {
+			if info.IsDir() {
+				dirNames = append(dirNames, info.Name())
+			} else {
+				fileNames = append(fileNames, info.Name())
+			}
+		}
+
+		return fileNames, dirNames
+	}
+
+	expandWildCardFile := func(path string) []string {
+		if exists(path) {
+			return []string{path}
+		}
+		return []string{}
+	}
+
+	// actual function begins
 	if pathIndex >= len(pathPieces) {
 		return []string{}
 	}
@@ -259,10 +340,10 @@ func expandWildCardRecursive(pathIndex int, pathPieces []string) []string {
 				// replace wildcard character with real folders
 				newPathPieces[pathIndex] = dir
 				allPaths = append(allPaths,
-					expandWildCardRecursive(pathIndex, newPathPieces)...)
+					expandWildCardRecursive(pathIndex, newPathPieces, basepath)...)
 			}
 
-			// only add files if we're at the last piece
+			// only add files if we're at the last piece of the path
 			if pathIndex == len(pathPieces) - 1 {
 				for _, file := range fileNames {
 					path := getParentPath(pathPieces, pathIndex) + file
@@ -273,7 +354,7 @@ func expandWildCardRecursive(pathIndex int, pathPieces []string) []string {
 			return allPaths
 		}
 
-		// if we don't have globs and are not a directory, add as well
+		// we're not globs and don't have directory, so we're done here
 		if !isDirectory(currentPath) {
 			if exists(currentPath) {
 				return []string{currentPath[:len(currentPath)-1]}
@@ -281,7 +362,7 @@ func expandWildCardRecursive(pathIndex int, pathPieces []string) []string {
 		}
 
 		// if we don't have globs are are a directory, keep going
-		return expandWildCardRecursive(pathIndex+1, pathPieces)
+		return expandWildCardRecursive(pathIndex+1, pathPieces, basepath)
 	}
 
 	// normal path, but doesn't exist
@@ -294,12 +375,6 @@ func expandWildCardRecursive(pathIndex int, pathPieces []string) []string {
 
 }
 
-func expandWildCardFile(path string) []string {
-	if exists(path) {
-		return []string{path}
-	}
-	return []string{}
-}
 
 // TODO remove code duplication
 func getCurrentPath(index int, pathPieces []string) string {
@@ -321,34 +396,6 @@ func getParentPath(pathPieces []string, index int) string {
 		path += string(os.PathSeparator)
 	}
 	return path
-}
-
-func isDirectory(path string) bool {
-	if path == "" {
-		return true
-		// TODO I suppose this could cause everything to break
-	}
-
-	currentFile, err := fs.Stat(path)
-	if err != nil {
-		return false
-	}
-
-	return currentFile.IsDir()
-}
-
-func exists(path string) bool {
-	_, err := fs.Stat(path)
-
-	if err != nil && len(path) != 0 {
-		_, err = fs.Stat(path[:len(path)-1])
-		if err != nil && os.IsNotExist(err) {
-			// eg. mutator/branch/remove.go does not exist
-			return false
-		}
-	}
-
-	return true
 }
 
 // Does not properly account for slashes
@@ -376,23 +423,6 @@ func filterFileNames(globPattern string, files []string) []string {
 	}
 
 	return validFiles
-}
-
-func getAllFilesInPath(path string) (fileNames []string, dirNames []string) {
-	fileInfo, err := ioutil.ReadDir(path)
-	if err != nil {
-		panic(err)
-	}
-
-	for _, info := range fileInfo {
-		if info.IsDir() {
-			dirNames = append(dirNames, info.Name())
-		} else {
-			fileNames = append(fileNames, info.Name())
-		}
-	}
-
-	return fileNames, dirNames
 }
 
 func convertFromYaml(yamlData []byte) ([]byte, error) {

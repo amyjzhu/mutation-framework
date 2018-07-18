@@ -157,7 +157,7 @@ func mainCmd(args []string) int {
 
 	consolidateArgsIntoConfig(opts, mutationConfig)
 	operators := retrieveMutationOperators(mutationConfig)
-	files := getCandidateFiles(mutationConfig)
+	files := mutationConfig.getAbsoluteIncludedFiles()
 
 	defer runCleanUpCommand(mutationConfig)
 	return mutateFiles(mutationConfig, files, operators)
@@ -197,33 +197,6 @@ func retrieveMutationOperators(config *MutationConfig) []mutator.Mutator {
 	return operators
 }
 
-func getCandidateFiles(config *MutationConfig) []string {
-	var filesToMutate = make(map[string]struct{},0)
-
-	if len(config.Mutate.FilesToInclude) == 0 {
-		// TODO add all files
-	}
-
-	for _, file := range config.Mutate.FilesToInclude {
-		filesToMutate[file] = struct{}{}
-	}
-
-	fmt.Println(filesToMutate)
-	// TODO exclude is more powerful than include
-	for _, excludeFile := range config.Mutate.FilesToExclude {
-		delete(filesToMutate, excludeFile)
-	}
-
-	fileNames := make([]string, len(filesToMutate))
-	i := 0
-	for name := range filesToMutate {
-		fileNames[i] = name
-		i++
-	}
-
-	return fileNames
-}
-
 func mutateFiles(config *MutationConfig, files []string, operators []mutator.Mutator) int {
 	stats := &mutationStats{}
 
@@ -232,6 +205,7 @@ func mutateFiles(config *MutationConfig, files []string, operators []mutator.Mut
 
 		src, fset, pkg, info, err := mutesting.ParseAndTypeCheckFile(file)
 		if err != nil {
+			fmt.Printf("There was an error compiling %s. Is the file correct? \n", file)
 			return exitError(err.Error())
 		}
 
@@ -291,7 +265,7 @@ func mutate(config *MutationConfig, mutationID int, pkg *types.Package, info *ty
 
 			//mutationFile := fmt.Sprintf("%s.%d", tmpFile, mutationID)
 			mutationFileName := fmt.Sprintf("%s.%d", tmpFile, mutationID)
-			mutationFile := fmt.Sprintf("%s%s", appendSlash(config.FileBasePath), tmpFile)
+			mutationFile := fmt.Sprintf("%s%s", config.FileBasePath, tmpFile)
 
 			err := copyProject(config, mutationFileName)
 			if err != nil {
@@ -351,7 +325,6 @@ func mutate(config *MutationConfig, mutationID int, pkg *types.Package, info *ty
 }
 
 // TODO converting to project root too early fails because files should be relatively specified
-// TODO also, getting infinite loops even though filtering mutation_folder name...
 func copyProject(config *MutationConfig, name string) error {
 	projectRoot := config.FileBasePath
 
@@ -360,8 +333,10 @@ func copyProject(config *MutationConfig, name string) error {
 		panic (err)
 	}
 
+	fmt.Println(name)
 	pathParts := strings.Split(projectRoot, string(os.PathSeparator))
-	projectName := config.FileBasePath + "/" + pathParts[len(pathParts)-1] + "_" + name
+	projectName := config.FileBasePath + config.Mutate.MutantFolder +
+		pathParts[len(pathParts)-1] + "_" + name
 
 	return copy(config.Mutate.Overwrite, dir, projectName, config.Mutate.MutantFolder)
 }

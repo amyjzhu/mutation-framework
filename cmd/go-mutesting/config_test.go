@@ -36,7 +36,7 @@ func initialize() {
 		false,
 		"/home/",
 		Mutate{false, []Operator{Operator{&expectedMutator, "mutator/mock"}},
-			[]string{"/home/primary.go", "/home/secondary.go"},
+			[]string{"primary.go", "secondary.go"},
 			//[]string{},
 			nil,"mutants/",
 			false},
@@ -80,19 +80,19 @@ func TestWildcardConfig(t *testing.T) {
 	assert.Nil(t, err)
 
 	expectedIncludedFiles := []string{
-		"/home/amy/go/src/github.com/amyjzhu/mutation-framework/cmd/go-mutesting/config.go",
-		"/home/amy/go/src/github.com/amyjzhu/mutation-framework/cmd/go-mutesting/config_test.go",
-		"/home/amy/go/src/github.com/amyjzhu/mutation-framework/cmd/go-mutesting/main.go",
-		"/home/amy/go/src/github.com/amyjzhu/mutation-framework/cmd/go-mutesting/main_test.go"}
+		"cmd/go-mutesting/config.go",
+		"cmd/go-mutesting/config_test.go",
+		"cmd/go-mutesting/main.go",
+		"cmd/go-mutesting/main_test.go"}
 
 	assert.ElementsMatch(t, wildcardConfig.Mutate.FilesToInclude, expectedIncludedFiles)
 
 	expectedExcludedFiles := []string{
-		"/home/amy/go/src/github.com/amyjzhu/mutation-framework/mutator/mutation.go",
-		"/home/amy/go/src/github.com/amyjzhu/mutation-framework/mutator/mutator.go",
-		"/home/amy/go/src/github.com/amyjzhu/mutation-framework/mutator/mutator_test.go",
-		"/home/amy/go/src/github.com/amyjzhu/mutation-framework/mutator/expression/remove.go",
-		"/home/amy/go/src/github.com/amyjzhu/mutation-framework/mutator/statement/remove.go"}
+		"/mutator/mutation.go",
+		"/mutator/mutator.go",
+		"/mutator/mutator_test.go",
+		"/mutator/expression/remove.go",
+		"/mutator/statement/remove.go"}
 
 	assert.ElementsMatch(t, wildcardConfig.Mutate.FilesToExclude, expectedExcludedFiles)
 }

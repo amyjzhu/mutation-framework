@@ -150,6 +150,11 @@ func checkNilImportantFields(config *MutationConfig) error {
 		}
 	}
 
+	if config.Commands == (Commands{}) {
+		debug(config, "Did you mean for Commands to be empty?")
+	}
+
+
 	return nil
 }
 

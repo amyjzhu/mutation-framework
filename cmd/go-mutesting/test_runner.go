@@ -121,68 +121,6 @@ func customTestMutateExec(config *MutationConfig, originalFilePath string, dirPa
 
 }
 
-/*
-func customTestMutateExec(config *MutationConfig, pkg *types.Package, file string, mutationFile string, testCommand string) (execExitCode int) {
-	const MUTATION_FOLDER = "mutants/"
-	debug(config, "Execute built-in exec command with custom test script for mutation")
-
-	diff, err := exec.Command("diff", "-u", file, mutationFile).CombinedOutput()
-	if err == nil {
-		execExitCode = execPassed
-	} else if e, ok := err.(*exec.ExitError); ok {
-		execExitCode = e.Sys().(syscall.WaitStatus).ExitStatus()
-	} else {
-		panic(err)
-	}
-	if execExitCode != execPassed && execExitCode != execFailed {
-		fmt.Printf("%s\n", diff)
-
-		panic("Could not execute diff on mutation file")
-	}
-
-	defer func() {
-		_ = fs.Rename(file+".tmp", file)
-	}()
-
-	err = fs.Rename(file, file+".tmp")
-	if err != nil {
-		panic(err)
-	}
-
-	fmt.Printf("Mutationfile: %s, file: %s", mutationFile, file)
-
-	err = osutil.CopyFile(mutationFile, file)
-	if err != nil {
-		panic(err)
-	}
-
-	err = moveIntoMutantsFolder(MUTATION_FOLDER, mutationFile)
-	if err != nil {
-		panic(err)
-	}
-
-	execWithArgs := strings.Split(testCommand, " ")
-
-	test, err := exec.Command(execWithArgs[0], execWithArgs[1:]...).CombinedOutput()
-
-	if err == nil {
-		execExitCode = execPassed
-	} else if e, ok := err.(*exec.ExitError); ok {
-		execExitCode = e.Sys().(syscall.WaitStatus).ExitStatus()
-	} else {
-		panic(err)
-	}
-
-	debug(config, "%s\n", test)
-
-	putFailedTestsInMap(mutationFile, test)
-
-	execExitCode = determinePassOrFail(config, diff, mutationFile, execExitCode)
-
-	return execExitCode
-}
-*/
-
 func determinePassOrFail(config *MutationConfig, diff []byte, mutationFile string, execExitCode int) (int) {
 	switch execExitCode {
 	case 0: // Tests passed -> FAIL

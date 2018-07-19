@@ -14,6 +14,15 @@ import (
 	"github.com/amyjzhu/mutation-framework/osutil"
 )
 
+type MutantInfo struct {
+	pkg *types.Package
+	info *types.Info
+	originalFile string
+	mutantDirPath string
+	mutationFile string
+	checksum string
+}
+
 func mutateFiles(config *MutationConfig, files map[string]string, operators []mutator.Mutator) (*mutationStats, int) {
 	stats := &mutationStats{}
 
@@ -31,24 +40,14 @@ func mutateFiles(config *MutationConfig, files map[string]string, operators []mu
 			panic(err)
 		}
 
-		// TODO won't matter how specific the paths are once we create entire systems as artifacts
 		mutantFile := config.Mutate.MutantFolder + rel
 		createMutantFolderPath(mutantFile)
-
-		originalFile := fmt.Sprintf("%s.original", mutantFile)
-		err = osutil.CopyFile(abs, originalFile)
-		if err != nil {
-			panic(err)
-		}
-		debug(config, "Save original into %q", originalFile)
 
 		mutationID := 0
 
 		// TODO match function names instead
 		mutationID = mutate(config, mutationID, pkg, info, abs, rel, fset, src, src, mutantFile, stats)
 	}
-
-	//printStats(config, stats)
 
 	return stats, returnOk
 }
@@ -63,15 +62,6 @@ func createMutantFolderPath(file string) {
 			panic(err)
 		}
 	}
-}
-
-type MutantInfo struct {
-	pkg *types.Package
-	info *types.Info
-	originalFile string
-	mutantDirPath string
-	mutationFile string
-	checksum string
 }
 
 func mutate(config *MutationConfig, mutationID int, pkg *types.Package, info *types.Info, file string, relPath string, fset *token.FileSet, src ast.Node, node ast.Node, tmpFile string, stats *mutationStats) int {
@@ -95,6 +85,7 @@ func mutate(config *MutationConfig, mutationID int, pkg *types.Package, info *ty
 			//mutationFile := fmt.Sprintf("%s%s", config.FileBasePath, tmpFile)
 			//fmt.Printf("mutationFileID: %s mutationFile:%s\n", mutationFileID, mutationFile)
 			mutantPath, err := copyProject(config, mutationFileID) // TODO verify correctness of absolute file
+			fmt.Printf("mutant path is %s\n", mutantPath)
 			if err != nil {
 				fmt.Printf("INTERNAL ERROR %s\n", err.Error())
 			}
@@ -133,18 +124,22 @@ func mutate(config *MutationConfig, mutationID int, pkg *types.Package, info *ty
 var mutantPaths []MutantInfo
 
 func copyProject(config *MutationConfig, name string) (string, error) {
-	projectRoot := config.FileBasePath
+	//projectRoot := config.FileBasePath
 
+	debug(config, "copying %s to mutants folder", name)
 	dir, err := os.Getwd()
 	if err != nil {
 		panic (err)
 	}
-
-	fmt.Printf("mutant name is %s\n", name)
+	/*
 	pathParts := strings.Split(projectRoot, string(os.PathSeparator))
-	fmt.Printf("pathparts is %s\n", pathParts)
+	// TODO do I even really need pathparts? seems redundant since that's the directory I'm in
+	// all projectRoots end with a / so the last element is ""
+	// we're interested in the non-empty string part before it, thus index is length - 2
+	PathPartPieceIndex := len(pathParts)-2
 	projectName := config.FileBasePath + config.Mutate.MutantFolder +
-		pathParts[len(pathParts)-1] + "_" + name
+		pathParts[PathPartPieceIndex] + "_" + name*/
+	projectName := config.FileBasePath + config.Mutate.MutantFolder + name
 
 	return projectName,
 		copyRecursive(config.Mutate.Overwrite, dir, projectName, config.Mutate.MutantFolder)

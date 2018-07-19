@@ -8,21 +8,17 @@ import (
 	"go/format"
 	"go/printer"
 	"go/token"
-	"go/types"
 	"io"
 	"io/ioutil"
 	"os"
-	"strings"
 	"github.com/jessevdk/go-flags"
 
-	"github.com/amyjzhu/mutation-framework"
-	"github.com/amyjzhu/mutation-framework/osutil"
 	"github.com/amyjzhu/mutation-framework/mutator"
 	_ "github.com/amyjzhu/mutation-framework/mutator/branch"
 	_ "github.com/amyjzhu/mutation-framework/mutator/expression"
 	_ "github.com/amyjzhu/mutation-framework/mutator/statement"
 	"github.com/spf13/afero"
-	"path/filepath"
+	"strings"
 )
 
 const (
@@ -138,8 +134,6 @@ func (ms *mutationStats) Total() int {
 
 
 func mainCmd(args []string) int {
-	// get config path
-	// get overrides
 	var opts = &Args{}
 	if exit, exitCode := checkArguments(args, opts); exit {
 		return exitCode
@@ -161,7 +155,7 @@ func mainCmd(args []string) int {
 }
 
 func consolidateArgsIntoConfig(opts *Args, config *MutationConfig) {
-	if opts.Exec.CustomTest != "" {
+	if strings.TrimSpace(opts.Exec.CustomTest) != "" {
 		config.Commands.Test = opts.Exec.CustomTest // TODO fix for arguments
 	}
 
@@ -201,10 +195,6 @@ func main() {
 
 	//fmt.Println("Running main nonsense instead of real program")
 	//doNonsense()
-}
-
-func doNonsense() {
-	copyRecursive(true, "/home/amy/go/src/github.com/amyjzhu/mutation-framework", "mutant-copyRecursive", "mutant-copyRecursive")
 }
 
 func saveAST(mutationBlackList map[string]struct{}, file string, fset *token.FileSet, node ast.Node) (string, bool, error) { // TODO blacklists -- don't currently have this capability

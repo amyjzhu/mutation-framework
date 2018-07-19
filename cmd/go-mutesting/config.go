@@ -79,13 +79,16 @@ func getConfig(configFilePath string) (*MutationConfig, error) {
 		return nil, err
 	}
 
-	var config MutationConfig
-
 	if !isJson(data) {
 		data, err = convertFromYaml(data)
 	}
 
-	err = json.Unmarshal([]byte(data), &config)
+	return parseConfig(data)
+}
+
+func parseConfig(data []byte) (*MutationConfig, error) {
+	var config MutationConfig
+	err := json.Unmarshal([]byte(data), &config)
 
 	if err != nil {
 		return nil, err

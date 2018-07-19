@@ -23,7 +23,12 @@ func printStats(config *MutationConfig, stats *mutationStats) {
 
 var liveMutants = make([]string, 0)
 
+func runAllMutantsInFolder(config *MutationConfig, folder string) {
+
+}
+
 func runMutants(config *MutationConfig, mutantFiles []MutantInfo, stats *mutationStats) int {
+	fmt.Println(mutantFiles)
 	exitCode := returnOk
 	for _, file := range mutantFiles {
 		exitCode = runExecution(config, file, stats)
@@ -32,8 +37,6 @@ func runMutants(config *MutationConfig, mutantFiles []MutantInfo, stats *mutatio
 	printStats(config, stats)
 	return exitCode
 }
-
-
 
 func runExecution(config *MutationConfig, mutantInfo MutantInfo, stats *mutationStats) int {
 	if !config.Test.Disable {
@@ -71,10 +74,7 @@ func oneMutantRunTests(config *MutationConfig, pkg *types.Package, file string, 
 		return customTestMutateExec(config, pkg, file, mutationFile, config.Commands.Test)
 	}
 
-	//if len(execs) == 0 {
-	//defaultMutateExec(opts, pkg, file, mutationFile)
 	return customMutateExec(config, pkg, file, mutationFile)
-	//}
 }
 
 func customTestMutateExec(config *MutationConfig, pkg *types.Package, file string, mutationFile string, testCommand string) (execExitCode int) {
@@ -115,7 +115,6 @@ func customTestMutateExec(config *MutationConfig, pkg *types.Package, file strin
 	if err != nil {
 		panic(err)
 	}
-
 
 	execWithArgs := strings.Split(testCommand, " ")
 

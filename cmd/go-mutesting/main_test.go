@@ -109,7 +109,7 @@ func TestCopy(t *testing.T) {
 	fs.Mkdir(testFile + ".git", os.FileMode(077))
 	defer sample.Close()
 
-	err = copy(true, testFileParent, mutationPath, mutationFolder)
+	err = copyRecursive(true, testFileParent, mutationPath, mutationFolder)
 	assert.Nil(t, err)
 
 	entries, err := ioutil.ReadDir(mutationFolder)

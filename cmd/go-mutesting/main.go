@@ -290,7 +290,7 @@ func mutate(config *MutationConfig, mutationID int, pkg *types.Package, info *ty
 			} else {
 				debug(config, "Save mutation into %q with checksum %s", mutatedFilePath, checksum)
 				mutantInfo := MutantInfo{pkg, info, file, mutatedFilePath, checksum}
-				runExecution(config, mutantInfo, stats)
+				//runExecution(config, mutantInfo, stats)
 				mutantPaths = append(mutantPaths, mutantInfo)
 			}
 
@@ -327,10 +327,10 @@ func copyProject(config *MutationConfig, name string) (string, error) {
 		pathParts[len(pathParts)-1] + "_" + name
 
 	return projectName,
-	copy(config.Mutate.Overwrite, dir, projectName, config.Mutate.MutantFolder)
+	copyRecursive(config.Mutate.Overwrite, dir, projectName, config.Mutate.MutantFolder)
 }
 
-func copy(overwrite bool, source string, dest string, mutantFolder string) error {
+func copyRecursive(overwrite bool, source string, dest string, mutantFolder string) error {
 	destFile, err := fs.Open(dest)
 	if !os.IsNotExist(err) {
 		if overwrite {
@@ -367,7 +367,7 @@ func copy(overwrite bool, source string, dest string, mutantFolder string) error
 					continue
 				}
 
-				err = copy(overwrite, newSource, newDest, mutantFolder)
+				err = copyRecursive(overwrite, newSource, newDest, mutantFolder)
 				if err != nil {
 					return err
 				}
@@ -396,7 +396,7 @@ func main() {
 }
 
 func doNonsense() {
-	copy(true, "/home/amy/go/src/github.com/amyjzhu/mutation-framework", "mutant-copy", "mutant-copy")
+	copyRecursive(true, "/home/amy/go/src/github.com/amyjzhu/mutation-framework", "mutant-copyRecursive", "mutant-copyRecursive")
 }
 
 func saveAST(mutationBlackList map[string]struct{}, file string, fset *token.FileSet, node ast.Node) (string, bool, error) { // TODO blacklists -- don't currently have this capability

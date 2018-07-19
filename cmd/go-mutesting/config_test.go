@@ -98,6 +98,17 @@ func TestWildcardConfig(t *testing.T) {
 	assert.ElementsMatch(t, wildcardConfig.Mutate.FilesToExclude, expectedExcludedFiles)
 }
 
+func TestMinimalParseConfig(t *testing.T) {
+	configString := `{"project_root":"home"}`
+
+	actualConfig, err := parseConfig([]byte(configString))
+	assert.Nil(t, err)
+
+	expectedConfig = MutationConfig{FileBasePath:"home/",
+	Mutate:Mutate{MutantFolder:"mutants/"}}
+	assert.EqualValues(t, *actualConfig, expectedConfig)
+}
+
 func TestDefaultMutantFunctionality(t *testing.T) {
 	//initialize()
 	expectedConfig.Mutate.MutantFolder = ""
@@ -163,4 +174,16 @@ func TestGetParentDirectory(t *testing.T) {
 	actualPath = getParentPath(pathPieces, 0)
 	expectedPath = ""
 	assert.Equal(t, expectedPath, actualPath)
+}
+
+func TestFilterFileNames(t *testing.T) {
+	patternWithGlob := "foo*"
+	candidateFiles := []string{"foobar", "foo%", "foo-", "foo.jpg", "bar.jpg",
+	"baz", "baz*", "foo*", "foo....", "maryfoo"}
+
+	expectedFiles := []string{"foobar", "foo-", "foo.jpg", "foo...."}
+	actualFiles := filterFileNames(patternWithGlob, candidateFiles)
+
+	assert.ElementsMatch(t, expectedFiles, actualFiles)
+	assert.NotContains(t, expectedFiles, []string{"maryfoo", "bar.jpg", "baz*", "baz"})
 }

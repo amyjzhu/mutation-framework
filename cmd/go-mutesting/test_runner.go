@@ -40,7 +40,8 @@ func runMutants(config *MutationConfig, mutantFiles []MutantInfo, stats *mutatio
 
 func runExecution(config *MutationConfig, mutantInfo MutantInfo, stats *mutationStats) int {
 	if !config.Test.Disable {
-		execExitCode := oneMutantRunTests(config, mutantInfo.pkg, mutantInfo.absFile, mutantInfo.mutationFile)
+		execExitCode := oneMutantRunTests(config, mutantInfo.pkg,
+			mutantInfo.originalFile, mutantInfo.mutantDirPath, mutantInfo.mutationFile)
 
 		debug(config, "Exited with %d", execExitCode)
 
@@ -69,14 +70,58 @@ func runExecution(config *MutationConfig, mutantInfo MutantInfo, stats *mutation
 	return returnOk
 }
 
-func oneMutantRunTests(config *MutationConfig, pkg *types.Package, file string, mutationFile string) (execExitCode int) {
+func oneMutantRunTests(config *MutationConfig, pkg *types.Package, originalFilePath string, file string, mutationFile string) (execExitCode int) {
 	if config.Commands.Test != "" {
-		return customTestMutateExec(config, pkg, file, mutationFile, config.Commands.Test)
+		return customTestMutateExec(config, originalFilePath, file, mutationFile, config.Commands.Test)
 	}
 
 	return customMutateExec(config, pkg, file, mutationFile)
 }
 
+func customTestMutateExec(config *MutationConfig, originalFilePath string, dirPath string, mutationFile string, testCommand string) (execExitCode int) {
+	debug(config, "Executing built-in execution steps with custom test command %s", config.Commands.Test)
+	defer runCleanUpCommand(config)
+
+	// TODO not supported by afero
+	os.Chdir(dirPath)
+
+	diff, err := exec.Command("diff", "-u", originalFilePath, mutationFile).CombinedOutput()
+	if err == nil {
+		execExitCode = execPassed
+	} else if e, ok := err.(*exec.ExitError); ok {
+		execExitCode = e.Sys().(syscall.WaitStatus).ExitStatus()
+	} else {
+		panic(err)
+	}
+	if execExitCode != execPassed && execExitCode != execFailed {
+		fmt.Printf("%s\n", diff)
+
+		panic("Could not execute diff on mutation file")
+	}
+
+	execWithArgs := strings.Split(testCommand, " ")
+
+	test, err := exec.Command(execWithArgs[0], execWithArgs[1:]...).CombinedOutput()
+
+	if err == nil {
+		execExitCode = execPassed
+	} else if e, ok := err.(*exec.ExitError); ok {
+		execExitCode = e.Sys().(syscall.WaitStatus).ExitStatus()
+	} else {
+		panic(err)
+	}
+
+	debug(config, "%s\n", test)
+
+	putFailedTestsInMap(mutationFile, test)
+
+	execExitCode = determinePassOrFail(config, diff, mutationFile, execExitCode)
+
+	return execExitCode
+
+}
+
+/*
 func customTestMutateExec(config *MutationConfig, pkg *types.Package, file string, mutationFile string, testCommand string) (execExitCode int) {
 	const MUTATION_FOLDER = "mutants/"
 	debug(config, "Execute built-in exec command with custom test script for mutation")
@@ -136,6 +181,7 @@ func customTestMutateExec(config *MutationConfig, pkg *types.Package, file strin
 
 	return execExitCode
 }
+*/
 
 func determinePassOrFail(config *MutationConfig, diff []byte, mutationFile string, execExitCode int) (int) {
 	switch execExitCode {

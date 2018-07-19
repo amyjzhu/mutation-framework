@@ -12,6 +12,7 @@ import (
 	"github.com/amyjzhu/mutation-framework/mutator"
 	"github.com/amyjzhu/mutation-framework"
 	"github.com/amyjzhu/mutation-framework/osutil"
+	log "github.com/sirupsen/logrus"
 )
 
 type MutantInfo struct {
@@ -26,12 +27,12 @@ type MutantInfo struct {
 func mutateFiles(config *MutationConfig, files map[string]string, operators []mutator.Mutator) (*mutationStats, int) {
 	stats := &mutationStats{}
 
-	for rel, abs := range files {
-		debug(config, "Mutate %q", abs)
+	for relativeFileLocation, abs := range files {
+		log.WithField("file", abs).Debug("Mutating file")
 
 		src, fset, pkg, info, err := mutesting.ParseAndTypeCheckFile(abs)
 		if err != nil {
-			fmt.Printf("There was an error compiling %s. Is the file correct?\n", abs)
+			log.WithField("file", abs).Error("There was an error compiling the file.")
 			return nil, exitError(err.Error())
 		}
 
@@ -40,13 +41,14 @@ func mutateFiles(config *MutationConfig, files map[string]string, operators []mu
 			panic(err)
 		}
 
-		mutantFile := config.Mutate.MutantFolder + rel
+		mutantFile := config.Mutate.MutantFolder + relativeFileLocation
 		createMutantFolderPath(mutantFile)
 
 		mutationID := 0
 
 		// TODO match function names instead
-		mutationID = mutate(config, mutationID, pkg, info, abs, rel, fset, src, src, mutantFile, stats)
+		mutationID = mutate(config, mutationID, pkg, info, abs, relativeFileLocation,
+			fset, src, src, mutantFile, stats)
 	}
 
 	return stats, returnOk
@@ -54,9 +56,7 @@ func mutateFiles(config *MutationConfig, files map[string]string, operators []mu
 
 func createMutantFolderPath(file string) {
 	if strings.Contains(file, string(os.PathSeparator)) {
-		paths := strings.Split(file, string(os.PathSeparator))
-		paths = paths[:len(paths)-1]
-		parentPath := strings.Join(paths, string(os.PathSeparator))
+		parentPath := filepath.Dir(file)
 		err := fs.MkdirAll(parentPath, 0755)
 		if err != nil {
 			panic(err)
@@ -64,9 +64,11 @@ func createMutantFolderPath(file string) {
 	}
 }
 
-func mutate(config *MutationConfig, mutationID int, pkg *types.Package, info *types.Info, file string, relPath string, fset *token.FileSet, src ast.Node, node ast.Node, tmpFile string, stats *mutationStats) int {
+func mutate(config *MutationConfig, mutationID int, pkg *types.Package,
+	info *types.Info, file string, relativeFilePath string, fset *token.FileSet,
+	src ast.Node, node ast.Node, tmpFile string, stats *mutationStats) int {
 	for _, m := range config.Mutate.Operators {
-		debug(config, "Mutator %s", m.Name)
+		log.WithField("mutation_operator", m.Name).Debug("Mutating.")
 
 		changed := mutesting.MutateWalk(pkg, info, node, *m.MutationOperator)
 
@@ -79,29 +81,26 @@ func mutate(config *MutationConfig, mutationID int, pkg *types.Package, info *ty
 
 			mutationBlackList := make(map[string]struct{},0) //TODO implement real blacklisting
 
-			//mutationFile := fmt.Sprintf("%s.%d", tmpFile, mutationID)
-			mutationFileID := fmt.Sprintf("%s.%d", relPath, mutationID)
+			mutationFileID := fmt.Sprintf("%s.%d", relativeFilePath, mutationID)
 
-			//mutationFile := fmt.Sprintf("%s%s", config.FileBasePath, tmpFile)
-			//fmt.Printf("mutationFileID: %s mutationFile:%s\n", mutationFileID, mutationFile)
 			mutantPath, err := copyProject(config, mutationFileID) // TODO verify correctness of absolute file
-			fmt.Printf("mutant path is %s\n", mutantPath)
 			if err != nil {
-				fmt.Printf("INTERNAL ERROR %s\n", err.Error())
+				log.WithField("error", err).Error("Internal error.")
 			}
 
-			mutatedFilePath := filepath.Clean(mutantPath) + "/" + relPath
+			mutatedFilePath := filepath.Clean(mutantPath) + string(os.PathSeparator) + relativeFilePath
 			checksum, duplicate, err := saveAST(mutationBlackList, mutatedFilePath, fset, src)
 			if err != nil {
-				fmt.Printf("INTERNAL ERROR %s\n", err.Error())
+				log.WithField("error", err).Error("Internal error.")
 			} else if duplicate {
-				debug(config, "%q is a duplicate, we ignore it", mutatedFilePath)
-
+				log.WithField("mutant", mutatedFilePath).Debug("Ignoring duplicate.")
 				stats.duplicated++
 			} else {
-				debug(config, "Save mutation into %q with checksum %s", mutatedFilePath, checksum)
-				mutantInfo := MutantInfo{pkg, info, file, relPath, mutatedFilePath, checksum}
-				//runExecution(config, mutantInfo, stats)
+				log.WithFields(
+					log.Fields{"mutant": mutatedFilePath, "checksum": checksum}).
+					Debug("Saving mutated file.")
+				mutantInfo := MutantInfo{pkg, info, file,
+				relativeFilePath, mutatedFilePath, checksum}
 				mutantPaths = append(mutantPaths, mutantInfo)
 			}
 
@@ -116,29 +115,20 @@ func mutate(config *MutationConfig, mutationID int, pkg *types.Package, info *ty
 	}
 
 	getRedundantCandidates()
-	fmt.Printf("Live muatants: %s\n", liveMutants)
-	fmt.Println(testsToMutants)
+	log.Info("Live mutants are ", liveMutants)
+	log.Info("Mutants killed ", testsToMutants)
 	return mutationID
 }
 
 var mutantPaths []MutantInfo
 
 func copyProject(config *MutationConfig, name string) (string, error) {
-	//projectRoot := config.FileBasePath
-
-	debug(config, "copying %s to mutants folder", name)
+	log.WithField("mutant", name).Debug("Copying into mutants folder.")
 	dir, err := os.Getwd()
 	if err != nil {
 		panic (err)
 	}
-	/*
-	pathParts := strings.Split(projectRoot, string(os.PathSeparator))
-	// TODO do I even really need pathparts? seems redundant since that's the directory I'm in
-	// all projectRoots end with a / so the last element is ""
-	// we're interested in the non-empty string part before it, thus index is length - 2
-	PathPartPieceIndex := len(pathParts)-2
-	projectName := config.FileBasePath + config.Mutate.MutantFolder +
-		pathParts[PathPartPieceIndex] + "_" + name*/
+
 	projectName := config.FileBasePath + config.Mutate.MutantFolder + name
 
 	return projectName,
@@ -149,9 +139,9 @@ func copyRecursive(overwrite bool, source string, dest string, mutantFolder stri
 	destFile, err := fs.Open(dest)
 	if !os.IsNotExist(err) {
 		if overwrite {
-			fmt.Println("Overwriting destination mutants if they already exist.")
+			log.Debug("Overwriting destination mutants if they already exist.")
 		} else if err != nil {
-			fmt.Println(err)
+			log.WithFields(log.Fields{"file":source, "error":err}).Info("Some error arose.")
 			return fmt.Errorf("source file %s does not exist", source)
 		}
 	}

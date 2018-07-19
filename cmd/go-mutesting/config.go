@@ -10,6 +10,7 @@ import (
 	"strings"
 	"os"
 	"io/ioutil"
+	log "github.com/sirupsen/logrus"
 )
 
 // Cannot extend types in other packages
@@ -21,6 +22,7 @@ type Operator struct {
 
 type MutationConfig struct {
 	Verbose      bool   `json:"verbose"`
+	Json bool `json:"json"`
 	FileBasePath   string     `json:"project_root"` // the root of project and appended to file paths
 	Mutate Mutate `json:"mutate"`
 	Test Test `json:"test"`
@@ -120,7 +122,7 @@ func (config *MutationConfig) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	debug(config, configString)
+	log.WithField("config", configString).Info("Finished parsing config.")
 
 	return nil
 }
@@ -137,7 +139,7 @@ func checkNilImportantFields(config *MutationConfig) error {
 	if !config.Mutate.Disable &&
 		(len(config.Mutate.FilesToExclude) == 0 &&
 			len(config.Mutate.FilesToInclude) == 0) {
-				fmt.Println("Mutate files are empty. Is your config correct?")
+				log.Info("Mutate files are empty. Is your config correct?")
 	}
 
 	if config.FileBasePath == "" {
@@ -146,12 +148,12 @@ func checkNilImportantFields(config *MutationConfig) error {
 
 	for _, file := range append(config.Mutate.FilesToInclude, config.Mutate.FilesToExclude...) {
 		if strings.HasPrefix(file, string(os.PathSeparator)) {
-			debug(config, "Did you intend for %s to have path separator prefix?\n", file)
+			log.WithField("file", file).Debug( "Did you intend for %s to have path separator prefix?\n")
 		}
 	}
 
 	if config.Commands == (Commands{}) {
-		debug(config, "Did you mean for Commands to be empty?")
+		log.Debug("Did you mean for Commands to be empty?")
 	}
 
 
@@ -201,7 +203,6 @@ func (config *MutationConfig) getIncludedFiles() []string {
 		filesToMutate[file] = struct{}{}
 	}
 
-	fmt.Println(filesToMutate)
 	// TODO exclude is more powerful than include
 	for _, excludeFile := range config.Mutate.FilesToExclude {
 		delete(filesToMutate, excludeFile)
@@ -384,6 +385,7 @@ func expandWildCardRecursive(pathIndex int, pathPieces []string, basepath string
 
 
 // TODO remove code duplication
+// TODO replace with filepath.Dir and filepath.Parent
 func getCurrentPath(index int, pathPieces []string) string {
 	path := ""
 	for i := 0; i <= index; i++ {
@@ -449,10 +451,4 @@ func (config *MutationConfig) getString() (string, error) {
 	}
 
 	return string(result), nil
-}
-
-func test() {
-	fmt.Println(mutator.List())
-	config, _ := getConfig("testdata/config/sample_config.yaml")
-	fmt.Println(config.getString())
 }

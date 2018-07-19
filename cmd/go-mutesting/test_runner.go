@@ -11,13 +11,17 @@ import (
 	"sort"
 
 	"github.com/amyjzhu/mutation-framework/osutil"
+	log "github.com/sirupsen/logrus"
 )
 
 func printStats(config *MutationConfig, stats *mutationStats) {
 	if !config.Test.Disable {
-		fmt.Printf("The mutation score is %f (%d passed, %d failed, %d duplicated, %d skipped, total is %d)\n", stats.Score(), stats.passed, stats.failed, stats.duplicated, stats.skipped, stats.Total())
+		// TODO parameterize
+		log.Info(
+			fmt.Sprintf("The mutation score is %f (%d passed, %d failed, %d duplicated, %d skipped, total is %d)",
+				stats.Score(), stats.passed, stats.failed, stats.duplicated, stats.skipped, stats.Total()))
 	} else {
-		fmt.Println("Cannot do a mutation testing summary since no exec command was executed.")
+		log.Info("Cannot do a mutation testing summary since no exec command was executed.")
 	}
 }
 
@@ -28,7 +32,6 @@ func runAllMutantsInFolder(config *MutationConfig, folder string) {
 }
 
 func runMutants(config *MutationConfig, mutantFiles []MutantInfo, stats *mutationStats) int {
-	fmt.Println(mutantFiles)
 	exitCode := returnOk
 	for _, file := range mutantFiles {
 		exitCode = runExecution(config, file, stats)
@@ -43,25 +46,25 @@ func runExecution(config *MutationConfig, mutantInfo MutantInfo, stats *mutation
 		execExitCode := oneMutantRunTests(config, mutantInfo.pkg,
 			mutantInfo.originalFile, mutantInfo.mutantDirPath, mutantInfo.mutationFile)
 
-		debug(config, "Exited with %d", execExitCode)
+		log.WithField("exit_code", execExitCode).Debug("Finished running tests.")
 
 		msg := fmt.Sprintf("%q with checksum %s", mutantInfo.mutationFile, mutantInfo.checksum)
 
 		switch execExitCode {
 		case execPassed:
-			fmt.Printf("PASS %s\n", msg)
+			log.Info(fmt.Sprintf("PASS %s", msg))
 
 			stats.passed++
 		case execFailed:
-			fmt.Printf("FAIL %s\n", msg)
+			log.Info(fmt.Sprintf("FAIL %s", msg))
 
 			stats.failed++
 		case execSkipped:
-			fmt.Printf("SKIP %s\n", msg)
+			log.Info(fmt.Sprintf("SKIP %s", msg))
 
 			stats.skipped++
 		default:
-			fmt.Printf("UNKNOWN exit code for %s\n", msg)
+			log.Info(fmt.Sprintf("UNKNOWN exit code for %s", msg))
 		}
 
 		return execExitCode
@@ -79,7 +82,7 @@ func oneMutantRunTests(config *MutationConfig, pkg *types.Package, originalFileP
 }
 
 func customTestMutateExec(config *MutationConfig, originalFilePath string, dirPath string, mutationFile string, testCommand string) (execExitCode int) {
-	debug(config, "Executing built-in execution steps with custom test command %s", config.Commands.Test)
+	log.WithField("command", testCommand).Debug("Executing built-in execution steps with custom test command")
 	defer runCleanUpCommand(config)
 
 	// TODO not supported by afero
@@ -94,7 +97,7 @@ func customTestMutateExec(config *MutationConfig, originalFilePath string, dirPa
 		panic(err)
 	}
 	if execExitCode != execPassed && execExitCode != execFailed {
-		fmt.Printf("%s\n", diff)
+		log.Info(diff)
 
 		panic("Could not execute diff on mutation file")
 	}
@@ -111,7 +114,7 @@ func customTestMutateExec(config *MutationConfig, originalFilePath string, dirPa
 		panic(err)
 	}
 
-	debug(config, "%s\n", test)
+	log.Debug(string(test))
 
 	putFailedTestsInMap(mutationFile, test)
 
@@ -124,29 +127,29 @@ func customTestMutateExec(config *MutationConfig, originalFilePath string, dirPa
 func determinePassOrFail(config *MutationConfig, diff []byte, mutationFile string, execExitCode int) (int) {
 	switch execExitCode {
 	case 0: // Tests passed -> FAIL
-		fmt.Printf("%s\n", diff)
+		log.Info(string(diff))
 
 
 		return execFailed
 		liveMutants = append(liveMutants, mutationFile)
 	case 1: // Tests failed -> PASS
-		debug(config,"%s\n", diff)
+		log.Debug(string(diff))
 
 		return execPassed
 	case 2: // Did not compile -> SKIP
-		debug(config, "Mutation did not compile")
-		debug(config, "%s\n", diff)
+		log.Debug("Mutation did not compile")
+		log.Info(string(diff))
 
 		return execSkipped
 	default: // Unknown exit code -> SKIP
-		fmt.Println("Unknown exit code")
-		fmt.Printf("%s\n", diff)
+		log.WithField("exit_code", execExitCode).Info("Unknown exit code")
+		log.Debug(string(diff))
 	}
 	return execExitCode
 }
 
 func customMutateExec(config *MutationConfig, pkg *types.Package, file string, mutationFile string) (execExitCode int) {
-	debug(config, "Execute custom exec command for mutation")
+	log.Debug("Execute custom exec command for mutation")
 
 	diff, err := exec.Command("diff", "-u", file, mutationFile).CombinedOutput()
 	if err == nil {
@@ -157,7 +160,7 @@ func customMutateExec(config *MutationConfig, pkg *types.Package, file string, m
 		panic(err)
 	}
 	if execExitCode != execPassed && execExitCode != execFailed {
-		fmt.Printf("%s\n", diff)
+		log.Info(diff)
 
 		panic("Could not execute diff on mutation file")
 	}
@@ -192,7 +195,7 @@ func customMutateExec(config *MutationConfig, pkg *types.Package, file string, m
 		panic(err)
 	}
 
-	debug(config, "%s\n", test)
+	log.Debug(test)
 
 	putFailedTestsInMap(mutationFile, test)
 
@@ -207,7 +210,6 @@ func moveIntoMutantsFolder(folder string, file string) error {
 	matches := relevantMutationFileName.FindStringSubmatch(file)
 	CAPTURING_GROUP_INDEX := 2
 	prettyMutationFileName := matches[CAPTURING_GROUP_INDEX]
-	fmt.Println(prettyMutationFileName)
 
 	if _, err := fs.Stat(folder); os.IsNotExist(err) {
 		fs.Mkdir(folder, os.ModePerm)
@@ -255,12 +257,10 @@ func putFailedTestsInMap(mutationFile string, testOutput []byte) {
 }
 
 func getRedundantCandidates() {
-	//	fmt.Println(testsToMutants)
 	for _, mutants := range testsToMutants {
 		if len(mutants) > 1 {
-			fmt.Println(len(mutants))
-			fmt.Printf("Potential duplicates: %s", mutants)
-			fmt.Println(testsToMutants)
+			log.WithField("mutants", mutants).Info("Potential duplicates")
+			log.Debug(testsToMutants)
 		}
 	}
 }

@@ -19,6 +19,7 @@ import (
 	_ "github.com/amyjzhu/mutation-framework/mutator/statement"
 	"github.com/spf13/afero"
 	"strings"
+	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -43,12 +44,12 @@ type Args struct {
 		Verbose              bool `long:"verbose" description:"Verbose log output"`
 		ConfigPath 		string `long:"config" descriptionL:"Path to mutation config file" required:"true"`
 		ListMutators    bool     `long:"list-mutators" description:"List all available mutators"`
+		Json bool `long:"json" description:"Log events in json format"`
 	} `group:"General Args"`
 
 	Files struct {
 		Blacklist []string `long:"blacklist" description:"List of MD5 checksums of mutations which should be ignored. Each checksum must end with a new line character."`
 		ListFiles bool     `long:"list-files" description:"List found files"`
-		PrintAST  bool     `long:"print-ast" description:"Print the ASTs of all given files and exit"`
 	} `group:"File Args"`
 
 	Exec struct {
@@ -106,7 +107,8 @@ func debug(config *MutationConfig, format string, args ...interface{}) {
 }
 
 func exitError(format string, args ...interface{}) int {
-	fmt.Fprintf(os.Stderr, format+"\n", args...)
+	errorMessage := fmt.Sprintf(format+"\n", args...)
+	log.Error(errorMessage)
 
 	return returnError
 }
@@ -146,6 +148,7 @@ func mainCmd(args []string) int {
 	}
 
 	consolidateArgsIntoConfig(opts, mutationConfig)
+	setUpLogging(mutationConfig)
 	operators := retrieveMutationOperators(mutationConfig)
 	files := mutationConfig.getRelativeAndAbsoluteFiles()
 
@@ -154,9 +157,25 @@ func mainCmd(args []string) int {
 	return exitCode
 }
 
+func setUpLogging(config *MutationConfig) {
+	if config.Json {
+		log.SetFormatter(&log.JSONFormatter{})
+	} else {
+		log.SetFormatter(&log.TextFormatter{})
+	}
+
+	if config.Verbose {
+		log.SetLevel(log.DebugLevel)
+	} else {
+		log.SetLevel(log.InfoLevel)
+	}
+
+	log.SetOutput(os.Stdout)
+}
+
 func consolidateArgsIntoConfig(opts *Args, config *MutationConfig) {
 	if strings.TrimSpace(opts.Exec.CustomTest) != "" {
-		config.Commands.Test = opts.Exec.CustomTest // TODO fix for arguments
+		config.Commands.Test = opts.Exec.CustomTest
 	}
 
 	if opts.Exec.ExecOnly {
@@ -178,6 +197,10 @@ func consolidateArgsIntoConfig(opts *Args, config *MutationConfig) {
 	if opts.Exec.Timeout != 0 {
 		config.Test.Timeout = opts.Exec.Timeout
 	}
+
+	if opts.General.Json {
+		config.Json = true
+	}
 }
 
 func retrieveMutationOperators(config *MutationConfig) []mutator.Mutator {
@@ -190,11 +213,6 @@ func retrieveMutationOperators(config *MutationConfig) []mutator.Mutator {
 
 func main() {
 	os.Exit(mainCmd(os.Args[1:]))
-	// fmt.Println("Running config test instead of real program")
-	//test()
-
-	//fmt.Println("Running main nonsense instead of real program")
-	//doNonsense()
 }
 
 func saveAST(mutationBlackList map[string]struct{}, file string, fset *token.FileSet, node ast.Node) (string, bool, error) { // TODO blacklists -- don't currently have this capability

@@ -34,6 +34,7 @@ func initialize() {
 
 	expectedConfig = MutationConfig{
 		false,
+		false,
 		"/home/",
 		Mutate{false, []Operator{Operator{&expectedMutator, "mutator/mock"}},
 			[]string{"primary.go", "secondary.go"},

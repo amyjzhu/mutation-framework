@@ -28,8 +28,8 @@
           <file leaf-file-name="main.go" pinned="false" current-in-tab="false">
             <entry file="file://$PROJECT_DIR$/cmd/go-mutesting/main.go">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="432">
-                  <caret line="102" column="8" lean-forward="true" selection-start-line="102" selection-start-column="8" selection-end-line="102" selection-end-column="8" />
+                <state relative-caret-position="-84">
+                  <caret line="68" column="1" selection-start-line="68" selection-start-column="1" selection-end-line="68" selection-end-column="1" />
                   <folding>
                     <element signature="e#14#444#0" expanded="true" />
                   </folding>
@@ -40,8 +40,8 @@
           <file leaf-file-name="mutate.go" pinned="false" current-in-tab="false">
             <entry file="file://$PROJECT_DIR$/cmd/go-mutesting/mutate.go">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="192">
-                  <caret line="141" column="21" selection-start-line="141" selection-start-column="16" selection-end-line="141" selection-end-column="21" />
+                <state relative-caret-position="1740">
+                  <caret line="116" selection-start-line="116" selection-end-line="116" />
                   <folding>
                     <element signature="e#14#91#0" expanded="true" />
                   </folding>
@@ -52,8 +52,8 @@
           <file leaf-file-name="test_runner.go" pinned="false" current-in-tab="true">
             <entry file="file://$PROJECT_DIR$/cmd/go-mutesting/test_runner.go">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="257">
-                  <caret line="71" lean-forward="true" selection-start-line="71" selection-end-line="71" />
+                <state relative-caret-position="-2033">
+                  <caret line="17" column="42" selection-start-line="17" selection-start-column="42" selection-end-line="17" selection-end-column="42" />
                   <folding>
                     <element signature="e#14#100#0" expanded="true" />
                   </folding>
@@ -77,8 +77,8 @@
           <file leaf-file-name="config_test.go" pinned="false" current-in-tab="false">
             <entry file="file://$PROJECT_DIR$/cmd/go-mutesting/config_test.go">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="225">
-                  <caret line="36" column="14" lean-forward="true" selection-start-line="36" selection-start-column="14" selection-end-line="36" selection-end-column="14" />
+                <state relative-caret-position="62">
+                  <caret line="41" column="21" lean-forward="true" selection-start-line="41" selection-start-column="21" selection-end-line="41" selection-end-column="21" />
                 </state>
               </provider>
             </entry>
@@ -86,8 +86,8 @@
           <file leaf-file-name="config.go" pinned="false" current-in-tab="true">
             <entry file="file://$PROJECT_DIR$/cmd/go-mutesting/config.go">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="312">
-                  <caret line="101" column="29" selection-start-line="101" selection-start-column="29" selection-end-line="101" selection-end-column="29" />
+                <state relative-caret-position="2211">
+                  <caret line="394" lean-forward="true" selection-start-line="394" selection-end-line="394" />
                   <folding>
                     <element signature="e#14#204#0" expanded="true" />
                   </folding>
@@ -117,9 +117,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>&quot;/&quot;</find>
-      <find>scripts</find>
-      <find>projecy</find>
       <find>defer func</find>
       <find>os.</find>
       <find>fs.FileM</find>
@@ -147,6 +144,9 @@
       <find>fmt.</find>
       <find>the mutation score is</find>
       <find>debug</find>
+      <find>\n</find>
+      <find>tostring</find>
+      <find>getString</find>
     </findStrings>
     <replaceStrings>
       <replace>amyjzhu/mutation-framework/</replace>
@@ -156,6 +156,7 @@
       <replace>fs.</replace>
       <replace>os.FileM</replace>
       <replace>os.</replace>
+      <replace>toString</replace>
     </replaceStrings>
   </component>
   <component name="GOROOT" path="$USER_HOME$/.go" />
@@ -188,9 +189,9 @@
         <option value="$PROJECT_DIR$/testdata/config/sample_config.json" />
         <option value="$PROJECT_DIR$/testdata/config/wildcard_config.json" />
         <option value="$PROJECT_DIR$/cmd/test_runner.go" />
-        <option value="$PROJECT_DIR$/cmd/go-mutesting/config_test.go" />
-        <option value="$PROJECT_DIR$/cmd/go-mutesting/main.go" />
         <option value="$PROJECT_DIR$/cmd/go-mutesting/mutate.go" />
+        <option value="$PROJECT_DIR$/cmd/go-mutesting/main.go" />
+        <option value="$PROJECT_DIR$/cmd/go-mutesting/config_test.go" />
         <option value="$PROJECT_DIR$/cmd/go-mutesting/config.go" />
         <option value="$PROJECT_DIR$/cmd/go-mutesting/test_runner.go" />
       </list>
@@ -437,25 +438,25 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" type="DlvLineBreakpoint">
           <url>file://$PROJECT_DIR$/cmd/go-mutesting/config.go</url>
-          <line>336</line>
+          <line>335</line>
           <properties />
           <option name="timeStamp" value="36" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="DlvLineBreakpoint">
           <url>file://$PROJECT_DIR$/cmd/go-mutesting/config.go</url>
-          <line>356</line>
+          <line>355</line>
           <properties />
           <option name="timeStamp" value="38" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="DlvLineBreakpoint">
           <url>file://$PROJECT_DIR$/cmd/go-mutesting/config.go</url>
-          <line>381</line>
+          <line>380</line>
           <properties />
           <option name="timeStamp" value="40" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="DlvLineBreakpoint">
           <url>file://$PROJECT_DIR$/cmd/go-mutesting/config.go</url>
-          <line>377</line>
+          <line>376</line>
           <properties />
           <option name="timeStamp" value="41" />
         </line-breakpoint>
@@ -719,13 +720,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/cmd/go-mutesting/config_test.go">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="225">
-          <caret line="36" column="14" lean-forward="true" selection-start-line="36" selection-start-column="14" selection-end-line="36" selection-end-column="14" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$USER_HOME$/.go/src/os/exec/exec.go">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="210">
@@ -733,30 +727,37 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/cmd/go-mutesting/mutate.go">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="192">
-          <caret line="141" column="21" selection-start-line="141" selection-start-column="16" selection-end-line="141" selection-end-column="21" />
-          <folding>
-            <element signature="e#14#91#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/cmd/go-mutesting/main.go">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="432">
-          <caret line="102" column="8" lean-forward="true" selection-start-line="102" selection-start-column="8" selection-end-line="102" selection-end-column="8" />
+        <state relative-caret-position="-84">
+          <caret line="68" column="1" selection-start-line="68" selection-start-column="1" selection-end-line="68" selection-end-column="1" />
           <folding>
             <element signature="e#14#444#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/cmd/go-mutesting/mutate.go">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1740">
+          <caret line="116" selection-start-line="116" selection-end-line="116" />
+          <folding>
+            <element signature="e#14#91#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/cmd/go-mutesting/config_test.go">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="62">
+          <caret line="41" column="21" lean-forward="true" selection-start-line="41" selection-start-column="21" selection-end-line="41" selection-end-column="21" />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/cmd/go-mutesting/test_runner.go">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="257">
-          <caret line="71" lean-forward="true" selection-start-line="71" selection-end-line="71" />
+        <state relative-caret-position="-2033">
+          <caret line="17" column="42" selection-start-line="17" selection-start-column="42" selection-end-line="17" selection-end-column="42" />
           <folding>
             <element signature="e#14#100#0" expanded="true" />
           </folding>
@@ -765,8 +766,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/cmd/go-mutesting/config.go">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="312">
-          <caret line="101" column="29" selection-start-line="101" selection-start-column="29" selection-end-line="101" selection-end-column="29" />
+        <state relative-caret-position="2211">
+          <caret line="394" lean-forward="true" selection-start-line="394" selection-end-line="394" />
           <folding>
             <element signature="e#14#204#0" expanded="true" />
           </folding>

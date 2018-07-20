@@ -255,7 +255,6 @@ func expandWildCard(path string, basepath string) []string {
 	return expandWildCardRecursive(0, pieces, basepath)
 }
 
-// TODO find out where this is getting added so we don't need this
 func removeWildCardPaths(paths []string) []string {
 	var nonWildCards []string
 
@@ -383,7 +382,6 @@ func expandWildCardRecursive(pathIndex int, pathPieces []string, basepath string
 
 }
 
-
 // TODO remove code duplication
 // TODO replace with filepath.Dir and filepath.Parent
 func getCurrentPath(index int, pathPieces []string) string {
@@ -441,14 +439,4 @@ func convertFromYaml(yamlData []byte) ([]byte, error) {
 func isJson(data []byte) bool {
 	jsonPattern := regexp.MustCompile(`[\s]*{.*`)
 	return jsonPattern.Match(data)
-
-}
-
-func (config *MutationConfig) getString() (string, error) {
-	result, err := json.Marshal(config)
-	if err != nil {
-		return "", err
-	}
-
-	return string(result), nil
 }

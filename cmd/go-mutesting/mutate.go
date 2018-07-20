@@ -25,6 +25,7 @@ type MutantInfo struct {
 }
 
 func mutateFiles(config *MutationConfig, files map[string]string, operators []mutator.Mutator) (*mutationStats, int) {
+	log.Info("Mutating files.")
 	stats := &mutationStats{}
 
 	for relativeFileLocation, abs := range files {
@@ -114,9 +115,6 @@ func mutate(config *MutationConfig, mutationID int, pkg *types.Package,
 		}
 	}
 
-	getRedundantCandidates()
-	log.Info("Live mutants are ", liveMutants)
-	log.Info("Mutants killed ", testsToMutants)
 	return mutationID
 }
 

@@ -47,14 +47,14 @@ func initialize() {
 
 func TestJsonConfig(t *testing.T) {
 	initialize()
-	expectedString, err := expectedConfig.getString()
+	expectedString, err := expectedConfig.toString()
 	assert.Nil(t, err)
 
 
 	actualConfig, err := getConfig(testFile)
 	assert.Nil(t, err)
 
-	actualString, err := actualConfig.getString()
+	actualString, err := actualConfig.toString()
 	assert.Nil(t, err)
 
 	assert.Equal(t, expectedString, actualString)
@@ -65,10 +65,10 @@ func TestYamlConfig(t *testing.T) {
 	actualConfig, err := getConfig(testFileYaml)
 	assert.Nil(t, err)
 
-	actualString, err := actualConfig.getString()
+	actualString, err := actualConfig.toString()
 	assert.Nil(t, err)
 
-	expectedString, err := expectedConfig.getString()
+	expectedString, err := expectedConfig.toString()
 	assert.Nil(t, err)
 
 	assert.Equal(t, expectedString, actualString)

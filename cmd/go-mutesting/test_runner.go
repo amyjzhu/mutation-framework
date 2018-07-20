@@ -15,6 +15,7 @@ import (
 )
 
 func printStats(config *MutationConfig, stats *mutationStats) {
+	// TODO show stats for different files
 	if !config.Test.Disable {
 		// TODO parameterize
 		log.Info(
@@ -23,6 +24,10 @@ func printStats(config *MutationConfig, stats *mutationStats) {
 	} else {
 		log.Info("Cannot do a mutation testing summary since no exec command was executed.")
 	}
+
+	getRedundantCandidates()
+	log.Info("Mutants killed by: ", testsToMutants)
+	log.Info("Live mutants are: ", liveMutants)
 }
 
 var liveMutants = make([]string, 0)
@@ -32,6 +37,7 @@ func runAllMutantsInFolder(config *MutationConfig, folder string) {
 }
 
 func runMutants(config *MutationConfig, mutantFiles []MutantInfo, stats *mutationStats) int {
+	log.Info("Executing tests against mutants.")
 	exitCode := returnOk
 	for _, file := range mutantFiles {
 		exitCode = runExecution(config, file, stats)
@@ -42,6 +48,7 @@ func runMutants(config *MutationConfig, mutantFiles []MutantInfo, stats *mutatio
 }
 
 func runExecution(config *MutationConfig, mutantInfo MutantInfo, stats *mutationStats) int {
+	log.WithField("mutant", mutantInfo.mutationFile).Debug("Running tests.")
 	if !config.Test.Disable {
 		execExitCode := oneMutantRunTests(config, mutantInfo.pkg,
 			mutantInfo.originalFile, mutantInfo.mutantDirPath, mutantInfo.mutationFile)
@@ -83,7 +90,10 @@ func oneMutantRunTests(config *MutationConfig, pkg *types.Package, originalFileP
 
 func customTestMutateExec(config *MutationConfig, originalFilePath string, dirPath string, mutationFile string, testCommand string) (execExitCode int) {
 	log.WithField("command", testCommand).Debug("Executing built-in execution steps with custom test command")
-	defer runCleanUpCommand(config)
+	defer func() {
+		log.WithField("command", config.Commands.CleanUp).Info("Running clean up command.")
+		runCleanUpCommand(config)
+	}()
 
 	// TODO not supported by afero
 	os.Chdir(dirPath)
@@ -114,17 +124,16 @@ func customTestMutateExec(config *MutationConfig, originalFilePath string, dirPa
 		panic(err)
 	}
 
-	log.Debug(string(test))
+	log.Debug("Test output: ", string(test))
 
 	putFailedTestsInMap(mutationFile, test)
 
-	execExitCode = determinePassOrFail(config, diff, mutationFile, execExitCode)
+	execExitCode = determinePassOrFail(diff, mutationFile, execExitCode)
 
 	return execExitCode
-
 }
 
-func determinePassOrFail(config *MutationConfig, diff []byte, mutationFile string, execExitCode int) (int) {
+func determinePassOrFail(diff []byte, mutationFile string, execExitCode int) (int) {
 	switch execExitCode {
 	case 0: // Tests passed -> FAIL
 		log.Info(string(diff))
@@ -199,7 +208,7 @@ func customMutateExec(config *MutationConfig, pkg *types.Package, file string, m
 
 	putFailedTestsInMap(mutationFile, test)
 
-	execExitCode = determinePassOrFail(config, diff, mutationFile, execExitCode)
+	execExitCode = determinePassOrFail(diff, mutationFile, execExitCode)
 
 	return execExitCode
 }
@@ -248,9 +257,8 @@ func putFailedTestsInMap(mutationFile string, testOutput []byte) {
 	testsKey := getTestKey(failedTests)
 	existingMutants, exists := testsToMutants[testsKey]
 	var newValue []string
-	if (exists) {
+	if exists {
 		newValue = append(existingMutants, mutationFile)
-	} else {
 	}
 
 	testsToMutants[testsKey] = newValue

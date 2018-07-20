@@ -61,6 +61,13 @@ type Args struct {
 	} `group:"Exec Args"`
 }
 
+type mutationStats struct {
+	passed     int
+	failed     int
+	duplicated int
+	skipped    int
+}
+
 func checkArguments(args []string, opts *Args) (bool, int) {
 	p := flags.NewNamedParser("go-mutesting", flags.None)
 
@@ -100,24 +107,11 @@ func checkArguments(args []string, opts *Args) (bool, int) {
 	return false, 0
 }
 
-func debug(config *MutationConfig, format string, args ...interface{}) {
-	if config.Verbose {
-		fmt.Printf(format+"\n", args...)
-	}
-}
-
 func exitError(format string, args ...interface{}) int {
 	errorMessage := fmt.Sprintf(format+"\n", args...)
 	log.Error(errorMessage)
 
 	return returnError
-}
-
-type mutationStats struct {
-	passed     int
-	failed     int
-	duplicated int
-	skipped    int
 }
 
 func (ms *mutationStats) Score() float64 {

@@ -10,6 +10,7 @@ import (
 	"golang.org/x/tools/go/loader"
 	"path/filepath"
 	"github.com/spf13/afero"
+	log "github.com/sirupsen/logrus"
 )
 
 var fs = afero.NewOsFs()
@@ -77,7 +78,7 @@ func ParseAndTypeCheckFile(file string) (*ast.File, *token.FileSet, *types.Packa
 
 	prog, err := conf.Load()
 	if err != nil {
-		fmt.Println("error in ParseAndTypeCheckFile")
+		log.Error("error in ParseAndTypeCheckFile")
 		return nil, nil, nil, nil, fmt.Errorf("Could not load package of file %q: %v", file, err)
 	}
 

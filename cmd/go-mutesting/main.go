@@ -130,24 +130,43 @@ func (ms *mutationStats) Total() int {
 
 
 func mainCmd(args []string) int {
-	var opts = &Args{}
+	var opts= &Args{}
 	if exit, exitCode := checkArguments(args, opts); exit {
 		return exitCode
 	}
 
 	pathToConfig := opts.General.ConfigPath
-	mutationConfig, err := getConfig(pathToConfig)
+	config, err := getConfig(pathToConfig)
 	if err != nil {
 		exitError(err.Error())
 	}
 
-	consolidateArgsIntoConfig(opts, mutationConfig)
-	setUpLogging(mutationConfig)
-	operators := retrieveMutationOperators(mutationConfig)
-	files := mutationConfig.getRelativeAndAbsoluteFiles()
+	consolidateArgsIntoConfig(opts, config)
+	setUpLogging(config)
+	operators := retrieveMutationOperators(config)
+	files := config.getRelativeAndAbsoluteFiles()
 
-	stats, exitCode := mutateFiles(mutationConfig, files, operators)
-	exitCode = runMutants(mutationConfig, mutantPaths, stats)
+	var stats *mutationStats
+	var exitCode int
+	if !config.Mutate.Disable {
+		stats, exitCode = mutateFiles(config, files, operators)
+		if exitCode == returnError {
+			return exitCode
+		}
+	} else {
+		log.Info("Running tests without  mutating.")
+		mutantPaths, err = findAllMutantsInFolder(config, stats)
+		if err != nil {
+			log.Error(err)
+			return exitCode
+		}
+		fmt.Println(mutantPaths)
+	}
+
+	if !config.Test.Disable {
+		exitCode = runMutants(config, mutantPaths, stats)
+	}
+
 	return exitCode
 }
 

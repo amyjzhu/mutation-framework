@@ -17,7 +17,6 @@ import (
 
 type MutantInfo struct {
 	pkg *types.Package
-	info *types.Info
 	originalFile string
 	mutantDirPath string
 	mutationFile string
@@ -29,7 +28,7 @@ func mutateFiles(config *MutationConfig, files map[string]string, operators []mu
 	stats := &mutationStats{}
 
 	for relativeFileLocation, abs := range files {
-		log.WithField("file", abs).Debug("Mutating file")
+		log.WithField("file", relativeFileLocation).Debug("Mutating file.")
 
 		src, fset, pkg, info, err := mutesting.ParseAndTypeCheckFile(abs)
 		if err != nil {
@@ -45,6 +44,7 @@ func mutateFiles(config *MutationConfig, files map[string]string, operators []mu
 		mutantFile := config.Mutate.MutantFolder + relativeFileLocation
 		createMutantFolderPath(mutantFile)
 
+		// TODO should it be number per operator, or number overall?
 		mutationID := 0
 
 		// TODO match function names instead
@@ -69,7 +69,8 @@ func mutate(config *MutationConfig, mutationID int, pkg *types.Package,
 	info *types.Info, file string, relativeFilePath string, fset *token.FileSet,
 	src ast.Node, node ast.Node, tmpFile string, stats *mutationStats) int {
 	for _, m := range config.Mutate.Operators {
-		log.WithField("mutation_operator", m.Name).Debug("Mutating.")
+		mutationID = 0 // reset the mutationid for each operator
+		log.WithField("mutation_operator", m.Name).Info("Mutating.")
 
 		changed := mutesting.MutateWalk(pkg, info, node, *m.MutationOperator)
 
@@ -82,9 +83,11 @@ func mutate(config *MutationConfig, mutationID int, pkg *types.Package,
 
 			mutationBlackList := make(map[string]struct{},0) //TODO implement real blacklisting
 
-			mutationFileID := fmt.Sprintf("%s.%d", relativeFilePath, mutationID)
-
-			mutantPath, err := copyProject(config, mutationFileID) // TODO verify correctness of absolute file
+			safeMutationName := strings.Replace(m.Name, string(os.PathSeparator), "-", -1)
+			mutationFileId := fmt.Sprintf("%s.%s.%d", relativeFilePath, safeMutationName, mutationID)
+			log.WithField("name", mutationFileId).Info("Creating mutant.")
+			// TODO would multiple files be named the same thing? directory structure could become complicated
+			mutantPath, err := copyProject(config, mutationFileId) // TODO verify correctness of absolute file
 			if err != nil {
 				log.WithField("error", err).Error("Internal error.")
 			}
@@ -100,7 +103,7 @@ func mutate(config *MutationConfig, mutationID int, pkg *types.Package,
 				log.WithFields(
 					log.Fields{"mutant": mutatedFilePath, "checksum": checksum}).
 					Debug("Saving mutated file.")
-				mutantInfo := MutantInfo{pkg, info, file,
+				mutantInfo := MutantInfo{pkg, file,
 				relativeFilePath, mutatedFilePath, checksum}
 				mutantPaths = append(mutantPaths, mutantInfo)
 			}

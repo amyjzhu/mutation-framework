@@ -154,6 +154,8 @@ func mainCmd(args []string) int {
 			return exitCode
 		}
 	} else {
+		// TODO refactor this declaration
+		stats = &mutationStats{}
 		log.Info("Running tests without  mutating.")
 		mutantPaths, err = findAllMutantsInFolder(config, stats)
 		if err != nil {

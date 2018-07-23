@@ -36,57 +36,8 @@ func printStats(config *MutationConfig, stats *mutationStats) {
 
 var liveMutants = make([]string, 0)
 
-/*func findAllMutantsInFolder(config *MutationConfig, folder string) []MutantInfo {
-	mutationFolderAbsolutePath := config.FileBasePath + folder
-	var mutants []MutantInfo
-	mutantPattern := regexp.MustCompile(`[\d]+.go`)
-	mutantNamePattern := regexp.MustCompile(`([\w\-. ]+.go)[\w\-. ]*.[\d]+.go`)
-	isMutant := func(info os.FileInfo) bool {
-		return mutantPattern.MatchString(filepath.Clean(info.Name()))
-	}
-
-	// TODO multiple files with same name case
-	filepath.Walk(mutationFolderAbsolutePath, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
-
-		if info.IsDir() {
-			if isMutant(info) {
-				fmt.Printf("the path is %s", path)
-				// I need to find the mutated file. should be the first part before
-				// TODO only go files are supported for mutation... duh
-				// We want the first match and the second item in the match (captured group)
-				//mutantName := mutantNamePattern.FindAllStringSubmatch(info.Name(), -1)[0][1]
-				// TODO don't use mutantName, just check against all mutants specified in config
-
-				var mutatedFilePath
-				for mutantName := range config.getIncludedFiles() {
-					mutatedFilePath = getMutatedFilePath(path, mutantName)
-				}
-
-				if mutatedFilePath == "" {
-					panic(fmt.Sprintf("could not find mutant file for %s", path))
-				}
-
-				checksum, err := getChecksum(mutatedFilePath)
-				if err != nil {
-					panic(fmt.Sprintf("could not get checksum for for %s", mutatedFilePath))
-				}
-
-				_, _, pkg, _, err := mutesting.ParseAndTypeCheckFile(mutatedFilePath)
-				mutantInfo := MutantInfo{pkg, "", path, mutatedFilePath, checksum}
-				return filepath.SkipDir
-			}
-		}
-
-		return nil
-	})
-
-	return mutants
-}*/
-
 func findAllMutantsInFolder(config *MutationConfig, stats *mutationStats) ([]MutantInfo, error) {
+	log.Info("Finding mutants and mutant files.")
 	var mutants []MutantInfo
 
 	var findMutantsRecursive func(folder string, pathSoFar string) error
@@ -104,8 +55,9 @@ func findAllMutantsInFolder(config *MutationConfig, stats *mutationStats) ([]Mut
 					if err != nil {
 						return err
 					}
-					fmt.Println(mutantInfo)
-					mutants = append(mutants, *mutantInfo)
+					if mutantInfo != nil {
+						mutants = append(mutants, *mutantInfo)
+					}
 				} else {
 					findMutantsRecursive(appendFolder(absolutePath, fileInfo.Name()),
 						appendFolder(pathSoFar, fileInfo.Name()))
@@ -129,7 +81,6 @@ func findAllMutantsInFolder(config *MutationConfig, stats *mutationStats) ([]Mut
 func isMutant(candidate string) bool {
 	mutantPattern := regexp.MustCompile(`([\w\-. ]+.go)[\w\-. ]*.[\d]+`)
 	return mutantPattern.MatchString(filepath.Clean(candidate))
-
 }
 
 func createNewMutantInfo(pathSoFar string, fileInfo os.FileInfo, absPath string, stats *mutationStats) (*MutantInfo, error) {
@@ -143,16 +94,16 @@ func createNewMutantInfo(pathSoFar string, fileInfo os.FileInfo, absPath string,
 	_, _, pkg, _, err := mutesting.ParseAndTypeCheckFile(mutatedFileAbsolutePath)
 	if err != nil {
 		stats.skipped++
-		log.Info(fmt.Sprintf("SKIP %s", pathSoFar))
+		log.WithField("mutant", mutatedFileRelativePath).Info("Skip this mutant.")
 		return nil, nil
 	}
+	log.WithField("path", mutatedFileAbsolutePath).Debug("Found mutant.")
 	mutantInfo := MutantInfo{pkg, mutatedFileRelativePath,
 		currentPath, mutatedFileAbsolutePath, checksum}
 	return &mutantInfo, nil
 }
 
 func appendFolder(original string, folder string) string {
-	// TODO check for slash
 	if original == "" {
 		return folder
 	}
@@ -166,22 +117,6 @@ func getMutatedFileRelativePath(pathSoFar string, mutantFolder string) string {
 
 	return appendFolder(pathSoFar, mutantName)
 }
-
-/*
-func getMutatedFilePath(mutantFilePath string, mutantName string) string {
-	mutatedFilePath := ""
-	filepath.Walk(mutantFilePath, func(path string, info os.FileInfo, err error) error {
-		if !info.IsDir() {
-			if strings.HasSuffix(path, mutantName) {
-				path =  mutatedFilePath
-			}
-		}
-		return nil
-	})
-
-	return mutatedFilePath
-}
-*/
 
 func getChecksum(path string) (string, error) {
 	data, err := ioutil.ReadFile(path)
@@ -207,6 +142,7 @@ func runMutants(config *MutationConfig, mutantFiles []MutantInfo, stats *mutatio
 
 func runExecution(config *MutationConfig, mutantInfo MutantInfo, stats *mutationStats) int {
 	log.WithField("mutant", mutantInfo.mutationFile).Debug("Running tests.")
+
 	if !config.Test.Disable {
 		execExitCode := oneMutantRunTests(config, mutantInfo.pkg,
 			mutantInfo.originalFile, mutantInfo.mutantDirPath, mutantInfo.mutationFile)
@@ -238,12 +174,17 @@ func runExecution(config *MutationConfig, mutantInfo MutantInfo, stats *mutation
 	return returnOk
 }
 
-func oneMutantRunTests(config *MutationConfig, pkg *types.Package, originalFilePath string, file string, mutationFile string) (execExitCode int) {
-	if config.Commands.Test != "" {
-		return customTestMutateExec(config, originalFilePath, file, mutationFile, config.Commands.Test)
+func oneMutantRunTests(config *MutationConfig, pkg *types.Package, originalFilePath string, file string, absMutationFile string) (execExitCode int) {
+	_, _, _, _, err := mutesting.ParseAndTypeCheckFile(absMutationFile)
+	if err != nil {
+		return execSkipped
 	}
 
-	return customMutateExec(config, pkg, file, mutationFile)
+	if config.Commands.Test != "" {
+		return customTestMutateExec(config, originalFilePath, file, absMutationFile, config.Commands.Test)
+	}
+
+	return customMutateExec(config, pkg, file, absMutationFile)
 }
 
 func customTestMutateExec(config *MutationConfig, originalFilePath string, dirPath string, mutationFile string, testCommand string) (execExitCode int) {

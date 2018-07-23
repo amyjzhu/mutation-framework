@@ -86,7 +86,6 @@ func mutate(config *MutationConfig, mutationID int, pkg *types.Package,
 			safeMutationName := strings.Replace(m.Name, string(os.PathSeparator), "-", -1)
 			mutationFileId := fmt.Sprintf("%s.%s.%d", relativeFilePath, safeMutationName, mutationID)
 			log.WithField("name", mutationFileId).Info("Creating mutant.")
-			// TODO would multiple files be named the same thing? directory structure could become complicated
 			mutantPath, err := copyProject(config, mutationFileId) // TODO verify correctness of absolute file
 			if err != nil {
 				log.WithField("error", err).Error("Internal error.")

@@ -10,7 +10,6 @@ import (
 	"os"
 	"sort"
 
-	"github.com/amyjzhu/mutation-framework/osutil"
 	log "github.com/sirupsen/logrus"
 	"path/filepath"
 	"io/ioutil"
@@ -138,7 +137,7 @@ func runMutants(config *MutationConfig, mutantFiles []MutantInfo, allStats map[s
 	log.Info("Executing tests against mutants.")
 	exitCode := returnOk
 	for _, file := range mutantFiles {
-		stats := allStats[file.originalFile]
+		stats := allStats[file.originalFileRelativePath]
 		exitCode = runExecution(config, file, stats)
 	}
 
@@ -147,15 +146,16 @@ func runMutants(config *MutationConfig, mutantFiles []MutantInfo, allStats map[s
 }
 
 func runExecution(config *MutationConfig, mutantInfo MutantInfo, stats *mutationStats) int {
-	log.WithField("mutant", mutantInfo.mutationFile).Debug("Running tests.")
+	log.WithField("mutant", mutantInfo.mutationFileAbsPath).Debug("Running tests.")
 
 	if !config.Test.Disable {
 		execExitCode := oneMutantRunTests(config, mutantInfo.pkg,
-			mutantInfo.originalFile, mutantInfo.mutantDirPath, mutantInfo.mutationFile)
+			mutantInfo.originalFileRelativePath, mutantInfo.mutantDirPathAbsPath,
+			mutantInfo.mutationFileAbsPath)
 
 		log.WithField("exit_code", execExitCode).Debug("Finished running tests.")
 
-		msg := fmt.Sprintf("%q with checksum %s", mutantInfo.mutationFile, mutantInfo.checksum)
+		msg := fmt.Sprintf("%q with checksum %s", mutantInfo.mutationFileAbsPath, mutantInfo.checksum)
 
 		switch execExitCode {
 		case execPassed:
@@ -204,21 +204,13 @@ func customTestMutateExec(config *MutationConfig, originalFilePath string, dirPa
 	// TODO why does it keep running over and over
 
 	// TODO not supported by afero
-	os.Chdir(dirPath)
-
-	diff, err := exec.Command("diff", "-u", originalFilePath, mutationFile).CombinedOutput()
-	if err == nil {
-		execExitCode = execPassed
-	} else if e, ok := err.(*exec.ExitError); ok {
-		execExitCode = e.Sys().(syscall.WaitStatus).ExitStatus()
-	} else {
-		panic(err)
+	err := os.Chdir(dirPath)
+	if err != nil {
+		log.Error(err)
+		return returnError
 	}
-	if execExitCode != execPassed && execExitCode != execFailed {
-		log.Info(diff)
 
-		panic("Could not execute diff on mutation file")
-	}
+	diff, execExitCode := showDiff(originalFilePath, mutationFile)
 
 	execWithArgs := strings.Split(testCommand, " ")
 
@@ -239,6 +231,52 @@ func customTestMutateExec(config *MutationConfig, originalFilePath string, dirPa
 	execExitCode = determinePassOrFail(diff, mutationFile, execExitCode)
 
 	return execExitCode
+}
+
+func customMutateExec(config *MutationConfig, pkg *types.Package, file string, mutationFile string) (execExitCode int) {
+	log.Debug("Execute custom exec command for mutation")
+
+	os.Chdir(file)
+
+	diff, execExitCode := showDiff(file, mutationFile)
+
+	pkgName := pkg.Path()
+
+	test, err := exec.Command("go", "test", "-timeout", fmt.Sprintf("%ds", config.Test.Timeout), pkgName).CombinedOutput()
+
+	if err == nil {
+		execExitCode = execPassed
+	} else if e, ok := err.(*exec.ExitError); ok {
+		execExitCode = e.Sys().(syscall.WaitStatus).ExitStatus()
+	} else {
+		panic(err)
+	}
+
+	log.Debug(test)
+
+	putFailedTestsInMap(mutationFile, test)
+
+	execExitCode = determinePassOrFail(diff, mutationFile, execExitCode)
+
+	return execExitCode
+}
+
+func showDiff(file string, mutationFile string) (diff []byte, execExitCode int) {
+	diff, err := exec.Command("diff", "-u", file, mutationFile).CombinedOutput()
+	if err == nil {
+		execExitCode = execPassed
+	} else if e, ok := err.(*exec.ExitError); ok {
+		execExitCode = e.Sys().(syscall.WaitStatus).ExitStatus()
+	} else {
+		panic(err)
+	}
+	if execExitCode != execPassed && execExitCode != execFailed {
+		log.Info(diff)
+
+		panic("Could not execute diff on mutation file")
+	}
+
+	return
 }
 
 func determinePassOrFail(diff []byte, mutationFile string, execExitCode int) (int) {
@@ -263,76 +301,6 @@ func determinePassOrFail(diff []byte, mutationFile string, execExitCode int) (in
 		log.Debug(string(diff))
 	}
 	return execExitCode
-}
-
-func customMutateExec(config *MutationConfig, pkg *types.Package, file string, mutationFile string) (execExitCode int) {
-	log.Debug("Execute custom exec command for mutation")
-
-	diff, err := exec.Command("diff", "-u", file, mutationFile).CombinedOutput()
-	if err == nil {
-		execExitCode = execPassed
-	} else if e, ok := err.(*exec.ExitError); ok {
-		execExitCode = e.Sys().(syscall.WaitStatus).ExitStatus()
-	} else {
-		panic(err)
-	}
-	if execExitCode != execPassed && execExitCode != execFailed {
-		log.Info(diff)
-
-		panic("Could not execute diff on mutation file")
-	}
-
-	defer func() {
-		_ = fs.Rename(file+".tmp", file)
-	}()
-
-	err = fs.Rename(file, file+".tmp")
-	if err != nil {
-		panic(err)
-	}
-	err = osutil.CopyFile(mutationFile, file)
-	if err != nil {
-		panic(err)
-	}
-
-	err = moveIntoMutantsFolder(config.Mutate.MutantFolder, mutationFile)
-	if err != nil {
-		panic(err)
-	}
-
-	pkgName := pkg.Path()
-
-	test, err := exec.Command("go", "test", "-timeout", fmt.Sprintf("%ds", config.Test.Timeout), pkgName).CombinedOutput()
-
-	if err == nil {
-		execExitCode = execPassed
-	} else if e, ok := err.(*exec.ExitError); ok {
-		execExitCode = e.Sys().(syscall.WaitStatus).ExitStatus()
-	} else {
-		panic(err)
-	}
-
-	log.Debug(test)
-
-	putFailedTestsInMap(mutationFile, test)
-
-	execExitCode = determinePassOrFail(diff, mutationFile, execExitCode)
-
-	return execExitCode
-}
-
-// TODO may not be necessary anymore
-func moveIntoMutantsFolder(folder string, file string) error {
-	relevantMutationFileName := regexp.MustCompile(`\/?([\w-]*\/)*([\w.-]*)`)
-	matches := relevantMutationFileName.FindStringSubmatch(file)
-	CAPTURING_GROUP_INDEX := 2
-	prettyMutationFileName := matches[CAPTURING_GROUP_INDEX]
-
-	if _, err := fs.Stat(folder); os.IsNotExist(err) {
-		fs.Mkdir(folder, os.ModePerm)
-	}
-
-	return osutil.CopyFile(file, folder + prettyMutationFileName)
 }
 
 func getFailedTests(output []byte) []string {

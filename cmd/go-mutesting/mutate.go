@@ -16,11 +16,11 @@ import (
 )
 
 type MutantInfo struct {
-	pkg *types.Package
-	originalFile string
-	mutantDirPath string
-	mutationFile string
-	checksum string
+	pkg                      *types.Package
+	originalFileRelativePath string
+	mutantDirPathAbsPath     string
+	mutationFileAbsPath      string
+	checksum                 string
 }
 
 func mutateFiles(config *MutationConfig, files map[string]string, operators []mutator.Mutator) (map[string]*mutationStats, []MutantInfo, int) {
@@ -51,7 +51,7 @@ func mutateFiles(config *MutationConfig, files map[string]string, operators []mu
 
 		// TODO match function names instead
 		mutantInfo := mutate(config, mutationID, pkg, info, abs, relativeFileLocation,
-			fset, src, src, mutantFile, stats)
+			fset, src, src, stats)
 
 		mutantInfos = append(mutantInfos, mutantInfo...)
 	}
@@ -71,7 +71,7 @@ func createMutantFolderPath(file string) {
 
 func mutate(config *MutationConfig, mutationID int, pkg *types.Package,
 	info *types.Info, file string, relativeFilePath string, fset *token.FileSet,
-	src ast.Node, node ast.Node, tmpFile string, stats *mutationStats) []MutantInfo {
+	src ast.Node, node ast.Node, stats *mutationStats) []MutantInfo {
 
 	var mutantInfos []MutantInfo
 
@@ -113,7 +113,8 @@ func mutate(config *MutationConfig, mutationID int, pkg *types.Package,
 					Debug("Saving mutated file.")
 
 				mutantInfo := MutantInfo{pkg, relativeFilePath,
-					file, mutatedFilePath, checksum}
+					filepath.Clean(mutantPath),
+					mutatedFilePath, checksum}
 				mutantInfos = append(mutantInfos, mutantInfo)
 			}
 

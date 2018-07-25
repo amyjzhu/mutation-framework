@@ -23,11 +23,13 @@ type MutantInfo struct {
 	checksum string
 }
 
-func mutateFiles(config *MutationConfig, files map[string]string, operators []mutator.Mutator) (*mutationStats, int) {
+func mutateFiles(config *MutationConfig, files map[string]string, operators []mutator.Mutator) (map[string]*mutationStats, int) {
 	log.Info("Mutating files.")
-	stats := &mutationStats{}
+	allStats := make(map[string]*mutationStats)
 
 	for relativeFileLocation, abs := range files {
+		stats := &mutationStats{}
+		allStats[relativeFileLocation] = stats
 		log.WithField("file", relativeFileLocation).Debug("Mutating file.")
 
 		src, fset, pkg, info, err := mutesting.ParseAndTypeCheckFile(abs)
@@ -52,7 +54,7 @@ func mutateFiles(config *MutationConfig, files map[string]string, operators []mu
 			fset, src, src, mutantFile, stats)
 	}
 
-	return stats, returnOk
+	return allStats, returnOk
 }
 
 func createMutantFolderPath(file string) {
@@ -93,6 +95,7 @@ func mutate(config *MutationConfig, mutationID int, pkg *types.Package,
 
 			mutatedFilePath := filepath.Clean(mutantPath) + string(os.PathSeparator) + relativeFilePath
 			checksum, duplicate, err := saveAST(mutationBlackList, mutatedFilePath, fset, src)
+
 			if err != nil {
 				log.WithField("error", err).Error("Internal error.")
 			} else if duplicate {

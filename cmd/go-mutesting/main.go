@@ -86,7 +86,7 @@ func checkArguments(args []string, opts *Args) (bool, int) {
 		return true, returnHelp
 	} else if opts.General.ListMutators {
 		for _, name := range mutator.List() {
-			fmt.Println(name)
+			log.Debug(name)
 		}
 
 		return true, returnOk
@@ -107,7 +107,7 @@ func checkArguments(args []string, opts *Args) (bool, int) {
 	return false, 0
 }
 
-func exitError(format string, args ...interface{}) int {
+func exitError(format string, args ...interface{}) (exitCode int) {
 	errorMessage := fmt.Sprintf(format+"\n", args...)
 	log.Error(errorMessage)
 
@@ -129,7 +129,7 @@ func (ms *mutationStats) Total() int {
 }
 
 
-func mainCmd(args []string) int {
+func mainCmd(args []string) (exitCode int) {
 	var opts= &Args{}
 	if exit, exitCode := checkArguments(args, opts); exit {
 		return exitCode
@@ -146,8 +146,7 @@ func mainCmd(args []string) int {
 	operators := retrieveMutationOperators(config)
 	files := config.getRelativeAndAbsoluteFiles()
 
-	var stats *mutationStats
-	var exitCode int
+	var stats map[string]*mutationStats
 	if !config.Mutate.Disable {
 		stats, exitCode = mutateFiles(config, files, operators)
 		if exitCode == returnError {
@@ -155,14 +154,13 @@ func mainCmd(args []string) int {
 		}
 	} else {
 		// TODO refactor this declaration
-		stats = &mutationStats{}
-		log.Info("Running tests without  mutating.")
+		stats = make(map[string]*mutationStats)
+		log.Info("Running tests without mutating.")
 		mutantPaths, err = findAllMutantsInFolder(config, stats)
 		if err != nil {
 			log.Error(err)
 			return exitCode
 		}
-		fmt.Println(mutantPaths)
 	}
 
 	if !config.Test.Disable {

@@ -18,16 +18,19 @@ import (
 	"github.com/amyjzhu/mutation-framework"
 )
 
-func printStats(config *MutationConfig, stats *mutationStats) {
+func printStats(config *MutationConfig, allStats map[string]*mutationStats) {
 	// TODO show stats for different files
 	if !config.Test.Disable {
 		// TODO parameterize
 		getRedundantCandidates()
 		log.Info("Mutants killed by: ", testsToMutants)
 		log.Info("Live mutants are: ", liveMutants)
-		log.Info(
-			fmt.Sprintf("The mutation score is %f (%d passed, %d failed, %d duplicated, %d skipped, total is %d)",
-				stats.Score(), stats.passed, stats.failed, stats.duplicated, stats.skipped, stats.Total()))
+
+		for file, stats := range allStats {
+			log.WithField("file", file).
+				Info(fmt.Sprintf("For this file, the mutation score is %f (%d passed, %d failed, %d duplicated, %d skipped, total is %d)",
+					stats.Score(), stats.passed, stats.failed, stats.duplicated, stats.skipped, stats.Total()))
+		}
 	} else {
 		log.Info("Cannot do a mutation testing summary since no exec command was executed.")
 	}
@@ -36,7 +39,7 @@ func printStats(config *MutationConfig, stats *mutationStats) {
 
 var liveMutants = make([]string, 0)
 
-func findAllMutantsInFolder(config *MutationConfig, stats *mutationStats) ([]MutantInfo, error) {
+func findAllMutantsInFolder(config *MutationConfig, allStats map[string]*mutationStats) ([]MutantInfo, error) {
 	log.Info("Finding mutants and mutant files.")
 	var mutants []MutantInfo
 
@@ -51,7 +54,7 @@ func findAllMutantsInFolder(config *MutationConfig, stats *mutationStats) ([]Mut
 		for _, fileInfo := range directoryContents {
 			if fileInfo.IsDir() {
 				if isMutant(fileInfo.Name()) {
-					mutantInfo, err := createNewMutantInfo(pathSoFar, fileInfo, absolutePath, stats)
+					mutantInfo, err := createNewMutantInfo(pathSoFar, fileInfo, absolutePath, allStats)
 					if err != nil {
 						return err
 					}
@@ -83,22 +86,23 @@ func isMutant(candidate string) bool {
 	return mutantPattern.MatchString(filepath.Clean(candidate))
 }
 
-func createNewMutantInfo(pathSoFar string, fileInfo os.FileInfo, absPath string, stats *mutationStats) (*MutantInfo, error) {
-	mutatedFileRelativePath := getMutatedFileRelativePath(pathSoFar, fileInfo.Name())
+func createNewMutantInfo(pathSoFar string, fileInfo os.FileInfo, absPath string, allStats map[string]*mutationStats) (*MutantInfo, error) {
+	originalFilePath := getMutatedFileRelativePath(pathSoFar, fileInfo.Name())
 	currentPath := appendFolder(absPath, fileInfo.Name())
-	mutatedFileAbsolutePath := appendFolder(currentPath, mutatedFileRelativePath)
+	mutatedFileAbsolutePath := appendFolder(currentPath, originalFilePath)
 	checksum, err := getChecksum(mutatedFileAbsolutePath)
 	if err != nil {
 		return nil, err
 	}
-	_, _, pkg, _, err := mutesting.ParseAndTypeCheckFile(mutatedFileAbsolutePath)
-	if err != nil {
-		stats.skipped++
-		log.WithField("mutant", mutatedFileRelativePath).Info("Skip this mutant.")
-		return nil, nil
-	}
+
+	stats := &mutationStats{}
+	allStats[originalFilePath] = stats
+
+	// check the original file package
+	fmt.Printf("Getting the package of %s\n", originalFilePath)
+	_, _, pkg, _, err := mutesting.ParseAndTypeCheckFile(originalFilePath)
 	log.WithField("path", mutatedFileAbsolutePath).Debug("Found mutant.")
-	mutantInfo := MutantInfo{pkg, mutatedFileRelativePath,
+	mutantInfo := MutantInfo{pkg, originalFilePath,
 		currentPath, mutatedFileAbsolutePath, checksum}
 	return &mutantInfo, nil
 }
@@ -129,14 +133,15 @@ func getChecksum(path string) (string, error) {
 
 }
 
-func runMutants(config *MutationConfig, mutantFiles []MutantInfo, stats *mutationStats) int {
+func runMutants(config *MutationConfig, mutantFiles []MutantInfo, allStats map[string]*mutationStats) int {
 	log.Info("Executing tests against mutants.")
 	exitCode := returnOk
 	for _, file := range mutantFiles {
+		stats := allStats[file.originalFile]
 		exitCode = runExecution(config, file, stats)
 	}
 
-	printStats(config, stats)
+	printStats(config, allStats)
 	return exitCode
 }
 
@@ -175,10 +180,11 @@ func runExecution(config *MutationConfig, mutantInfo MutantInfo, stats *mutation
 }
 
 func oneMutantRunTests(config *MutationConfig, pkg *types.Package, originalFilePath string, file string, absMutationFile string) (execExitCode int) {
+	/* // TODO might be worthwhile to check validity before running tests, because test execution can take a long time
 	_, _, _, _, err := mutesting.ParseAndTypeCheckFile(absMutationFile)
 	if err != nil {
 		return execSkipped
-	}
+	}*/
 
 	if config.Commands.Test != "" {
 		return customTestMutateExec(config, originalFilePath, file, absMutationFile, config.Commands.Test)
@@ -193,6 +199,8 @@ func customTestMutateExec(config *MutationConfig, originalFilePath string, dirPa
 		log.WithField("command", config.Commands.CleanUp).Info("Running clean up command.")
 		runCleanUpCommand(config)
 	}()
+
+	// TODO why does it keep running over and over
 
 	// TODO not supported by afero
 	os.Chdir(dirPath)

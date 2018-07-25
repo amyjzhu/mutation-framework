@@ -21,7 +21,7 @@ var afs = &afero.Afero{Fs: fs}
 func ParseFile(file string) (*ast.File, *token.FileSet, error) {
 	data, err := afs.ReadFile(file)
 	if err != nil {
-		fmt.Println("error in ParseFile")
+		log.Error("error in ParseFile")
 		return nil, nil, err
 	}
 
@@ -31,7 +31,7 @@ func ParseFile(file string) (*ast.File, *token.FileSet, error) {
 func LoadFile(file string) (data []byte, err error) {
 	data, err = afs.ReadFile(file)
 	if err != nil {
-		fmt.Println("error in LoadFile")
+		log.Error("error in LoadFile")
 		return nil, err
 	}
 	return data, nil
@@ -44,7 +44,7 @@ func ParseSource(data interface{}) (*ast.File, *token.FileSet, error) {
 
 	src, err := parser.ParseFile(fset, "", data, parser.ParseComments|parser.AllErrors)
 	if err != nil {
-		fmt.Println("error in ParseSource")
+		log.Error("error in ParseSource")
 		return nil, nil, err
 	}
 

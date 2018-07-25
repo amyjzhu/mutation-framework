@@ -8,4 +8,4 @@ _go_mutesting() {
 	return 1
 }
 
-complete -F _go_mutesting go-mutesting
+complete -F _go_mutesting mutation-framework

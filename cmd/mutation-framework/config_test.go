@@ -81,13 +81,13 @@ func TestWildcardConfig(t *testing.T) {
 	assert.Nil(t, err)
 
 	expectedIncludedFiles := []string{
-		"cmd/go-mutesting/config.go",
-		"cmd/go-mutesting/config_test.go",
-		"cmd/go-mutesting/main.go",
-		"cmd/go-mutesting/main_test.go",
-		"cmd/go-mutesting/mutate.go",
-		"cmd/go-mutesting/test_runner.go",
-		"cmd/go-mutesting/test_runner_test.go"}
+		"cmd/mutation-framework/config.go",
+		"cmd/mutation-framework/config_test.go",
+		"cmd/mutation-framework/main.go",
+		"cmd/mutation-framework/main_test.go",
+		"cmd/mutation-framework/mutate.go",
+		"cmd/mutation-framework/test_runner.go",
+		"cmd/mutation-framework/test_runner_test.go"}
 
 	assert.ElementsMatch(t, wildcardConfig.Mutate.FilesToInclude, expectedIncludedFiles)
 

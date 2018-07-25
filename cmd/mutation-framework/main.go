@@ -69,11 +69,11 @@ type mutationStats struct {
 }
 
 func checkArguments(args []string, opts *Args) (bool, int) {
-	p := flags.NewNamedParser("go-mutesting", flags.None)
+	p := flags.NewNamedParser("mutation-framework", flags.None)
 
 	p.ShortDescription = "Mutation testing for Go source code"
 
-	if _, err := p.AddGroup("go-mutesting", "go-mutesting arguments", opts); err != nil {
+	if _, err := p.AddGroup("mutation-framework", "mutation-framework arguments", opts); err != nil {
 		return true, exitError(err.Error())
 	}
 

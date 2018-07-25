@@ -11,7 +11,7 @@
       "mutator/mock"
     ],
     "files_to_include": [
-      "cmd/go-mutesting/*.go"
+      "cmd/mutation-framework/*.go"
     ],
     "files_to_exclude": [
       "/mutator/*",

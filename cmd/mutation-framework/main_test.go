@@ -90,18 +90,18 @@ func testMain(t *testing.T, root string, exec []string, expectedExitCode int, co
 }
 
 // TODO file paths
-// TODO should write more tests with mocks or abstract file systems (afero?)
+// TODO won't work until afero copyfile exists
 func TestCopy(t *testing.T) {
 	fs = afero.NewMemMapFs()
 
 	testFileParent := "/tmp/mutation-testing/"
-	testFile := testFileParent + "testcopy/"
+	testFile := appendFolder(testFileParent, "testcopy/")
 	// No idea what permission mode this is
 	err := fs.MkdirAll(testFile, os.FileMode(077))
 	assert.Nil(t, err)
 
 	mutationFolder := "copied-mutants/"
-	mutationPath := testFileParent + mutationFolder
+	mutationPath := appendFolder(testFileParent, mutationFolder)
 	defer fs.RemoveAll(testFileParent)
 
 	sample, err := fs.Create(testFile + "sample.txt")
@@ -112,7 +112,7 @@ func TestCopy(t *testing.T) {
 	err = copyRecursive(true, testFileParent, mutationPath, mutationFolder)
 	assert.Nil(t, err)
 
-	entries, err := ioutil.ReadDir(mutationFolder)
+	entries, err := ioutil.ReadDir(mutationPath)
 	assert.Nil(t, err)
 
 	testFolderExists := false

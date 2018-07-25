@@ -30,3 +30,7 @@ func TestAppendFolder(t *testing.T) {
 	assert.Equal(t,"/folder", appendFolder("/", "folder"))
 	assert.Equal(t,"/folder", appendFolder("/", "/folder"))
 }
+
+func TestCreateMutantInfo(t *testing.T) {
+
+}

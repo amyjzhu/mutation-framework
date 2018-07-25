@@ -54,7 +54,7 @@ type Args struct {
 
 	Exec struct {
 		Composition int `long:"composition" description:"Describe how many nodes should contain the mutation"`
-		MutateOnly bool   `long:"mutate-only" description:"Skip the built-in exec command and just generate the mutations"`
+		MutateOnly bool   `long:"no-exec" description:"Skip the built-in exec command and just generate the mutations"`
 		Timeout    uint   `long:"exec-timeout" description:"Sets a timeout for the command execution (in seconds)" default:"10"`
 		ExecOnly   bool   `long:"no-mutate" description:"Does not mutate the files, only executes existing mutations"`
 		CustomTest string   `string:"custom-test" description:"Specifies location of test script"`
@@ -130,9 +130,20 @@ func (ms *mutationStats) Total() int {
 
 
 func mainCmd(args []string) (exitCode int) {
+	config, operators, files, exitCode := setUp(args)
+	if exitCode != returnOk {
+		return exitCode
+	}
+
+	exitCode = execute(config, operators, files)
+
+	return exitCode
+}
+
+func setUp(args []string) (*MutationConfig, []mutator.Mutator, map[string]string, int){
 	var opts= &Args{}
 	if exit, exitCode := checkArguments(args, opts); exit {
-		return exitCode
+		return nil, nil, nil, exitCode
 	}
 
 	pathToConfig := opts.General.ConfigPath
@@ -146,8 +157,14 @@ func mainCmd(args []string) (exitCode int) {
 	operators := retrieveMutationOperators(config)
 	files := config.getRelativeAndAbsoluteFiles()
 
+	return config, operators, files, returnOk
+}
+
+func execute(config *MutationConfig, operators []mutator.Mutator, files map[string]string) (exitCode int) {
 	var mutantPaths []MutantInfo
 	var stats map[string]*mutationStats
+	var err error
+
 	if !config.Mutate.Disable {
 		stats, mutantPaths, exitCode = mutateFiles(config, files, operators)
 		if exitCode == returnError {
@@ -157,18 +174,21 @@ func mainCmd(args []string) (exitCode int) {
 		// TODO refactor this declaration
 		stats = make(map[string]*mutationStats)
 		log.Info("Running tests without mutating.")
-		mutantPaths, err = findAllMutantsInFolder(config, stats)
+		mutantPaths, err = findAllMutantsInFolder(config, stats, files)
 		if err != nil {
 			log.Error(err)
-			return exitCode
+			return returnError
 		}
 	}
 
 	if !config.Test.Disable {
 		exitCode = runMutants(config, mutantPaths, stats)
+	} else {
+		exitCode = returnOk
 	}
 
 	return exitCode
+
 }
 
 func setUpLogging(config *MutationConfig) {

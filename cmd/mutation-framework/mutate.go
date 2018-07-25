@@ -160,6 +160,12 @@ func copyRecursive(overwrite bool, source string, dest string, mutantFolder stri
 	}
 
 	file, err := fs.Stat(source)
+
+	if err != nil {
+		// TODO is this right?
+		return err
+	}
+
 	if file.IsDir() {
 		err = fs.MkdirAll(dest, file.Mode())
 		if err != nil {
@@ -172,8 +178,8 @@ func copyRecursive(overwrite bool, source string, dest string, mutantFolder stri
 		}
 
 		for _, entry := range files {
-			newSource := source + string(os.PathSeparator) + entry.Name()
-			newDest := dest + string(os.PathSeparator) + entry.Name()
+			newSource := appendFolder(source, entry.Name())
+			newDest := appendFolder(dest, entry.Name())
 
 			if entry.IsDir() {
 				if doNotCopyDir(entry, mutantFolder) {

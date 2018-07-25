@@ -38,7 +38,7 @@ func printStats(config *MutationConfig, allStats map[string]*mutationStats) {
 
 var liveMutants = make([]string, 0)
 
-func findAllMutantsInFolder(config *MutationConfig, allStats map[string]*mutationStats) ([]MutantInfo, error) {
+func findAllMutantsInFolder(config *MutationConfig, allStats map[string]*mutationStats, filesToExec map[string]string) ([]MutantInfo, error) {
 	log.Info("Finding mutants and mutant files.")
 	var mutants []MutantInfo
 
@@ -53,7 +53,7 @@ func findAllMutantsInFolder(config *MutationConfig, allStats map[string]*mutatio
 		for _, fileInfo := range directoryContents {
 			if fileInfo.IsDir() {
 				if isMutant(fileInfo.Name()) {
-					mutantInfo, err := createNewMutantInfo(pathSoFar, fileInfo, absolutePath, allStats)
+					mutantInfo, err := createNewMutantInfo(filesToExec, pathSoFar, fileInfo, absolutePath, allStats)
 					if err != nil {
 						return err
 					}
@@ -86,12 +86,18 @@ func isMutant(candidate string) bool {
 	return mutantPattern.MatchString(filepath.Clean(candidate))
 }
 
-func createNewMutantInfo(pathSoFar string, fileInfo os.FileInfo, absPath string, allStats map[string]*mutationStats) (*MutantInfo, error) {
+func createNewMutantInfo(acceptableFiles map[string]string, pathSoFar string, fileInfo os.FileInfo,
+	absPath string, allStats map[string]*mutationStats) (*MutantInfo, error) {
 	originalFilePath := getMutatedFileRelativePath(pathSoFar, fileInfo.Name())
 	currentPath := appendFolder(absPath, fileInfo.Name())
 	mutatedFileAbsolutePath := appendFolder(currentPath, originalFilePath)
 	checksum, err := getChecksum(mutatedFileAbsolutePath)
 	if err != nil {
+		return nil, err
+	}
+	
+	// don't add the file to be test if it doesn't fit specified files
+	if _, ok := acceptableFiles[originalFilePath]; !ok {
 		return nil, err
 	}
 

@@ -10,7 +10,7 @@ import (
 )
 
 func init() {
-	//mutator.Register("statement/timeout", MutatorTimeout)
+	mutator.Register("statement/timeout", MutatorTimeout)
 }
 
 // Doesn't have to be inspect; we can wholesale mutate

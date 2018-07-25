@@ -146,9 +146,10 @@ func mainCmd(args []string) (exitCode int) {
 	operators := retrieveMutationOperators(config)
 	files := config.getRelativeAndAbsoluteFiles()
 
+	var mutantPaths []MutantInfo
 	var stats map[string]*mutationStats
 	if !config.Mutate.Disable {
-		stats, exitCode = mutateFiles(config, files, operators)
+		stats, mutantPaths, exitCode = mutateFiles(config, files, operators)
 		if exitCode == returnError {
 			return exitCode
 		}

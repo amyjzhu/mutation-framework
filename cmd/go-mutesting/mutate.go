@@ -23,9 +23,10 @@ type MutantInfo struct {
 	checksum string
 }
 
-func mutateFiles(config *MutationConfig, files map[string]string, operators []mutator.Mutator) (map[string]*mutationStats, int) {
+func mutateFiles(config *MutationConfig, files map[string]string, operators []mutator.Mutator) (map[string]*mutationStats, []MutantInfo, int) {
 	log.Info("Mutating files.")
 	allStats := make(map[string]*mutationStats)
+	var mutantInfos []MutantInfo
 
 	for relativeFileLocation, abs := range files {
 		stats := &mutationStats{}
@@ -35,7 +36,7 @@ func mutateFiles(config *MutationConfig, files map[string]string, operators []mu
 		src, fset, pkg, info, err := mutesting.ParseAndTypeCheckFile(abs)
 		if err != nil {
 			log.WithField("file", abs).Error("There was an error compiling the file.")
-			return nil, exitError(err.Error())
+			return nil, nil, exitError(err.Error())
 		}
 
 		err = fs.MkdirAll(config.Mutate.MutantFolder, 0755)
@@ -46,15 +47,16 @@ func mutateFiles(config *MutationConfig, files map[string]string, operators []mu
 		mutantFile := config.Mutate.MutantFolder + relativeFileLocation
 		createMutantFolderPath(mutantFile)
 
-		// TODO should it be number per operator, or number overall?
 		mutationID := 0
 
 		// TODO match function names instead
-		mutationID = mutate(config, mutationID, pkg, info, abs, relativeFileLocation,
+		mutantInfo := mutate(config, mutationID, pkg, info, abs, relativeFileLocation,
 			fset, src, src, mutantFile, stats)
+
+		mutantInfos = append(mutantInfos, mutantInfo...)
 	}
 
-	return allStats, returnOk
+	return allStats, mutantInfos, returnOk
 }
 
 func createMutantFolderPath(file string) {
@@ -69,7 +71,10 @@ func createMutantFolderPath(file string) {
 
 func mutate(config *MutationConfig, mutationID int, pkg *types.Package,
 	info *types.Info, file string, relativeFilePath string, fset *token.FileSet,
-	src ast.Node, node ast.Node, tmpFile string, stats *mutationStats) int {
+	src ast.Node, node ast.Node, tmpFile string, stats *mutationStats) []MutantInfo {
+
+	var mutantInfos []MutantInfo
+
 	for _, m := range config.Mutate.Operators {
 		mutationID = 0 // reset the mutationid for each operator
 		log.WithField("mutation_operator", m.Name).Info("Mutating.")
@@ -88,6 +93,7 @@ func mutate(config *MutationConfig, mutationID int, pkg *types.Package,
 			safeMutationName := strings.Replace(m.Name, string(os.PathSeparator), "-", -1)
 			mutationFileId := fmt.Sprintf("%s.%s.%d", relativeFilePath, safeMutationName, mutationID)
 			log.WithField("name", mutationFileId).Info("Creating mutant.")
+
 			mutantPath, err := copyProject(config, mutationFileId) // TODO verify correctness of absolute file
 			if err != nil {
 				log.WithField("error", err).Error("Internal error.")
@@ -105,9 +111,10 @@ func mutate(config *MutationConfig, mutationID int, pkg *types.Package,
 				log.WithFields(
 					log.Fields{"mutant": mutatedFilePath, "checksum": checksum}).
 					Debug("Saving mutated file.")
-				mutantInfo := MutantInfo{pkg, file,
-				relativeFilePath, mutatedFilePath, checksum}
-				mutantPaths = append(mutantPaths, mutantInfo)
+
+				mutantInfo := MutantInfo{pkg, relativeFilePath,
+					file, mutatedFilePath, checksum}
+				mutantInfos = append(mutantInfos, mutantInfo)
 			}
 
 			changed <- true
@@ -119,11 +126,9 @@ func mutate(config *MutationConfig, mutationID int, pkg *types.Package,
 			mutationID++
 		}
 	}
-
-	return mutationID
+	return mutantInfos
 }
 
-var mutantPaths []MutantInfo
 
 func copyProject(config *MutationConfig, name string) (string, error) {
 	log.WithField("mutant", name).Debug("Copying into mutants folder.")

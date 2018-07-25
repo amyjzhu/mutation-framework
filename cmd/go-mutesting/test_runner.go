@@ -78,6 +78,7 @@ func findAllMutantsInFolder(config *MutationConfig, allStats map[string]*mutatio
 		return nil, err
 	}
 
+	fmt.Println(mutants)
 	return mutants, nil
 }
 
@@ -99,7 +100,6 @@ func createNewMutantInfo(pathSoFar string, fileInfo os.FileInfo, absPath string,
 	allStats[originalFilePath] = stats
 
 	// check the original file package
-	fmt.Printf("Getting the package of %s\n", originalFilePath)
 	_, _, pkg, _, err := mutesting.ParseAndTypeCheckFile(originalFilePath)
 	log.WithField("path", mutatedFileAbsolutePath).Debug("Found mutant.")
 	mutantInfo := MutantInfo{pkg, originalFilePath,
@@ -134,6 +134,7 @@ func getChecksum(path string) (string, error) {
 }
 
 func runMutants(config *MutationConfig, mutantFiles []MutantInfo, allStats map[string]*mutationStats) int {
+	fmt.Println(mutantFiles)
 	log.Info("Executing tests against mutants.")
 	exitCode := returnOk
 	for _, file := range mutantFiles {

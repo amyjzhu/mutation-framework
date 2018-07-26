@@ -12,10 +12,9 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	"path/filepath"
-	"io/ioutil"
 	"crypto/md5"
 	"github.com/amyjzhu/mutation-framework"
-	"github.com/amyjzhu/mutation-framework/osutil"
+	"github.com/spf13/afero"
 )
 
 func printStats(config *MutationConfig, allStats map[string]*mutationStats) {
@@ -47,7 +46,7 @@ func findAllMutantsInFolder(config *MutationConfig, allStats map[string]*mutatio
 
 	// look for all mutant directories
 	findMutantsRecursive = func(absolutePath string, pathSoFar string) error {
-		directoryContents, err := ioutil.ReadDir(absolutePath)
+		directoryContents, err := afero.ReadDir(fs, absolutePath)
 		if err != nil {
 			return err
 		}
@@ -139,7 +138,7 @@ func getMutatedFileRelativePath(pathSoFar string, mutantFolder string) string {
 }
 
 func getChecksum(path string) (string, error) {
-	data, err := ioutil.ReadFile(path)
+	data, err := afero.ReadFile(fs, path)
 	if err != nil {
 		return "", err
 	}
@@ -196,59 +195,6 @@ func executeAllMutants(config *MutationConfig, mutantFiles []MutantInfo, allStat
 
 	printStats(config, allStats)
 	return exitCode
-}
-
-// Copy contents of one folder to another, ignoring mutants folder
-func moveAllContentsExceptMutantFolder(sourceFolder string, dest string, mutantFolder string) error {
-	log.WithFields(log.Fields{"source": sourceFolder, "dest": dest}).Info("Moving contents of folder.")
-	isNotMutantsFolder := func(name string) bool {
-		if strings.Contains(filepath.Clean(mutantFolder), string(os.PathSeparator)) {
-			// Get first part of path, which matches what you see in directory
-			// TODO absolute // paths
-			//fmt.Printf("mutantFolder is %s\n", mutantFolder)
-			mutantFolder = strings.Split(mutantFolder, string(os.PathSeparator))[0]
-		}
-		//fmt.Printf("mutantFolder is %s and name is %s\n", mutantFolder, name)
-
-		// TODO
-		return !(strings.Contains(name, mutantFolder) || strings.Contains(mutantFolder, name))
-	}
-
-	return copyFolderContents(sourceFolder, dest, isNotMutantsFolder)
-}
-
-// Copy all the contents of one folder to another folder i.e. cp src/* dest/
-// Creates destination if doesn't exist
-func copyFolderContents(sourceFolder string, destFolder string, pred func(name string) bool) error {
-	itemsToMove, err := ioutil.ReadDir(sourceFolder)
-	if err != nil {
-		log.Error(err)
-		return err
-	}
-
-	// TODO not sure what code
-	err = os.MkdirAll(destFolder, os.FileMode(0700))
-	if err != nil {
-		log.Error(err)
-		return err
-	}
-
-	for _, item := range itemsToMove {
-		itemPath := appendFolder(sourceFolder, item.Name())
-		newItemPath:= appendFolder(destFolder, item.Name())
-		if pred(item.Name()) {
-			if item.IsDir() {
-				copyFolderContents(itemPath, newItemPath, pred)
-			} else {
-				err = osutil.CopyFile(itemPath, newItemPath)
-				if err != nil {
-					return err
-				}
-			}
-		}
-	}
-
-	return nil
 }
 
 func executeForMutant(config *MutationConfig, mutantInfo MutantInfo, stats *mutationStats) int {

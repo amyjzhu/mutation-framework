@@ -9,7 +9,6 @@ import (
 	"go/printer"
 	"go/token"
 	"io"
-	"io/ioutil"
 	"os"
 	"github.com/jessevdk/go-flags"
 
@@ -272,7 +271,7 @@ func saveAST(mutationBlackList map[string]struct{}, file string, fset *token.Fil
 		return "", false, err
 	}
 
-	err = ioutil.WriteFile(file, src, 0666)
+	err = afero.WriteFile(fs, file, src, 0666)
 	if err != nil {
 		return "", false, err
 	}

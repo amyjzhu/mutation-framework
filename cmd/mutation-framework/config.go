@@ -9,8 +9,9 @@ import (
 	"github.com/ghodss/yaml"
 	"strings"
 	"os"
-	"io/ioutil"
 	log "github.com/sirupsen/logrus"
+	"github.com/spf13/afero"
+	"path/filepath"
 )
 
 // Cannot extend types in other packages
@@ -44,6 +45,11 @@ type Mutate struct {
 	Overwrite bool `json:"overwrite"`
 }
 
+
+// TODO rules
+// Project Directory is necessary
+// If mutant folder doesn't start with /, it is taken to be relative
+
 type Commands struct {
 	Test    string `json:"test"`
 	Build string `json:"build"`
@@ -52,6 +58,7 @@ type Commands struct {
 
 const DefaultMutationFolder = "mutants/"
 
+// Bundle mutation operators together with their names
 func (operator *Operator) UnmarshalJSON(data []byte) error {
 	var mutatorName string
 	err := json.Unmarshal(data , &mutatorName)
@@ -108,7 +115,7 @@ func (config *MutationConfig) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	err = checkNilImportantFields(config)
+	err = validateImportantConfigFields(config)
 	if err != nil {
 		return err
 	}
@@ -135,7 +142,7 @@ func (config *MutationConfig) toString() (string, error) {
 	return string(configString), nil
 }
 
-func checkNilImportantFields(config *MutationConfig) error {
+func validateImportantConfigFields(config *MutationConfig) error {
 	if !config.Mutate.Disable &&
 		(len(config.Mutate.FilesToExclude) == 0 &&
 			len(config.Mutate.FilesToInclude) == 0) {
@@ -196,6 +203,7 @@ func appendSlash(path string) string {
 	return path
 }
 
+// Include files in include, then exclude files from exclude
 func (config *MutationConfig) getIncludedFiles() []string {
 	var filesToMutate = make(map[string]struct{},0)
 
@@ -222,6 +230,8 @@ func (config *MutationConfig) getIncludedFiles() []string {
 	return fileNames
 }
 
+// Maps the relative file paths within the project to their absolute paths
+// given by project directory option
 func (config *MutationConfig) getRelativeAndAbsoluteFiles() (fileMap map[string]string) {
 	fileMap = make(map[string]string)
 	files := config.getIncludedFiles()
@@ -232,6 +242,8 @@ func (config *MutationConfig) getRelativeAndAbsoluteFiles() (fileMap map[string]
 	return
 }
 
+// replaces wildcards with array of actual file paths
+// that are found using the glob patterns
 func expandWildCards(config *MutationConfig) {
 	var expandedPaths []string
 	for _, filePath := range config.Mutate.FilesToInclude {
@@ -272,6 +284,10 @@ func removeWildCardPaths(paths []string) []string {
 
 // TODO refactor
 // TODO replace with filepath.Glob?
+// Move through a string with wildcards to find all possible files
+// Keep a "pathPieces" arg as a context accumulator for the paths we've visited
+// thus far
+// basepath is the relative path within the project folder
 func expandWildCardRecursive(pathIndex int, pathPieces []string, basepath string) []string {
 
 	// Function closures
@@ -293,7 +309,8 @@ func expandWildCardRecursive(pathIndex int, pathPieces []string, basepath string
 		_, err := fs.Stat(basepath + path)
 
 		if err != nil && len(path) != 0 {
-			_, err = fs.Stat(basepath + path[:len(path)-1])
+			// Try opening the absolute path we have so far, ignoring last slash
+			_, err = fs.Stat(basepath + filepath.Clean(path))
 			if err != nil && os.IsNotExist(err) {
 				// eg. mutator/branch/remove.go does not exist
 				return false
@@ -303,8 +320,8 @@ func expandWildCardRecursive(pathIndex int, pathPieces []string, basepath string
 		return true
 	}
 
-	getAllFilesInPath := func(path string) (fileNames []string, dirNames []string) {
-		fileInfo, err := ioutil.ReadDir(basepath + path)
+	getAllFilesAndFoldersInPath := func(path string) (fileNames []string, dirNames []string) {
+		fileInfo, err := afero.ReadDir(fs, basepath + path)
 		if err != nil {
 			panic(err)
 		}
@@ -320,6 +337,7 @@ func expandWildCardRecursive(pathIndex int, pathPieces []string, basepath string
 		return fileNames, dirNames
 	}
 
+	// The file base case version of expandWildCard
 	expandWildCardFile := func(path string) []string {
 		if exists(path) {
 			return []string{path}
@@ -337,10 +355,11 @@ func expandWildCardRecursive(pathIndex int, pathPieces []string, basepath string
 	if isDirectory(parentPath) {
 
 		pathPiece := pathPieces[pathIndex]
+		// is the current directory we're in a wildcard?
 		if valid, glob := isValidWildCard(pathPiece); valid {
-			fileNames, dirNames := getAllFilesInPath(parentPath)
+			fileNames, dirNames := getAllFilesAndFoldersInPath(parentPath)
 
-			// is there something to filter?
+			// is there something to filter? e.g. /*/ no, but /*.jpg yes
 			if len(glob) > 1 {
 				fileNames = filterFileNames(glob, fileNames)
 				dirNames = filterFileNames(glob, dirNames)
@@ -351,11 +370,13 @@ func expandWildCardRecursive(pathIndex int, pathPieces []string, basepath string
 				newPathPieces := pathPieces
 				// replace wildcard character with real folders
 				newPathPieces[pathIndex] = dir
+				// recurse deeper into structure
 				allPaths = append(allPaths,
 					expandWildCardRecursive(pathIndex, newPathPieces, basepath)...)
 			}
 
 			// only add files if we're at the last piece of the path
+			// otherwise we need to keep looking
 			if pathIndex == len(pathPieces) - 1 {
 				for _, file := range fileNames {
 					path := getParentPath(pathPieces, pathIndex) + file
@@ -422,6 +443,7 @@ func isValidWildCard(piece string) (bool, string) {
 	}
 }
 
+// Replace a glob with regex so we can match it to file names
 func filterFileNames(globPattern string, files []string) []string {
 	validFileName := `[\w\-. ]+` // should it be + or *? since replacing *
 	validFilePattern := strings.Replace(globPattern, "*", validFileName, -1)
@@ -437,6 +459,7 @@ func filterFileNames(globPattern string, files []string) []string {
 	return validFiles
 }
 
+// Support YAML configuration files
 func convertFromYaml(yamlData []byte) ([]byte, error) {
 	return yaml.YAMLToJSON(yamlData)
 }

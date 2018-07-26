@@ -2,12 +2,18 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="975b4f24-3c28-4402-9db0-321448b555a3" name="Default" comment="">
+      <change afterPath="$PROJECT_DIR$/cmd/mutation-framework/copy_utils.go" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/cmd/mutation-framework/copy_utils_test.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/cmd/mutation-framework/config.go" beforeDir="false" afterPath="$PROJECT_DIR$/cmd/mutation-framework/config.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/cmd/mutation-framework/config_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/cmd/mutation-framework/config_test.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/cmd/mutation-framework/main.go" beforeDir="false" afterPath="$PROJECT_DIR$/cmd/mutation-framework/main.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/cmd/mutation-framework/main_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/cmd/mutation-framework/main_test.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/cmd/mutation-framework/mutate.go" beforeDir="false" afterPath="$PROJECT_DIR$/cmd/mutation-framework/mutate.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/cmd/mutation-framework/test_runner.go" beforeDir="false" afterPath="$PROJECT_DIR$/cmd/mutation-framework/test_runner.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/cmd/mutation-framework/test_runner_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/cmd/mutation-framework/test_runner_test.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/osutil/copy.go" beforeDir="false" afterPath="$PROJECT_DIR$/osutil/copy.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/osutil/copy_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/osutil/copy_test.go" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
@@ -26,29 +32,47 @@
           <file leaf-file-name="main.go" pinned="false" current-in-tab="false">
             <entry file="file://$PROJECT_DIR$/cmd/mutation-framework/main.go">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="1905">
-                  <caret line="147" selection-start-line="147" selection-end-line="147" />
-                  <folding>
-                    <element signature="e#14#462#0" expanded="true" />
-                  </folding>
+                <state relative-caret-position="2565">
+                  <caret line="196" column="36" selection-start-line="196" selection-start-column="36" selection-end-line="196" selection-end-column="36" />
                 </state>
               </provider>
             </entry>
           </file>
-          <file leaf-file-name="sample_config.json" pinned="false" current-in-tab="false">
-            <entry file="file://$PROJECT_DIR$/testdata/config/sample_config.json">
+          <file leaf-file-name="test_runner.go" pinned="false" current-in-tab="false">
+            <entry file="file://$PROJECT_DIR$/cmd/mutation-framework/test_runner.go">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="315">
-                  <caret line="21" column="1" selection-start-line="21" selection-start-column="1" selection-end-line="21" selection-end-column="1" />
+                <state relative-caret-position="873">
+                  <caret line="198" selection-start-line="198" selection-end-line="198" />
                 </state>
               </provider>
             </entry>
           </file>
-          <file leaf-file-name="test_runner_test.go" pinned="false" current-in-tab="true">
+          <file leaf-file-name="copy_utils.go" pinned="false" current-in-tab="true">
+            <entry file="file://$PROJECT_DIR$/cmd/mutation-framework/copy_utils.go">
+              <provider selected="true" editor-type-id="text-editor">
+                <state relative-caret-position="1275">
+                  <caret line="99" column="51" selection-start-line="99" selection-start-column="51" selection-end-line="99" selection-end-column="51" />
+                </state>
+              </provider>
+            </entry>
+          </file>
+          <file leaf-file-name="test_runner_test.go" pinned="false" current-in-tab="false">
             <entry file="file://$PROJECT_DIR$/cmd/mutation-framework/test_runner_test.go">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="585">
-                  <caret line="42" column="52" selection-start-line="42" selection-start-column="52" selection-end-line="42" selection-end-column="52" />
+                <state relative-caret-position="495">
+                  <caret line="36" selection-start-line="36" selection-end-line="36" />
+                </state>
+              </provider>
+            </entry>
+          </file>
+          <file leaf-file-name="mutate.go" pinned="false" current-in-tab="false">
+            <entry file="file://$PROJECT_DIR$/cmd/mutation-framework/mutate.go">
+              <provider selected="true" editor-type-id="text-editor">
+                <state relative-caret-position="30">
+                  <caret line="2" column="7" lean-forward="true" selection-start-line="2" selection-start-column="7" selection-end-line="2" selection-end-column="7" />
+                  <folding>
+                    <element signature="e#14#297#0" expanded="true" />
+                  </folding>
                 </state>
               </provider>
             </entry>
@@ -60,13 +84,17 @@
           </file>
           <file leaf-file-name="mutator.go" pinned="false" current-in-tab="false">
             <entry file="file://$PROJECT_DIR$/test/mutator.go">
-              <provider selected="true" editor-type-id="text-editor" />
+              <provider selected="true" editor-type-id="text-editor">
+                <state relative-caret-position="165">
+                  <caret line="22" column="28" selection-start-line="22" selection-start-column="28" selection-end-line="22" selection-end-column="28" />
+                </state>
+              </provider>
             </entry>
           </file>
           <file leaf-file-name="exec.go" pinned="false" current-in-tab="false">
             <entry file="file://$USER_HOME$/.go/src/os/exec/exec.go">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="105">
+                <state relative-caret-position="2070">
                   <caret line="150" column="5" selection-start-line="150" selection-start-column="5" selection-end-line="150" selection-end-column="5" />
                 </state>
               </provider>
@@ -79,17 +107,8 @@
           <file leaf-file-name="parse.go" pinned="false" current-in-tab="false">
             <entry file="file://$PROJECT_DIR$/parse.go">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="180">
+                <state relative-caret-position="-531">
                   <caret line="23" column="39" selection-start-line="23" selection-start-column="39" selection-end-line="23" selection-end-column="39" />
-                </state>
-              </provider>
-            </entry>
-          </file>
-          <file leaf-file-name="test_runner.go" pinned="false" current-in-tab="true">
-            <entry file="file://$PROJECT_DIR$/cmd/mutation-framework/test_runner.go">
-              <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="153">
-                  <caret line="314" column="61" selection-start-line="314" selection-start-column="61" selection-end-line="314" selection-end-column="61" />
                 </state>
               </provider>
             </entry>
@@ -97,47 +116,47 @@
           <file leaf-file-name="copy.go" pinned="false" current-in-tab="false">
             <entry file="file://$PROJECT_DIR$/osutil/copy.go">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="609">
-                  <caret line="61" column="19" selection-start-line="61" selection-start-column="19" selection-end-line="61" selection-end-column="19" />
+                <state relative-caret-position="1125">
+                  <caret line="79" selection-start-line="79" selection-end-line="79" />
                 </state>
               </provider>
             </entry>
           </file>
-          <file leaf-file-name="mutate.go" pinned="false" current-in-tab="false">
-            <entry file="file://$PROJECT_DIR$/cmd/mutation-framework/mutate.go">
+          <file leaf-file-name="config_test.go" pinned="false" current-in-tab="false">
+            <entry file="file://$PROJECT_DIR$/cmd/mutation-framework/config_test.go">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="655">
-                  <caret line="230" column="1" lean-forward="true" selection-start-line="230" selection-start-column="1" selection-end-line="230" selection-end-column="1" />
+                <state relative-caret-position="315">
+                  <caret line="27" lean-forward="true" selection-start-line="27" selection-end-line="27" />
                 </state>
               </provider>
             </entry>
           </file>
-          <file leaf-file-name="copy_test.go" pinned="false" current-in-tab="false">
-            <entry file="file://$PROJECT_DIR$/osutil/copy_test.go">
+          <file leaf-file-name="copy_utils_test.go" pinned="false" current-in-tab="false">
+            <entry file="file://$PROJECT_DIR$/cmd/mutation-framework/copy_utils_test.go">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="60">
-                  <caret line="10" column="5" selection-start-line="10" selection-start-column="5" selection-end-line="10" selection-end-column="5" />
-                </state>
-              </provider>
-            </entry>
-          </file>
-          <file leaf-file-name="main_test.go" pinned="false" current-in-tab="false">
-            <entry file="file://$PROJECT_DIR$/cmd/mutation-framework/main_test.go">
-              <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="1560">
-                  <caret line="113" selection-start-line="113" selection-end-line="113" />
+                <state relative-caret-position="1725">
+                  <caret line="115" column="4" selection-start-line="115" selection-start-column="4" selection-end-line="115" selection-end-column="4" />
                   <folding>
-                    <element signature="e#14#134#0" expanded="true" />
+                    <element signature="e#14#73#0" expanded="true" />
                   </folding>
                 </state>
               </provider>
             </entry>
           </file>
-          <file leaf-file-name="config.go" pinned="false" current-in-tab="false">
+          <file leaf-file-name="testing.go" pinned="false" current-in-tab="false">
+            <entry file="file://$USER_HOME$/.go/src/testing/testing.go">
+              <provider selected="true" editor-type-id="text-editor">
+                <state relative-caret-position="570">
+                  <caret line="778" selection-start-line="778" selection-end-line="778" />
+                </state>
+              </provider>
+            </entry>
+          </file>
+          <file leaf-file-name="config.go" pinned="false" current-in-tab="true">
             <entry file="file://$PROJECT_DIR$/cmd/mutation-framework/config.go">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="5820">
-                  <caret line="399" selection-start-line="399" selection-end-line="399" />
+                <state relative-caret-position="585">
+                  <caret line="339" column="51" lean-forward="true" selection-start-line="339" selection-start-column="51" selection-end-line="339" selection-end-column="51" />
                 </state>
               </provider>
             </entry>
@@ -155,10 +174,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>mutateex</find>
-      <find>oh no!</find>
-      <find>byte</find>
-      <find>exited with</find>
       <find>r</find>
       <find>mutant</find>
       <find>mutantinfo</find>
@@ -185,6 +200,10 @@
       <find>fmt.Println</find>
       <find>appendfolder</find>
       <find>chdir</find>
+      <find>first element in</find>
+      <find>osutil</find>
+      <find>ioutil.ReadD</find>
+      <find>ioutil.</find>
     </findStrings>
     <replaceStrings>
       <replace>amyjzhu/mutation-framework/</replace>
@@ -235,14 +254,18 @@
         <option value="$PROJECT_DIR$/cmd/go-mutesting/mutate.go" />
         <option value="$PROJECT_DIR$/cmd/go-mutesting/test_runner.go" />
         <option value="$PROJECT_DIR$/mutator/statement/removetimeout.go" />
-        <option value="$PROJECT_DIR$/cmd/mutation-framework/main.go" />
         <option value="$PROJECT_DIR$/mutator/statement/removetimeout_test.go" />
-        <option value="$PROJECT_DIR$/cmd/mutation-framework/main_test.go" />
-        <option value="$PROJECT_DIR$/cmd/mutation-framework/config.go" />
-        <option value="$PROJECT_DIR$/osutil/copy.go" />
+        <option value="$PROJECT_DIR$/cmd/mutation-framework/config_test.go" />
+        <option value="$PROJECT_DIR$/cmd/mutation-framework/main.go" />
         <option value="$PROJECT_DIR$/cmd/mutation-framework/test_runner_test.go" />
+        <option value="$PROJECT_DIR$/cmd/mutation-framework/main_test.go" />
         <option value="$PROJECT_DIR$/cmd/mutation-framework/mutate.go" />
         <option value="$PROJECT_DIR$/cmd/mutation-framework/test_runner.go" />
+        <option value="$PROJECT_DIR$/osutil/copy_test.go" />
+        <option value="$PROJECT_DIR$/osutil/copy.go" />
+        <option value="$PROJECT_DIR$/cmd/mutation-framework/copy_utils_test.go" />
+        <option value="$PROJECT_DIR$/cmd/mutation-framework/config.go" />
+        <option value="$PROJECT_DIR$/cmd/mutation-framework/copy_utils.go" />
       </list>
     </option>
   </component>
@@ -366,93 +389,122 @@
       </list>
     </option>
   </component>
-  <component name="RunManager" selected="Go Test.go test github.com/amyjzhu/mutation-framework/cmd/go-mutesting">
-    <configuration name="go build main.go config.go" type="GoApplicationRunConfiguration" factoryName="Go Application" temporary="true" nameIsGenerated="true">
+  <component name="RunManager" selected="Go Test.go test github.com/amyjzhu/mutation-framework/cmd/mutation-framework">
+    <configuration name="TestAferoCopyFile in github.com/amyjzhu/mutation-framework/osutil" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
       <module name="go-mutesting" />
-      <working_directory value="$PROJECT_DIR$/" />
-      <go_parameters value="-i" />
-      <kind value="FILE" />
-      <filePath value="$PROJECT_DIR$/cmd/go-mutesting/main.go|$PROJECT_DIR$/cmd/go-mutesting/config.go" />
-      <package value="github.com/amyjzhu/mutation-framework" />
-      <directory value="$PROJECT_DIR$/" />
-    </configuration>
-    <configuration name="TestWildcardConfig in github.com/amyjzhu/mutation-framework/cmd/go-mutesting" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
-      <module name="go-mutesting" />
-      <working_directory value="$PROJECT_DIR$/cmd/go-mutesting" />
+      <working_directory value="$PROJECT_DIR$/osutil" />
       <go_parameters value="-i" />
       <framework value="gotest" />
       <kind value="PACKAGE" />
-      <package value="github.com/amyjzhu/mutation-framework/cmd/go-mutesting" />
+      <package value="github.com/amyjzhu/mutation-framework/osutil" />
       <directory value="$PROJECT_DIR$/" />
       <filePath value="$PROJECT_DIR$/" />
-      <pattern value="^TestWildcardConfig$" />
+      <pattern value="^TestAferoCopyFile$" />
     </configuration>
-    <configuration name="go test github.com/amyjzhu/mutation-framework/cmd/go-mutesting" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
+    <configuration name="TestCopy in github.com/amyjzhu/mutation-framework/cmd/mutation-framework" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
       <module name="go-mutesting" />
-      <working_directory value="$PROJECT_DIR$/cmd/go-mutesting" />
+      <working_directory value="$PROJECT_DIR$/cmd/mutation-framework" />
       <go_parameters value="-i" />
       <framework value="gotest" />
       <kind value="PACKAGE" />
-      <package value="github.com/amyjzhu/mutation-framework/cmd/go-mutesting" />
+      <package value="github.com/amyjzhu/mutation-framework/cmd/mutation-framework" />
+      <directory value="$PROJECT_DIR$/" />
+      <filePath value="$PROJECT_DIR$/" />
+      <pattern value="^TestCopy$" />
+    </configuration>
+    <configuration name="TestCopyFolderContents in github.com/amyjzhu/mutation-framework/cmd/mutation-framework" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
+      <module name="go-mutesting" />
+      <working_directory value="$PROJECT_DIR$/cmd/mutation-framework" />
+      <go_parameters value="-i" />
+      <framework value="gotest" />
+      <kind value="PACKAGE" />
+      <package value="github.com/amyjzhu/mutation-framework/cmd/mutation-framework" />
+      <directory value="$PROJECT_DIR$/" />
+      <filePath value="$PROJECT_DIR$/" />
+      <pattern value="^TestCopyFolderContents$" />
+    </configuration>
+    <configuration name="TestSimpleCopyFolderContents in github.com/amyjzhu/mutation-framework/cmd/mutation-framework" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
+      <module name="go-mutesting" />
+      <working_directory value="$PROJECT_DIR$/cmd/mutation-framework" />
+      <go_parameters value="-i" />
+      <framework value="gotest" />
+      <kind value="PACKAGE" />
+      <package value="github.com/amyjzhu/mutation-framework/cmd/mutation-framework" />
+      <directory value="$PROJECT_DIR$/" />
+      <filePath value="$PROJECT_DIR$/" />
+      <pattern value="^TestSimpleCopyFolderContents$" />
+    </configuration>
+    <configuration name="go test github.com/amyjzhu/mutation-framework/cmd/mutation-framework" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
+      <module name="go-mutesting" />
+      <working_directory value="$PROJECT_DIR$/cmd/mutation-framework" />
+      <go_parameters value="-i" />
+      <framework value="gotest" />
+      <kind value="PACKAGE" />
+      <package value="github.com/amyjzhu/mutation-framework/cmd/mutation-framework" />
       <directory value="$PROJECT_DIR$/" />
       <filePath value="$PROJECT_DIR$/" />
     </configuration>
     <list>
-      <item itemvalue="Go Build.go build main.go config.go" />
-      <item itemvalue="Go Test.TestWildcardConfig in github.com/amyjzhu/mutation-framework/cmd/go-mutesting" />
-      <item itemvalue="Go Test.go test github.com/amyjzhu/mutation-framework/cmd/go-mutesting" />
+      <item itemvalue="Go Test.TestCopy in github.com/amyjzhu/mutation-framework/cmd/mutation-framework" />
+      <item itemvalue="Go Test.go test github.com/amyjzhu/mutation-framework/cmd/mutation-framework" />
+      <item itemvalue="Go Test.TestAferoCopyFile in github.com/amyjzhu/mutation-framework/osutil" />
+      <item itemvalue="Go Test.TestCopyFolderContents in github.com/amyjzhu/mutation-framework/cmd/mutation-framework" />
+      <item itemvalue="Go Test.TestSimpleCopyFolderContents in github.com/amyjzhu/mutation-framework/cmd/mutation-framework" />
     </list>
     <recent_temporary>
       <list>
-        <item itemvalue="Go Test.go test github.com/amyjzhu/mutation-framework/cmd/go-mutesting" />
-        <item itemvalue="Go Test.TestWildcardConfig in github.com/amyjzhu/mutation-framework/cmd/go-mutesting" />
-        <item itemvalue="Go Build.go build main.go config.go" />
+        <item itemvalue="Go Test.go test github.com/amyjzhu/mutation-framework/cmd/mutation-framework" />
+        <item itemvalue="Go Test.TestSimpleCopyFolderContents in github.com/amyjzhu/mutation-framework/cmd/mutation-framework" />
+        <item itemvalue="Go Test.TestCopyFolderContents in github.com/amyjzhu/mutation-framework/cmd/mutation-framework" />
+        <item itemvalue="Go Test.TestCopy in github.com/amyjzhu/mutation-framework/cmd/mutation-framework" />
+        <item itemvalue="Go Test.TestAferoCopyFile in github.com/amyjzhu/mutation-framework/osutil" />
       </list>
     </recent_temporary>
   </component>
   <component name="TestHistory">
-    <history-entry file="go_test_github_com_amyjzhu_mutation-framework_cmd_go-mutesting - 2018.07.16 at 16h 18m 02s.xml">
-      <configuration name="go test github.com/amyjzhu/mutation-framework/cmd/go-mutesting" configurationId="GoTestRunConfiguration" />
+    <history-entry file="TestSimpleCopyFolderContents_in_github_com_amyjzhu_mutation-framework_cmd_mutation-framework - 2018.07.26 at 16h 21m 55s.xml">
+      <configuration name="TestSimpleCopyFolderContents in github.com/amyjzhu/mutation-framework/cmd/mutation-framework" configurationId="GoTestRunConfiguration" />
     </history-entry>
-    <history-entry file="go_test_github_com_amyjzhu_mutation-framework_cmd_go-mutesting - 2018.07.16 at 16h 19m 15s.xml">
-      <configuration name="go test github.com/amyjzhu/mutation-framework/cmd/go-mutesting" configurationId="GoTestRunConfiguration" />
+    <history-entry file="TestSimpleCopyFolderContents_in_github_com_amyjzhu_mutation-framework_cmd_mutation-framework - 2018.07.26 at 16h 23m 54s.xml">
+      <configuration name="TestSimpleCopyFolderContents in github.com/amyjzhu/mutation-framework/cmd/mutation-framework" configurationId="GoTestRunConfiguration" />
     </history-entry>
-    <history-entry file="go_test_github_com_amyjzhu_mutation-framework_cmd_go-mutesting - 2018.07.16 at 16h 25m 14s.xml">
-      <configuration name="go test github.com/amyjzhu/mutation-framework/cmd/go-mutesting" configurationId="GoTestRunConfiguration" />
+    <history-entry file="TestSimpleCopyFolderContents_in_github_com_amyjzhu_mutation-framework_cmd_mutation-framework - 2018.07.26 at 16h 26m 32s.xml">
+      <configuration name="TestSimpleCopyFolderContents in github.com/amyjzhu/mutation-framework/cmd/mutation-framework" configurationId="GoTestRunConfiguration" />
     </history-entry>
-    <history-entry file="go_test_github_com_amyjzhu_mutation-framework_cmd_go-mutesting - 2018.07.16 at 16h 30m 57s.xml">
-      <configuration name="go test github.com/amyjzhu/mutation-framework/cmd/go-mutesting" configurationId="GoTestRunConfiguration" />
+    <history-entry file="TestSimpleCopyFolderContents_in_github_com_amyjzhu_mutation-framework_cmd_mutation-framework - 2018.07.26 at 16h 26m 35s.xml">
+      <configuration name="TestSimpleCopyFolderContents in github.com/amyjzhu/mutation-framework/cmd/mutation-framework" configurationId="GoTestRunConfiguration" />
     </history-entry>
-    <history-entry file="TestWildcardConfig_in_github_com_amyjzhu_mutation-framework_cmd_go-mutesting - 2018.07.18 at 15h 02m 53s.xml">
-      <configuration name="TestWildcardConfig in github.com/amyjzhu/mutation-framework/cmd/go-mutesting" configurationId="GoTestRunConfiguration" />
+    <history-entry file="TestSimpleCopyFolderContents_in_github_com_amyjzhu_mutation-framework_cmd_mutation-framework - 2018.07.26 at 16h 27m 21s.xml">
+      <configuration name="TestSimpleCopyFolderContents in github.com/amyjzhu/mutation-framework/cmd/mutation-framework" configurationId="GoTestRunConfiguration" />
     </history-entry>
-    <history-entry file="go_test_github_com_amyjzhu_mutation-framework_cmd_go-mutesting - 2018.07.18 at 15h 03m 06s.xml">
-      <configuration name="go test github.com/amyjzhu/mutation-framework/cmd/go-mutesting" configurationId="GoTestRunConfiguration" />
+    <history-entry file="TestSimpleCopyFolderContents_in_github_com_amyjzhu_mutation-framework_cmd_mutation-framework - 2018.07.26 at 16h 27m 23s.xml">
+      <configuration name="TestSimpleCopyFolderContents in github.com/amyjzhu/mutation-framework/cmd/mutation-framework" configurationId="GoTestRunConfiguration" />
     </history-entry>
-    <history-entry file="go_test_github_com_amyjzhu_mutation-framework_cmd_go-mutesting - 2018.07.18 at 15h 04m 11s.xml">
-      <configuration name="go test github.com/amyjzhu/mutation-framework/cmd/go-mutesting" configurationId="GoTestRunConfiguration" />
+    <history-entry file="TestSimpleCopyFolderContents_in_github_com_amyjzhu_mutation-framework_cmd_mutation-framework - 2018.07.26 at 16h 29m 11s.xml">
+      <configuration name="TestSimpleCopyFolderContents in github.com/amyjzhu/mutation-framework/cmd/mutation-framework" configurationId="GoTestRunConfiguration" />
     </history-entry>
-    <history-entry file="go_test_github_com_amyjzhu_mutation-framework_cmd_go-mutesting - 2018.07.18 at 15h 04m 14s.xml">
-      <configuration name="go test github.com/amyjzhu/mutation-framework/cmd/go-mutesting" configurationId="GoTestRunConfiguration" />
+    <history-entry file="TestSimpleCopyFolderContents_in_github_com_amyjzhu_mutation-framework_cmd_mutation-framework - 2018.07.26 at 16h 30m 20s.xml">
+      <configuration name="TestSimpleCopyFolderContents in github.com/amyjzhu/mutation-framework/cmd/mutation-framework" configurationId="GoTestRunConfiguration" />
     </history-entry>
-    <history-entry file="go_test_github_com_amyjzhu_mutation-framework_cmd_go-mutesting - 2018.07.18 at 15h 04m 25s.xml">
-      <configuration name="go test github.com/amyjzhu/mutation-framework/cmd/go-mutesting" configurationId="GoTestRunConfiguration" />
+    <history-entry file="TestSimpleCopyFolderContents_in_github_com_amyjzhu_mutation-framework_cmd_mutation-framework - 2018.07.26 at 16h 30m 22s.xml">
+      <configuration name="TestSimpleCopyFolderContents in github.com/amyjzhu/mutation-framework/cmd/mutation-framework" configurationId="GoTestRunConfiguration" />
     </history-entry>
-    <history-entry file="go_test_github_com_amyjzhu_mutation-framework_cmd_go-mutesting - 2018.07.18 at 15h 05m 16s.xml">
-      <configuration name="go test github.com/amyjzhu/mutation-framework/cmd/go-mutesting" configurationId="GoTestRunConfiguration" />
+    <history-entry file="go_test_github_com_amyjzhu_mutation-framework_cmd_mutation-framework - 2018.07.26 at 16h 33m 49s.xml">
+      <configuration name="go test github.com/amyjzhu/mutation-framework/cmd/mutation-framework" configurationId="GoTestRunConfiguration" />
     </history-entry>
   </component>
   <component name="ToolWindowManager">
     <frame x="64" y="-11" width="1857" height="1212" extended-state="6" />
     <editor active="true" />
     <layout>
-      <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.14339623" />
+      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.14339623" />
       <window_info anchor="bottom" id="TODO" order="6" />
       <window_info anchor="bottom" id="Event Log" order="9" sideWeight="0.50242585" side_tool="true" weight="0.39963505" />
       <window_info anchor="right" id="Database" order="3" />
+      <window_info anchor="bottom" id="Find" order="1" sideWeight="0.49757412" weight="0.32937956" />
       <window_info anchor="bottom" id="Database Changes" order="10" show_stripe_button="false" />
       <window_info anchor="bottom" id="Version Control" order="8" />
-      <window_info anchor="bottom" id="Run" order="2" sideWeight="0.49811321" weight="0.32937956" />
+      <window_info active="true" anchor="bottom" id="Run" order="2" sideWeight="0.49811321" visible="true" weight="0.32937956" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
       <window_info anchor="bottom" id="Terminal" order="7" />
       <window_info id="Favorites" order="2" side_tool="true" />
@@ -463,7 +515,6 @@
       <window_info anchor="right" id="Ant Build" order="1" weight="0.25" />
       <window_info anchor="bottom" id="Message" order="0" />
       <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
-      <window_info anchor="bottom" id="Find" order="1" sideWeight="0.49757412" weight="0.32937956" />
       <window_info anchor="right" id="Coverage" order="4" side_tool="true" weight="0.32991913" />
     </layout>
   </component>
@@ -496,50 +547,39 @@
           <line>101</line>
           <option name="timeStamp" value="47" />
         </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/cmd/mutation-framework/copy_utils_test.go</url>
+          <line>50</line>
+          <properties />
+          <option name="timeStamp" value="55" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/cmd/mutation-framework/copy_utils.go</url>
+          <line>94</line>
+          <properties />
+          <option name="timeStamp" value="57" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/osutil/copy.go</url>
+          <line>48</line>
+          <properties />
+          <option name="timeStamp" value="59" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/osutil/copy_test.go</url>
+          <line>40</line>
+          <properties />
+          <option name="timeStamp" value="60" />
+        </line-breakpoint>
       </breakpoints>
-      <option name="time" value="49" />
+      <option name="time" value="62" />
     </breakpoint-manager>
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/example/mutants/sub">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="120">
-          <caret line="8" selection-start-line="8" selection-end-line="8" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/example/mutants/example.go.12">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="270">
-          <caret line="18" column="13" selection-start-line="18" selection-start-column="13" selection-end-line="18" selection-end-column="13" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/walk.go">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="585">
-          <caret line="46" column="5" selection-start-line="46" selection-start-column="5" selection-end-line="46" selection-end-column="5" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/mutator/statement/remove.go">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="60">
-          <caret line="11" column="8" selection-start-line="11" selection-start-column="8" selection-end-line="11" selection-end-column="8" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/mutator/mutator_test.go">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="45">
           <caret line="9" selection-start-line="9" selection-end-line="14" selection-end-column="1" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$USER_HOME$/.go/src/testing/testing.go">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="570">
-          <caret line="778" selection-start-line="778" selection-end-line="778" />
         </state>
       </provider>
     </entry>
@@ -651,19 +691,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/test/mutator.go">
-      <provider selected="true" editor-type-id="text-editor" />
-    </entry>
-    <entry file="file://$PROJECT_DIR$/cmd/mutation-framework/main_test.go">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1560">
-          <caret line="113" selection-start-line="113" selection-end-line="113" />
-          <folding>
-            <element signature="e#14#134#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/mutator/branch/mutatecase.go">
       <provider selected="true" editor-type-id="text-editor" />
     </entry>
@@ -674,20 +701,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/osutil/copy_test.go">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="60">
-          <caret line="10" column="5" selection-start-line="10" selection-start-column="5" selection-end-line="10" selection-end-column="5" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/cmd/mutation-framework/config.go">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="5820">
-          <caret line="399" selection-start-line="399" selection-end-line="399" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/mutator/statement/removetimeout.go">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="660">
@@ -695,26 +708,9 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/cmd/mutation-framework/main.go">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1905">
-          <caret line="147" selection-start-line="147" selection-end-line="147" />
-          <folding>
-            <element signature="e#14#462#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/parse.go">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="180">
-          <caret line="23" column="39" selection-start-line="23" selection-start-column="39" selection-end-line="23" selection-end-column="39" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$USER_HOME$/.go/src/os/exec/exec.go">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="105">
+        <state relative-caret-position="2070">
           <caret line="150" column="5" selection-start-line="150" selection-start-column="5" selection-end-line="150" selection-end-column="5" />
         </state>
       </provider>
@@ -726,31 +722,117 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/osutil/copy.go">
+    <entry file="file://$PROJECT_DIR$/test/mutator.go">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="609">
-          <caret line="61" column="19" selection-start-line="61" selection-start-column="19" selection-end-line="61" selection-end-column="19" />
+        <state relative-caret-position="165">
+          <caret line="22" column="28" selection-start-line="22" selection-start-column="28" selection-end-line="22" selection-end-column="28" />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/cmd/mutation-framework/test_runner_test.go">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="585">
-          <caret line="42" column="52" selection-start-line="42" selection-start-column="52" selection-end-line="42" selection-end-column="52" />
+        <state relative-caret-position="495">
+          <caret line="36" selection-start-line="36" selection-end-line="36" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/cmd/mutation-framework/main_test.go">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-90">
+          <caret line="9" selection-start-line="9" selection-end-line="9" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$USER_HOME$/.go/src/testing/testing.go">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="570">
+          <caret line="778" selection-start-line="778" selection-end-line="778" />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/cmd/mutation-framework/mutate.go">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="655">
-          <caret line="230" column="1" lean-forward="true" selection-start-line="230" selection-start-column="1" selection-end-line="230" selection-end-column="1" />
+        <state relative-caret-position="30">
+          <caret line="2" column="7" lean-forward="true" selection-start-line="2" selection-start-column="7" selection-end-line="2" selection-end-column="7" />
+          <folding>
+            <element signature="e#14#297#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/cmd/mutation-framework/test_runner.go">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="153">
-          <caret line="314" column="61" selection-start-line="314" selection-start-column="61" selection-end-line="314" selection-end-column="61" />
+        <state relative-caret-position="873">
+          <caret line="198" selection-start-line="198" selection-end-line="198" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/osutil/copy_test.go">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="375">
+          <caret line="40" selection-start-line="40" selection-end-line="40" />
+          <folding>
+            <element signature="e#16#95#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/cmd/mutation-framework/main.go">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="2565">
+          <caret line="196" column="36" selection-start-line="196" selection-start-column="36" selection-end-line="196" selection-end-column="36" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../../spf13/afero/ioutil.go">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="367">
+          <caret line="52" column="20" lean-forward="true" selection-start-line="52" selection-start-column="20" selection-end-line="52" selection-end-column="20" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/cmd/mutation-framework/copy_utils_test.go">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1725">
+          <caret line="115" column="4" selection-start-line="115" selection-start-column="4" selection-end-line="115" selection-end-column="4" />
+          <folding>
+            <element signature="e#14#73#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/parse.go">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-531">
+          <caret line="23" column="39" selection-start-line="23" selection-start-column="39" selection-end-line="23" selection-end-column="39" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/cmd/mutation-framework/config_test.go">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="315">
+          <caret line="27" lean-forward="true" selection-start-line="27" selection-end-line="27" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/osutil/copy.go">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1125">
+          <caret line="79" selection-start-line="79" selection-end-line="79" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/cmd/mutation-framework/copy_utils.go">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1275">
+          <caret line="99" column="51" selection-start-line="99" selection-start-column="51" selection-end-line="99" selection-end-column="51" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/cmd/mutation-framework/config.go">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="585">
+          <caret line="339" column="51" lean-forward="true" selection-start-line="339" selection-start-column="51" selection-end-line="339" selection-end-column="51" />
         </state>
       </provider>
     </entry>

@@ -86,6 +86,8 @@ func TestWildcardConfig(t *testing.T) {
 		"cmd/mutation-framework/main.go",
 		"cmd/mutation-framework/main_test.go",
 		"cmd/mutation-framework/mutate.go",
+		"cmd/mutation-framework/copy_utils.go",
+		"cmd/mutation-framework/copy_utils_test.go",
 		"cmd/mutation-framework/test_runner.go",
 		"cmd/mutation-framework/test_runner_test.go"}
 

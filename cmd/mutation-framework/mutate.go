@@ -1,7 +1,6 @@
 package main
 
 import (
-	"github.com/spf13/afero"
 	"os"
 	"path/filepath"
 	"fmt"
@@ -11,7 +10,6 @@ import (
 	"go/ast"
 	"github.com/amyjzhu/mutation-framework/mutator"
 	"github.com/amyjzhu/mutation-framework"
-	"github.com/amyjzhu/mutation-framework/osutil"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -150,100 +148,3 @@ func getAbsoluteMutationFolderPath(config *MutationConfig) (projectName string) 
 	return
 }
 
-func copyProject(config *MutationConfig, name string) (string, error) {
-	log.WithField("mutant", name).Debug("Copying into mutants folder.")
-	dir, err := os.Getwd()
-	if err != nil {
-		panic (err)
-	}
-
-	// TODO would probably break if it wasn't under the goroot or gopath...
-	projectName := appendFolder(getAbsoluteMutationFolderPath(config), name)
-
-	return projectName,
-		copyRecursive(config.Mutate.Overwrite, dir, projectName, config.Mutate.MutantFolder)
-}
-
-func copyRecursive(overwrite bool, source string, dest string, mutantFolder string) error {
-	destFile, err := fs.Open(dest)
-	if !os.IsNotExist(err) {
-		if overwrite {
-			log.Debug("Overwriting destination mutants if they already exist.")
-		} else if err != nil {
-			log.WithFields(log.Fields{"file":source, "error":err}).Info("Some error arose.")
-			return fmt.Errorf("source file %s does not exist", source)
-		}
-	}
-
-	if destFile != nil {
-		destFile.Close()
-	}
-
-	// file should exist
-	file, err := fs.Stat(source)
-
-	if err != nil {
-		// TODO is this right?
-		return err
-	}
-
-	if file.IsDir() {
-		err = fs.MkdirAll(dest, file.Mode())
-		if err != nil {
-			return err
-		}
-
-		// get all files in source directory
-		files, err := afero.ReadDir(fs,source)
-		if err != nil {
-			return err
-		}
-
-		for _, entry := range files {
-			newSource := appendFolder(source, entry.Name())
-			newDest := appendFolder(dest, entry.Name())
-
-			if entry.IsDir() {
-				if doNotCopyDir(entry, mutantFolder) {
-					// avoid recursively copying mutant directory into new directory
-					continue
-				}
-
-				err = copyRecursive(overwrite, newSource, newDest, mutantFolder)
-				if err != nil {
-					return err
-				}
-			} else {
-				err = osutil.CopyFile(newSource, newDest)
-				if err != nil {
-					return err
-				}
-			}
-		}
-	}
-	return nil
-}
-
-func doNotCopyDir(dir os.FileInfo, innerFolder string) bool {
-	// don't copy git information or mutant folders
-	return dir.Name() == filepath.Clean(innerFolder) || dir.Name() == ".git" || //dir.Name() == filepath.Base(innerFolder)
-	dir.Name() == getFirstElementInPath(innerFolder)
-}
-
-func getFirstElementInPath(path string) string {
-	if path == "/" {
-		return path
-	}
-
-	elts := strings.Split(path, string(os.PathSeparator))
-	if len(elts) > 1 {
-		if elts[0] == "" { // TODO assuming not //folder
-			return elts[1]
-		}
-		return elts[0]
-	} else {
-		return path
-	}
-
-
-}

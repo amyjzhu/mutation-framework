@@ -7,8 +7,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"io/ioutil"
-	"github.com/spf13/afero"
 )
 
 func TestMain(t *testing.T) {
@@ -87,65 +85,4 @@ func testMain(t *testing.T, root string, exec []string, expectedExitCode int, co
 
 	assert.Equal(t, expectedExitCode, exitCode)
 	assert.Contains(t, out, contains)
-}
-
-// TODO file paths
-// TODO won't work until afero copyfile exists
-func TestCopy(t *testing.T) {
-	fs = afero.NewMemMapFs()
-
-	testFileParent := "/tmp/mutation-testing/"
-	testFile := appendFolder(testFileParent, "testcopy/")
-	// No idea what permission mode this is
-	err := fs.MkdirAll(testFile, os.FileMode(077))
-	assert.Nil(t, err)
-
-	mutationFolder := "copied-mutants/"
-	mutationPath := appendFolder(testFileParent, mutationFolder)
-	defer fs.RemoveAll(testFileParent)
-
-	sample, err := fs.Create(testFile + "sample.txt")
-	assert.Nil(t, err)
-	fs.Mkdir(testFile + ".git", os.FileMode(077))
-	defer sample.Close()
-
-	err = copyRecursive(true, testFileParent, mutationPath, mutationFolder)
-	assert.Nil(t, err)
-
-	entries, err := ioutil.ReadDir(mutationPath)
-	assert.Nil(t, err)
-
-	testFolderExists := false
-	sampleFileExists := false
-	gitDoesNotExist := true
-	mutantFolderDoesNotExist := true
-	for _, entry := range entries {
-		switch entry.Name() {
-		case "testcopy":
-			testFolderExists = true
-			break
-		case mutationFolder:
-			mutantFolderDoesNotExist = false
-			break
-		case ".git":
-			gitDoesNotExist = false
-			break
-		}
-
-		if entry.Name() == "testcopy" {
-			moreEntries, err := ioutil.ReadDir(testFile)
-			assert.Nil(t, err)
-			assert.Equal(t, moreEntries[0].Name(), "sample.txt")
-		}
-	}
-
-	assert.True(t, testFolderExists)
-	assert.True(t, sampleFileExists)
-	assert.True(t, gitDoesNotExist)
-	assert.True(t, mutantFolderDoesNotExist)
-
-	// entries should contain copied-mutants
-	// inside that should be testcopy/sample.txt
-	// there should not be git inside testcopy/
-
 }

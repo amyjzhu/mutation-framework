@@ -39,10 +39,17 @@ func mutateFiles(config *MutationConfig, files map[string]string, operators []mu
 			return nil, nil, exitError(err.Error())
 		}
 
-		err = fs.MkdirAll(config.Mutate.MutantFolder, 0755)
+		mutantFolderName := config.Mutate.MutantFolder
+		err = fs.MkdirAll(mutantFolderName, 0755)
 		if err != nil {
 			panic(err)
 		}
+
+		/*
+		// if the path specified is multiple folders deep, we should only use last one for name
+		if strings.Contains(mutantFolderName, string(os.PathSeparator)) {
+			mutantFolderName = filepath.Base(config.Mutate.MutantFolder)
+		}*/
 
 		mutantFile := config.Mutate.MutantFolder + relativeFileLocation
 		createMutantFolderPath(mutantFile)
@@ -138,7 +145,13 @@ func copyProject(config *MutationConfig, name string) (string, error) {
 		panic (err)
 	}
 
-	projectName := config.FileBasePath + config.Mutate.MutantFolder + name
+	// TODO would probably break if it wasn't under the goroot or gopath...
+	var projectName string
+	if strings.HasPrefix(config.Mutate.MutantFolder, string(os.PathSeparator)) {
+		projectName = appendFolder(config.Mutate.MutantFolder, name)
+	} else {
+		projectName = config.FileBasePath + config.Mutate.MutantFolder + name
+	}
 
 	return projectName,
 		copyRecursive(config.Mutate.Overwrite, dir, projectName, config.Mutate.MutantFolder)
@@ -203,5 +216,5 @@ func copyRecursive(overwrite bool, source string, dest string, mutantFolder stri
 }
 
 func doNotCopyDir(dir os.FileInfo, innerFolder string) bool {
-	return dir.Name() == filepath.Clean(innerFolder) || dir.Name() == ".git"
+	return dir.Name() == filepath.Clean(innerFolder) || dir.Name() == ".git" || dir.Name() == filepath.Base(innerFolder)
 }

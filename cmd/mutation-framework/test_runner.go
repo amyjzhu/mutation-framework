@@ -15,6 +15,7 @@ import (
 	"io/ioutil"
 	"crypto/md5"
 	"github.com/amyjzhu/mutation-framework"
+	"github.com/amyjzhu/mutation-framework/osutil"
 )
 
 func printStats(config *MutationConfig, allStats map[string]*mutationStats) {
@@ -113,7 +114,7 @@ func createNewMutantInfo(acceptableFiles map[string]string, pathSoFar string, fi
 }
 
 func appendFolder(original string, folder string) string {
-	if original == "" {
+	if original == "" || original == "."{
 		return folder
 	}
 
@@ -142,13 +143,102 @@ func runMutants(config *MutationConfig, mutantFiles []MutantInfo, allStats map[s
 	fmt.Println(mutantFiles)
 	log.Info("Executing tests against mutants.")
 	exitCode := returnOk
+
+	// move all contents into temp file
+	// maybe in the future can use go move
+	mutantFolder := config.Mutate.MutantFolder
+	//mutantFolder := appendFolder(config.FileBasePath, config.Mutate.MutantFolder)
+	originalArtifactFolder := appendFolder(mutantFolder, "original")
+	err := moveAllContentsExceptMutantFolder(".", originalArtifactFolder, mutantFolder)
+	if err != nil {
+		log.Error(err)
+		return returnError
+	}
+
+	// TODO actually replace back with original rather than symlink, but oh well
+	defer func() int {
+		/*err = os.Symlink(".", originalArtifactFolder)
+		if err != nil {
+			return returnError
+		}
+		return returnOk*/
+
+		moveAllContentsExceptMutantFolder(originalArtifactFolder, ".", mutantFolder)
+		if err != nil {
+			log.Error(err)
+			return returnError
+		}
+		// remove original
+		os.RemoveAll(originalArtifactFolder)
+		return returnOk
+	}()
+
 	for _, file := range mutantFiles {
 		stats := allStats[file.originalFileRelativePath]
+		//moveAllContentsExceptMutantFolder(file.mutantDirPathAbsPath, ".", mutantFolder)
+		os.Symlink(".", file.mutantDirPathAbsPath)
+		if err != nil {
+			log.Error(err)
+			return returnError
+		}
 		exitCode = runExecution(config, file, stats)
 	}
 
 	printStats(config, allStats)
 	return exitCode
+}
+
+func moveAllContentsExceptMutantFolder(sourceFolder string, dest string, mutantFolder string) error {
+	log.WithFields(log.Fields{"source": sourceFolder, "dest": dest}).Info("Moving contents of folder.")
+	isNotMutantsFolder := func(name string) bool {
+		if strings.Contains(filepath.Clean(mutantFolder), string(os.PathSeparator)) {
+			// Get first part of path, which matches what you see in directory
+			// TODO absolute // paths
+			//fmt.Printf("mutantFolder is %s\n", mutantFolder)
+			mutantFolder = strings.Split(mutantFolder, string(os.PathSeparator))[0]
+		}
+		//fmt.Printf("mutantFolder is %s and name is %s\n", mutantFolder, name)
+
+		// TODO
+		return !(strings.Contains(name, mutantFolder) || strings.Contains(mutantFolder, name))
+	}
+
+	return copyFolderContents(sourceFolder, dest, isNotMutantsFolder)
+}
+
+func copyFolderContents(sourceFolder string, destFolder string, pred func(name string) bool) error {
+	itemsToMove, err := ioutil.ReadDir(sourceFolder)
+	if err != nil {
+		fmt.Println("can't read directory")
+		return err
+	}
+
+	// TODO not sure what code
+	err = os.MkdirAll(destFolder, os.FileMode(0700))
+	if err != nil {
+		// abort if exists?
+		fmt.Println("couldn't make folder")
+		return err
+	}
+
+	for _, item := range itemsToMove {
+		itemPath := appendFolder(sourceFolder, item.Name())
+		newItemPath:= appendFolder(destFolder, item.Name())
+		// assume no
+		if pred(item.Name()) {
+			if item.IsDir() {
+				copyFolderContents(itemPath, newItemPath, pred)
+			} else {
+				//fmt.Printf("copying %s at %s to %s\n", item.Name(), itemPath, newItemPath)
+				err = osutil.CopyFile(itemPath, newItemPath)
+				if err != nil {
+					return err
+				}
+			}
+		}
+	}
+
+	return nil
 }
 
 func runExecution(config *MutationConfig, mutantInfo MutantInfo, stats *mutationStats) int {
@@ -193,6 +283,14 @@ func oneMutantRunTests(config *MutationConfig, pkg *types.Package, originalFileP
 		return execSkipped
 	}*/
 
+	wd, _ := os.Getwd()
+	fmt.Printf("I am in dir %s\n", wd)
+	// TODO probably want to put the whole thing in a docker container because you're gonna mess up your commands
+	runBuildCommand(config.Commands.Build)
+	defer func() {
+		runCleanUpCommand(config)
+	}()
+
 	if config.Commands.Test != "" {
 		return customTestMutateExec(config, originalFilePath, file, absMutationFile, config.Commands.Test)
 	}
@@ -200,21 +298,26 @@ func oneMutantRunTests(config *MutationConfig, pkg *types.Package, originalFileP
 	return customMutateExec(config, pkg, file, absMutationFile)
 }
 
+func runBuildCommand(buildCommand string) {
+	log.WithField("command", buildCommand).Info("Running build command.")
+
+	if buildCommand != "" {
+		_, err := exec.Command(buildCommand).CombinedOutput()
+
+		if err != nil {
+			panic(err)
+		}
+	}
+}
+
 func customTestMutateExec(config *MutationConfig, originalFilePath string, dirPath string, mutationFile string, testCommand string) (execExitCode int) {
 	log.WithField("command", testCommand).Debug("Executing built-in execution steps with custom test command")
-	defer func() {
-		log.WithField("command", config.Commands.CleanUp).Info("Running clean up command.")
-		runCleanUpCommand(config)
-	}()
 
-	// TODO why does it keep running over and over
-
-	// TODO not supported by afero
-	err := os.Chdir(dirPath)
+	/*err := os.Chdir(dirPath)
 	if err != nil {
 		log.Error(err)
 		return returnError
-	}
+	}*/
 
 	diff, execExitCode := showDiff(originalFilePath, mutationFile)
 
@@ -242,7 +345,7 @@ func customTestMutateExec(config *MutationConfig, originalFilePath string, dirPa
 func customMutateExec(config *MutationConfig, pkg *types.Package, file string, mutationFile string) (execExitCode int) {
 	log.Debug("Execute custom exec command for mutation")
 
-	os.Chdir(file)
+//	os.Chdir(file)
 
 	diff, execExitCode := showDiff(file, mutationFile)
 
@@ -361,6 +464,8 @@ func getTestKey(tests []string) string {
 }
 
 func runCleanUpCommand(config *MutationConfig) {
+	log.WithField("command", config.Commands.CleanUp).Info("Running clean up command.")
+
 	if config.Commands.CleanUp != "" {
 		_, err := exec.Command(config.Commands.CleanUp).CombinedOutput()
 

@@ -3,12 +3,10 @@
   <component name="ChangeListManager">
     <list default="true" id="975b4f24-3c28-4402-9db0-321448b555a3" name="Default" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cmd/mutation-framework/main.go" beforeDir="false" afterPath="$PROJECT_DIR$/cmd/mutation-framework/main.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cmd/mutation-framework/main_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/cmd/mutation-framework/main_test.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/cmd/mutation-framework/config.go" beforeDir="false" afterPath="$PROJECT_DIR$/cmd/mutation-framework/config.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/cmd/mutation-framework/mutate.go" beforeDir="false" afterPath="$PROJECT_DIR$/cmd/mutation-framework/mutate.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/cmd/mutation-framework/test_runner.go" beforeDir="false" afterPath="$PROJECT_DIR$/cmd/mutation-framework/test_runner.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cmd/mutation-framework/test_runner_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/cmd/mutation-framework/test_runner_test.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/mutator/statement/removetimeout.go" beforeDir="false" afterPath="$PROJECT_DIR$/mutator/statement/removetimeout.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/osutil/copy.go" beforeDir="false" afterPath="$PROJECT_DIR$/osutil/copy.go" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
@@ -24,20 +22,23 @@
     <splitter split-orientation="horizontal" split-proportion="0.47278482">
       <split-first>
         <leaf SIDE_TABS_SIZE_LIMIT_KEY="525">
-          <file leaf-file-name="removetimeout.go" pinned="false" current-in-tab="false">
-            <entry file="file://$PROJECT_DIR$/mutator/statement/removetimeout.go">
+          <file leaf-file-name="main.go" pinned="false" current-in-tab="true">
+            <entry file="file://$PROJECT_DIR$/cmd/mutation-framework/main.go">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="660">
-                  <caret line="51" column="16" lean-forward="true" selection-start-line="51" selection-start-column="16" selection-end-line="51" selection-end-column="16" />
+                <state relative-caret-position="720">
+                  <caret line="147" lean-forward="true" selection-start-line="147" selection-end-line="147" />
+                  <folding>
+                    <element signature="e#14#462#0" expanded="true" />
+                  </folding>
                 </state>
               </provider>
             </entry>
           </file>
-          <file leaf-file-name="main.go" pinned="false" current-in-tab="true">
-            <entry file="file://$PROJECT_DIR$/cmd/mutation-framework/main.go">
+          <file leaf-file-name="sample_config.json" pinned="false" current-in-tab="false">
+            <entry file="file://$PROJECT_DIR$/testdata/config/sample_config.json">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="960">
-                  <caret line="93" lean-forward="true" selection-start-line="93" selection-end-line="93" />
+                <state relative-caret-position="315">
+                  <caret line="21" column="1" selection-start-line="21" selection-start-column="1" selection-end-line="21" selection-end-column="1" />
                 </state>
               </provider>
             </entry>
@@ -46,7 +47,7 @@
             <entry file="file://$PROJECT_DIR$/cmd/mutation-framework/test_runner_test.go">
               <provider selected="true" editor-type-id="text-editor">
                 <state relative-caret-position="480">
-                  <caret line="35" column="1" lean-forward="true" selection-start-line="35" selection-start-column="1" selection-end-line="35" selection-end-column="1" />
+                  <caret line="35" column="1" selection-start-line="35" selection-start-column="1" selection-end-line="35" selection-end-column="1" />
                 </state>
               </provider>
             </entry>
@@ -64,7 +65,7 @@
           <file leaf-file-name="exec.go" pinned="false" current-in-tab="false">
             <entry file="file://$USER_HOME$/.go/src/os/exec/exec.go">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="150">
+                <state relative-caret-position="7470">
                   <caret line="510" column="14" selection-start-line="510" selection-start-column="14" selection-end-line="510" selection-end-column="14" />
                 </state>
               </provider>
@@ -77,20 +78,35 @@
           <file leaf-file-name="parse.go" pinned="false" current-in-tab="false">
             <entry file="file://$PROJECT_DIR$/parse.go">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="654">
-                  <caret line="79" column="19" selection-start-line="79" selection-start-column="19" selection-end-line="79" selection-end-column="19" />
-                  <folding>
-                    <element signature="e#19#178#0" expanded="true" />
-                  </folding>
+                <state relative-caret-position="180">
+                  <caret line="23" column="39" selection-start-line="23" selection-start-column="39" selection-end-line="23" selection-end-column="39" />
                 </state>
               </provider>
             </entry>
           </file>
-          <file leaf-file-name="test_runner.go" pinned="false" current-in-tab="false">
+          <file leaf-file-name="test_runner.go" pinned="false" current-in-tab="true">
             <entry file="file://$PROJECT_DIR$/cmd/mutation-framework/test_runner.go">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="63">
-                  <caret line="119" column="31" selection-start-line="119" selection-start-column="31" selection-end-line="119" selection-end-column="31" />
+                <state relative-caret-position="453">
+                  <caret line="263" selection-start-line="263" selection-end-line="263" />
+                </state>
+              </provider>
+            </entry>
+          </file>
+          <file leaf-file-name="copy.go" pinned="false" current-in-tab="false">
+            <entry file="file://$PROJECT_DIR$/osutil/copy.go">
+              <provider selected="true" editor-type-id="text-editor">
+                <state relative-caret-position="615">
+                  <caret line="45" column="1" selection-start-line="45" selection-start-column="1" selection-end-line="45" selection-end-column="1" />
+                </state>
+              </provider>
+            </entry>
+          </file>
+          <file leaf-file-name="mutate.go" pinned="false" current-in-tab="false">
+            <entry file="file://$PROJECT_DIR$/cmd/mutation-framework/mutate.go">
+              <provider selected="true" editor-type-id="text-editor">
+                <state relative-caret-position="-545">
+                  <caret line="91" column="19" selection-start-line="91" selection-start-column="19" selection-end-line="91" selection-end-column="19" />
                 </state>
               </provider>
             </entry>
@@ -99,7 +115,7 @@
             <entry file="file://$PROJECT_DIR$/mutator/statement/removetimeout_test.go">
               <provider selected="true" editor-type-id="text-editor">
                 <state relative-caret-position="285">
-                  <caret line="22" lean-forward="true" selection-start-line="22" selection-end-line="22" />
+                  <caret line="22" selection-start-line="22" selection-end-line="22" />
                 </state>
               </provider>
             </entry>
@@ -113,11 +129,14 @@
               </provider>
             </entry>
           </file>
-          <file leaf-file-name="main_test.go" pinned="false" current-in-tab="true">
+          <file leaf-file-name="main_test.go" pinned="false" current-in-tab="false">
             <entry file="file://$PROJECT_DIR$/cmd/mutation-framework/main_test.go">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="220">
-                  <caret line="102" column="39" lean-forward="true" selection-start-line="102" selection-start-column="39" selection-end-line="102" selection-end-column="39" />
+                <state relative-caret-position="1560">
+                  <caret line="113" selection-start-line="113" selection-end-line="113" />
+                  <folding>
+                    <element signature="e#14#134#0" expanded="true" />
+                  </folding>
                 </state>
               </provider>
             </entry>
@@ -125,17 +144,8 @@
           <file leaf-file-name="config.go" pinned="false" current-in-tab="false">
             <entry file="file://$PROJECT_DIR$/cmd/mutation-framework/config.go">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="-942">
-                  <caret line="139" column="50" lean-forward="true" selection-start-line="139" selection-start-column="50" selection-end-line="139" selection-end-column="50" />
-                </state>
-              </provider>
-            </entry>
-          </file>
-          <file leaf-file-name="mutate.go" pinned="false" current-in-tab="false">
-            <entry file="file://$PROJECT_DIR$/cmd/mutation-framework/mutate.go">
-              <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="753">
-                  <caret line="191" column="30" lean-forward="true" selection-start-line="191" selection-start-column="30" selection-end-line="191" selection-end-column="30" />
+                <state relative-caret-position="235">
+                  <caret line="399" selection-start-line="399" selection-end-line="399" />
                 </state>
               </provider>
             </entry>
@@ -153,7 +163,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>oh no</find>
       <find>mutateex</find>
       <find>oh no!</find>
       <find>byte</find>
@@ -183,6 +192,7 @@
       <find>testcopy</find>
       <find>fmt.Println</find>
       <find>appendfolder</find>
+      <find>chdir</find>
     </findStrings>
     <replaceStrings>
       <replace>amyjzhu/mutation-framework/</replace>
@@ -219,7 +229,6 @@
         <option value="$PROJECT_DIR$/scripts/exec/test-mutated-package.sh" />
         <option value="$PROJECT_DIR$/Makefile" />
         <option value="$PROJECT_DIR$/cmd/go-mutesting/main_test.go" />
-        <option value="$PROJECT_DIR$/osutil/copy.go" />
         <option value="$PROJECT_DIR$/testdata/config/incorrect_config.go" />
         <option value="$PROJECT_DIR$/testdata/config/incorrect_config.json" />
         <option value="$PROJECT_DIR$/testdata/config/sample_config.yaml" />
@@ -235,11 +244,13 @@
         <option value="$PROJECT_DIR$/cmd/go-mutesting/test_runner.go" />
         <option value="$PROJECT_DIR$/mutator/statement/removetimeout.go" />
         <option value="$PROJECT_DIR$/cmd/mutation-framework/test_runner_test.go" />
-        <option value="$PROJECT_DIR$/cmd/mutation-framework/test_runner.go" />
         <option value="$PROJECT_DIR$/cmd/mutation-framework/main.go" />
         <option value="$PROJECT_DIR$/mutator/statement/removetimeout_test.go" />
-        <option value="$PROJECT_DIR$/cmd/mutation-framework/mutate.go" />
         <option value="$PROJECT_DIR$/cmd/mutation-framework/main_test.go" />
+        <option value="$PROJECT_DIR$/cmd/mutation-framework/mutate.go" />
+        <option value="$PROJECT_DIR$/cmd/mutation-framework/config.go" />
+        <option value="$PROJECT_DIR$/osutil/copy.go" />
+        <option value="$PROJECT_DIR$/cmd/mutation-framework/test_runner.go" />
       </list>
     </option>
   </component>
@@ -313,6 +324,17 @@
               <item name="mutation-framework" type="462c0819:PsiDirectoryNode" />
               <item name="test" type="462c0819:PsiDirectoryNode" />
             </path>
+            <path>
+              <item name="mutation-framework" type="b2602c69:ProjectViewProjectNode" />
+              <item name="mutation-framework" type="462c0819:PsiDirectoryNode" />
+              <item name="testdata" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="mutation-framework" type="b2602c69:ProjectViewProjectNode" />
+              <item name="mutation-framework" type="462c0819:PsiDirectoryNode" />
+              <item name="testdata" type="462c0819:PsiDirectoryNode" />
+              <item name="config" type="462c0819:PsiDirectoryNode" />
+            </path>
           </expand>
           <select />
         </subPane>
@@ -325,7 +347,7 @@
     <property name="SearchEverywhereHistoryKey" value="&#9;FILE&#9;file:///home/amy/go/src/github.com/amyjzhu/mutation-framework/cmd/go-mutesting/config.go" />
     <property name="go.gopath.indexing.explicitly.defined" value="true" />
     <property name="go.sdk.automatically.set" value="true" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$/cmd/go-mutesting/config.go" />
+    <property name="last_opened_file_path" value="$USER_HOME$" />
     <property name="nodejs_interpreter_path.stuck_in_default_project" value="undefined stuck path" />
   </component>
   <component name="RecentsManager">
@@ -432,7 +454,7 @@
     <frame x="65" y="-4" width="1855" height="1204" extended-state="6" />
     <editor active="true" />
     <layout>
-      <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.14824797" />
+      <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.14339623" />
       <window_info anchor="bottom" id="TODO" order="6" />
       <window_info anchor="bottom" id="Event Log" order="9" sideWeight="0.50242585" side_tool="true" weight="0.39963505" />
       <window_info anchor="right" id="Database" order="3" />
@@ -552,13 +574,6 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/testdata/config/incorrect_config.go" />
     <entry file="file://$PROJECT_DIR$/testdata/config/incorrect_config.json" />
-    <entry file="file://$PROJECT_DIR$/osutil/copy.go">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="503">
-          <caret line="42" column="14" selection-start-line="42" selection-start-column="14" selection-end-line="42" selection-end-column="14" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/../ungutted-mutation-framework/mutator/branch/mutateif.go">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="75">
@@ -566,13 +581,7 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/cmd/go-mutesting/main_test.go">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="24">
-          <caret line="73" selection-start-line="73" selection-end-line="73" />
-        </state>
-      </provider>
-    </entry>
+    <entry file="file://$PROJECT_DIR$/cmd/go-mutesting/main_test.go" />
     <entry file="file://$PROJECT_DIR$/scripts/exec/new2.sh" />
     <entry file="file://$PROJECT_DIR$/scripts/exec/preserve-mutants-test-package.sh" />
     <entry file="file://$PROJECT_DIR$/scripts/exec/ricartagrawala.sh" />
@@ -586,13 +595,6 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/LICENSE">
       <provider selected="true" editor-type-id="text-editor" />
-    </entry>
-    <entry file="file://$PROJECT_DIR$/testdata/config/sample_config.json">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="300">
-          <caret line="20" column="24" selection-start-line="20" selection-start-column="24" selection-end-line="20" selection-end-column="24" />
-        </state>
-      </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/testdata/config/wildcard_config.json">
       <provider selected="true" editor-type-id="text-editor">
@@ -638,28 +640,13 @@
     </entry>
     <entry file="file://$USER_HOME$/.go/src/os/exec/exec.go">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="150">
+        <state relative-caret-position="7470">
           <caret line="510" column="14" selection-start-line="510" selection-start-column="14" selection-end-line="510" selection-end-column="14" />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/cmd/go-mutesting/test_runner_test.go">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="465">
-          <caret line="31" column="1" selection-start-line="31" selection-start-column="1" selection-end-line="31" selection-end-column="1" />
-          <folding>
-            <element signature="e#14#73#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/cmd/go-mutesting/config_test.go">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="310">
-          <caret line="88" column="48" selection-start-line="88" selection-start-column="48" selection-end-line="88" selection-end-column="48" />
-        </state>
-      </provider>
-    </entry>
+    <entry file="file://$PROJECT_DIR$/cmd/go-mutesting/test_runner_test.go" />
+    <entry file="file://$PROJECT_DIR$/cmd/go-mutesting/config_test.go" />
     <entry file="file://$USER_HOME$/.go/src/os/file.go">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="356">
@@ -667,65 +654,15 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/cmd/go-mutesting/main.go">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1293">
-          <caret line="159" column="34" selection-start-line="159" selection-start-column="34" selection-end-line="159" selection-end-column="34" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/cmd/go-mutesting/test_runner.go">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="15">
-          <caret line="63" selection-start-line="63" selection-end-line="63" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/cmd/go-mutesting/config.go">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="2580">
-          <caret line="183" column="5" selection-start-line="183" selection-start-column="5" selection-end-line="183" selection-end-column="5" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/cmd/go-mutesting/go-mutesting-bash_completion.sh">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="165">
-          <caret line="11" lean-forward="true" selection-start-line="11" selection-end-line="11" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/cmd/go-mutesting/mutate.go">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="158">
-          <caret line="123" column="21" lean-forward="true" selection-start-line="123" selection-start-column="21" selection-end-line="123" selection-end-column="21" />
-        </state>
-      </provider>
-    </entry>
+    <entry file="file://$PROJECT_DIR$/cmd/go-mutesting/main.go" />
+    <entry file="file://$PROJECT_DIR$/cmd/go-mutesting/test_runner.go" />
+    <entry file="file://$PROJECT_DIR$/cmd/go-mutesting/config.go" />
+    <entry file="file://$PROJECT_DIR$/cmd/go-mutesting/go-mutesting-bash_completion.sh" />
+    <entry file="file://$PROJECT_DIR$/cmd/go-mutesting/mutate.go" />
     <entry file="file://$PROJECT_DIR$/Makefile">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="270">
           <caret line="18" column="42" lean-forward="true" selection-start-line="18" selection-start-column="42" selection-end-line="18" selection-end-column="42" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/mutator/branch/mutatecase.go">
-      <provider selected="true" editor-type-id="text-editor" />
-    </entry>
-    <entry file="file://$PROJECT_DIR$/mutator/statement/removetimeout.go">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="660">
-          <caret line="51" column="16" lean-forward="true" selection-start-line="51" selection-start-column="16" selection-end-line="51" selection-end-column="16" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/parse.go">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="654">
-          <caret line="79" column="19" selection-start-line="79" selection-start-column="19" selection-end-line="79" selection-end-column="19" />
-          <folding>
-            <element signature="e#19#178#0" expanded="true" />
-          </folding>
         </state>
       </provider>
     </entry>
@@ -735,42 +672,34 @@
     <entry file="file://$PROJECT_DIR$/mutator/statement/removetimeout_test.go">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="285">
-          <caret line="22" lean-forward="true" selection-start-line="22" selection-end-line="22" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/cmd/mutation-framework/config.go">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-942">
-          <caret line="139" column="50" lean-forward="true" selection-start-line="139" selection-start-column="50" selection-end-line="139" selection-end-column="50" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/cmd/mutation-framework/test_runner.go">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="63">
-          <caret line="119" column="31" selection-start-line="119" selection-start-column="31" selection-end-line="119" selection-end-column="31" />
+          <caret line="22" selection-start-line="22" selection-end-line="22" />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/cmd/mutation-framework/test_runner_test.go">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="480">
-          <caret line="35" column="1" lean-forward="true" selection-start-line="35" selection-start-column="1" selection-end-line="35" selection-end-column="1" />
+          <caret line="35" column="1" selection-start-line="35" selection-start-column="1" selection-end-line="35" selection-end-column="1" />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/cmd/mutation-framework/main.go">
+    <entry file="file://$PROJECT_DIR$/cmd/mutation-framework/main_test.go">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="960">
-          <caret line="93" lean-forward="true" selection-start-line="93" selection-end-line="93" />
+        <state relative-caret-position="1560">
+          <caret line="113" selection-start-line="113" selection-end-line="113" />
+          <folding>
+            <element signature="e#14#134#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/cmd/mutation-framework/mutate.go">
+    <entry file="file://$PROJECT_DIR$/mutator/branch/mutatecase.go">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/testdata/config/sample_config.json">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="753">
-          <caret line="191" column="30" lean-forward="true" selection-start-line="191" selection-start-column="30" selection-end-line="191" selection-end-column="30" />
+        <state relative-caret-position="315">
+          <caret line="21" column="1" selection-start-line="21" selection-start-column="1" selection-end-line="21" selection-end-column="1" />
         </state>
       </provider>
     </entry>
@@ -781,10 +710,55 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/cmd/mutation-framework/main_test.go">
+    <entry file="file://$PROJECT_DIR$/cmd/mutation-framework/config.go">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="220">
-          <caret line="102" column="39" lean-forward="true" selection-start-line="102" selection-start-column="39" selection-end-line="102" selection-end-column="39" />
+        <state relative-caret-position="235">
+          <caret line="399" selection-start-line="399" selection-end-line="399" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/mutator/statement/removetimeout.go">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="660">
+          <caret line="51" column="16" selection-start-line="51" selection-start-column="16" selection-end-line="51" selection-end-column="16" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/cmd/mutation-framework/main.go">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="720">
+          <caret line="147" lean-forward="true" selection-start-line="147" selection-end-line="147" />
+          <folding>
+            <element signature="e#14#462#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/parse.go">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="180">
+          <caret line="23" column="39" selection-start-line="23" selection-start-column="39" selection-end-line="23" selection-end-column="39" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/cmd/mutation-framework/mutate.go">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-545">
+          <caret line="91" column="19" selection-start-line="91" selection-start-column="19" selection-end-line="91" selection-end-column="19" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/osutil/copy.go">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="615">
+          <caret line="45" column="1" selection-start-line="45" selection-start-column="1" selection-end-line="45" selection-end-column="1" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/cmd/mutation-framework/test_runner.go">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="453">
+          <caret line="263" selection-start-line="263" selection-end-line="263" />
         </state>
       </provider>
     </entry>

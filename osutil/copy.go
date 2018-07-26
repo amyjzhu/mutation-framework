@@ -3,6 +3,7 @@ package osutil
 import (
 	"io"
 	"os"
+	"fmt"
 )
 
 // CopyFile copies a file from src to dst
@@ -21,6 +22,7 @@ func CopyFile(src string, dst string) (err error) {
 
 	d, err := os.Create(dst)
 	if err != nil {
+		fmt.Println("3")
 		return err
 	}
 	defer func() {

@@ -152,6 +152,10 @@ func checkNilImportantFields(config *MutationConfig) error {
 		}
 	}
 
+	if strings.HasPrefix(config.Mutate.MutantFolder, string(os.PathSeparator)) {
+		log.Debug( "Did you intend for mutant folder to have path separator prefix?\n")
+	}
+
 	if config.Commands == (Commands{}) {
 		log.Debug("Did you mean for Commands to be empty?")
 	}
@@ -267,6 +271,7 @@ func removeWildCardPaths(paths []string) []string {
 }
 
 // TODO refactor
+// TODO replace with filepath.Glob?
 func expandWildCardRecursive(pathIndex int, pathPieces []string, basepath string) []string {
 
 	// Function closures

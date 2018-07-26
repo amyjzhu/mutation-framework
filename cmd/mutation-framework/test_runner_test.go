@@ -34,3 +34,11 @@ func TestAppendFolder(t *testing.T) {
 func TestCreateMutantInfo(t *testing.T) {
 
 }
+
+func TestGetFirstElementInPath(t *testing.T) {
+	assert.Equal(t, "hello", getFirstElementInPath("/hello/world"))
+	assert.Equal(t, "hello", getFirstElementInPath("hello/world"))
+	assert.Equal(t, "world", getFirstElementInPath("world"))
+	assert.Equal(t, "world", getFirstElementInPath("/world"))
+	assert.Equal(t, "/", getFirstElementInPath("/"))
+}

@@ -33,6 +33,7 @@ func mutateFiles(config *MutationConfig, files map[string]string, operators []mu
 		allStats[relativeFileLocation] = stats
 		log.WithField("file", relativeFileLocation).Debug("Mutating file.")
 
+		// make sure the source is valid before mutating
 		src, fset, pkg, info, err := mutesting.ParseAndTypeCheckFile(abs)
 		if err != nil {
 			log.WithField("file", abs).Error("There was an error compiling the file.")
@@ -137,6 +138,17 @@ func mutate(config *MutationConfig, mutationID int, pkg *types.Package,
 	return mutantInfos
 }
 
+func getAbsoluteMutationFolderPath(config *MutationConfig) (projectName string) {
+	if strings.HasPrefix(config.Mutate.MutantFolder, string(os.PathSeparator)) {
+		// don't add project base path to it thenm
+		projectName = config.Mutate.MutantFolder
+	} else {
+		projectName = appendFolder(config.FileBasePath, config.Mutate.MutantFolder)
+	}
+
+	log.Info(projectName)
+	return
+}
 
 func copyProject(config *MutationConfig, name string) (string, error) {
 	log.WithField("mutant", name).Debug("Copying into mutants folder.")
@@ -146,12 +158,7 @@ func copyProject(config *MutationConfig, name string) (string, error) {
 	}
 
 	// TODO would probably break if it wasn't under the goroot or gopath...
-	var projectName string
-	if strings.HasPrefix(config.Mutate.MutantFolder, string(os.PathSeparator)) {
-		projectName = appendFolder(config.Mutate.MutantFolder, name)
-	} else {
-		projectName = config.FileBasePath + config.Mutate.MutantFolder + name
-	}
+	projectName := appendFolder(getAbsoluteMutationFolderPath(config), name)
 
 	return projectName,
 		copyRecursive(config.Mutate.Overwrite, dir, projectName, config.Mutate.MutantFolder)
@@ -172,6 +179,7 @@ func copyRecursive(overwrite bool, source string, dest string, mutantFolder stri
 		destFile.Close()
 	}
 
+	// file should exist
 	file, err := fs.Stat(source)
 
 	if err != nil {
@@ -185,6 +193,7 @@ func copyRecursive(overwrite bool, source string, dest string, mutantFolder stri
 			return err
 		}
 
+		// get all files in source directory
 		files, err := afero.ReadDir(fs,source)
 		if err != nil {
 			return err
@@ -216,5 +225,25 @@ func copyRecursive(overwrite bool, source string, dest string, mutantFolder stri
 }
 
 func doNotCopyDir(dir os.FileInfo, innerFolder string) bool {
-	return dir.Name() == filepath.Clean(innerFolder) || dir.Name() == ".git" || dir.Name() == filepath.Base(innerFolder)
+	// don't copy git information or mutant folders
+	return dir.Name() == filepath.Clean(innerFolder) || dir.Name() == ".git" || //dir.Name() == filepath.Base(innerFolder)
+	dir.Name() == getFirstElementInPath(innerFolder)
+}
+
+func getFirstElementInPath(path string) string {
+	if path == "/" {
+		return path
+	}
+
+	elts := strings.Split(path, string(os.PathSeparator))
+	if len(elts) > 1 {
+		if elts[0] == "" { // TODO assuming not //folder
+			return elts[1]
+		}
+		return elts[0]
+	} else {
+		return path
+	}
+
+
 }

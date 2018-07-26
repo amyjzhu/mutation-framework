@@ -19,13 +19,12 @@ import (
 )
 
 func printStats(config *MutationConfig, allStats map[string]*mutationStats) {
-	// TODO show stats for different files
 	if !config.Test.Disable {
-		// TODO parameterize
 		getRedundantCandidates()
 		log.Info("Mutants killed by: ", testsToMutants)
 		log.Info("Live mutants are: ", liveMutants)
 
+		// print stats for each file
 		for file, stats := range allStats {
 			log.WithField("file", file).
 				Info(fmt.Sprintf("For this file, the mutation score is %f (%d passed, %d failed, %d duplicated, %d skipped, total is %d)",
@@ -44,7 +43,9 @@ func findAllMutantsInFolder(config *MutationConfig, allStats map[string]*mutatio
 	var mutants []MutantInfo
 
 	var findMutantsRecursive func(folder string, pathSoFar string) error
+	log.Info("What's wrong")
 
+	// look for all mutant directories
 	findMutantsRecursive = func(absolutePath string, pathSoFar string) error {
 		directoryContents, err := ioutil.ReadDir(absolutePath)
 		if err != nil {
@@ -54,6 +55,7 @@ func findAllMutantsInFolder(config *MutationConfig, allStats map[string]*mutatio
 		for _, fileInfo := range directoryContents {
 			if fileInfo.IsDir() {
 				if isMutant(fileInfo.Name()) {
+					// if we've found a mutant directory, collect information about it
 					mutantInfo, err := createNewMutantInfo(filesToExec, pathSoFar, fileInfo, absolutePath, allStats)
 					if err != nil {
 						return err
@@ -62,6 +64,7 @@ func findAllMutantsInFolder(config *MutationConfig, allStats map[string]*mutatio
 						mutants = append(mutants, *mutantInfo)
 					}
 				} else {
+					// not a mutant directory, so let's keep looking
 					findMutantsRecursive(appendFolder(absolutePath, fileInfo.Name()),
 						appendFolder(pathSoFar, fileInfo.Name()))
 				}
@@ -71,14 +74,16 @@ func findAllMutantsInFolder(config *MutationConfig, allStats map[string]*mutatio
 		return nil
 	}
 
-	mutationFolderAbsolutePath := config.FileBasePath + config.Mutate.MutantFolder
+	mutationFolderAbsolutePath := getAbsoluteMutationFolderPath(config)
+	fmt.Println("mutation folder path is " + mutationFolderAbsolutePath)
 
+	// find all mutants in the mutation folder
 	err := findMutantsRecursive(mutationFolderAbsolutePath, "")
 	if err != nil {
 		return nil, err
 	}
 
-	fmt.Println(mutants)
+	//fmt.Println(mutants)
 	return mutants, nil
 }
 
@@ -89,24 +94,29 @@ func isMutant(candidate string) bool {
 
 func createNewMutantInfo(acceptableFiles map[string]string, pathSoFar string, fileInfo os.FileInfo,
 	absPath string, allStats map[string]*mutationStats) (*MutantInfo, error) {
+	// the relative file path within the project, e.g. nsqd/nsqd.go
 	originalFilePath := getMutatedFileRelativePath(pathSoFar, fileInfo.Name())
+	// the directory name, e.g. nsqd.go.branch-if.1
 	currentPath := appendFolder(absPath, fileInfo.Name())
+	// absolute path to the mutated file, e.g. .../mutants/nsqd/nsqd.go.branch-if.1/nsqd/nsqd.go
 	mutatedFileAbsolutePath := appendFolder(currentPath, originalFilePath)
 	checksum, err := getChecksum(mutatedFileAbsolutePath)
 	if err != nil {
 		return nil, err
 	}
-	
+
 	// don't add the file to be test if it doesn't fit specified files
 	if _, ok := acceptableFiles[originalFilePath]; !ok {
 		return nil, err
 	}
 
+	// create a corresponding mutationStats for this file
 	stats := &mutationStats{}
 	allStats[originalFilePath] = stats
 
 	// check the original file package
 	_, _, pkg, _, err := mutesting.ParseAndTypeCheckFile(originalFilePath)
+
 	log.WithField("path", mutatedFileAbsolutePath).Debug("Found mutant.")
 	mutantInfo := MutantInfo{pkg, originalFilePath,
 		currentPath, mutatedFileAbsolutePath, checksum}
@@ -139,7 +149,7 @@ func getChecksum(path string) (string, error) {
 
 }
 
-func runMutants(config *MutationConfig, mutantFiles []MutantInfo, allStats map[string]*mutationStats) int {
+func executeAllMutants(config *MutationConfig, mutantFiles []MutantInfo, allStats map[string]*mutationStats) int {
 	fmt.Println(mutantFiles)
 	log.Info("Executing tests against mutants.")
 	exitCode := returnOk
@@ -181,13 +191,14 @@ func runMutants(config *MutationConfig, mutantFiles []MutantInfo, allStats map[s
 			log.Error(err)
 			return returnError
 		}
-		exitCode = runExecution(config, file, stats)
+		exitCode = executeForMutant(config, file, stats)
 	}
 
 	printStats(config, allStats)
 	return exitCode
 }
 
+// Copy contents of one folder to another, ignoring mutants folder
 func moveAllContentsExceptMutantFolder(sourceFolder string, dest string, mutantFolder string) error {
 	log.WithFields(log.Fields{"source": sourceFolder, "dest": dest}).Info("Moving contents of folder.")
 	isNotMutantsFolder := func(name string) bool {
@@ -206,30 +217,29 @@ func moveAllContentsExceptMutantFolder(sourceFolder string, dest string, mutantF
 	return copyFolderContents(sourceFolder, dest, isNotMutantsFolder)
 }
 
+// Copy all the contents of one folder to another folder i.e. cp src/* dest/
+// Creates destination if doesn't exist
 func copyFolderContents(sourceFolder string, destFolder string, pred func(name string) bool) error {
 	itemsToMove, err := ioutil.ReadDir(sourceFolder)
 	if err != nil {
-		fmt.Println("can't read directory")
+		log.Error(err)
 		return err
 	}
 
 	// TODO not sure what code
 	err = os.MkdirAll(destFolder, os.FileMode(0700))
 	if err != nil {
-		// abort if exists?
-		fmt.Println("couldn't make folder")
+		log.Error(err)
 		return err
 	}
 
 	for _, item := range itemsToMove {
 		itemPath := appendFolder(sourceFolder, item.Name())
 		newItemPath:= appendFolder(destFolder, item.Name())
-		// assume no
 		if pred(item.Name()) {
 			if item.IsDir() {
 				copyFolderContents(itemPath, newItemPath, pred)
 			} else {
-				//fmt.Printf("copying %s at %s to %s\n", item.Name(), itemPath, newItemPath)
 				err = osutil.CopyFile(itemPath, newItemPath)
 				if err != nil {
 					return err
@@ -241,11 +251,11 @@ func copyFolderContents(sourceFolder string, destFolder string, pred func(name s
 	return nil
 }
 
-func runExecution(config *MutationConfig, mutantInfo MutantInfo, stats *mutationStats) int {
+func executeForMutant(config *MutationConfig, mutantInfo MutantInfo, stats *mutationStats) int {
 	log.WithField("mutant", mutantInfo.mutationFileAbsPath).Debug("Running tests.")
 
 	if !config.Test.Disable {
-		execExitCode := oneMutantRunTests(config, mutantInfo.pkg,
+		execExitCode := runTestsForMutant(config, mutantInfo.pkg,
 			mutantInfo.originalFileRelativePath, mutantInfo.mutantDirPathAbsPath,
 			mutantInfo.mutationFileAbsPath)
 
@@ -276,15 +286,13 @@ func runExecution(config *MutationConfig, mutantInfo MutantInfo, stats *mutation
 	return returnOk
 }
 
-func oneMutantRunTests(config *MutationConfig, pkg *types.Package, originalFilePath string, file string, absMutationFile string) (execExitCode int) {
+func runTestsForMutant(config *MutationConfig, pkg *types.Package, originalFilePath string, file string, absMutationFile string) (execExitCode int) {
 	/* // TODO might be worthwhile to check validity before running tests, because test execution can take a long time
 	_, _, _, _, err := mutesting.ParseAndTypeCheckFile(absMutationFile)
 	if err != nil {
 		return execSkipped
 	}*/
 
-	wd, _ := os.Getwd()
-	fmt.Printf("I am in dir %s\n", wd)
 	// TODO probably want to put the whole thing in a docker container because you're gonna mess up your commands
 	runBuildCommand(config.Commands.Build)
 	defer func() {
@@ -292,17 +300,19 @@ func oneMutantRunTests(config *MutationConfig, pkg *types.Package, originalFileP
 	}()
 
 	if config.Commands.Test != "" {
-		return customTestMutateExec(config, originalFilePath, file, absMutationFile, config.Commands.Test)
+		return customTestMutateExec(originalFilePath, absMutationFile, config.Commands.Test)
 	}
 
-	return customMutateExec(config, pkg, file, absMutationFile)
+	return defaultMutateExec(config, pkg, file, absMutationFile)
 }
 
 func runBuildCommand(buildCommand string) {
 	log.WithField("command", buildCommand).Info("Running build command.")
 
 	if buildCommand != "" {
-		_, err := exec.Command(buildCommand).CombinedOutput()
+		output, err := exec.Command(buildCommand).CombinedOutput()
+
+		log.Debug(output) // TODO out-of-order with mutation 
 
 		if err != nil {
 			panic(err)
@@ -310,8 +320,8 @@ func runBuildCommand(buildCommand string) {
 	}
 }
 
-func customTestMutateExec(config *MutationConfig, originalFilePath string, dirPath string, mutationFile string, testCommand string) (execExitCode int) {
-	log.WithField("command", testCommand).Debug("Executing built-in execution steps with custom test command")
+func customTestMutateExec(originalFilePath string, mutationFile string, testCommand string) (execExitCode int) {
+	log.WithField("command", testCommand).Debug("Executing tests with custom test command.")
 
 	/*err := os.Chdir(dirPath)
 	if err != nil {
@@ -319,11 +329,27 @@ func customTestMutateExec(config *MutationConfig, originalFilePath string, dirPa
 		return returnError
 	}*/
 
+	execWithArgs := strings.Split(testCommand, " ")
+	execCommand := exec.Command(execWithArgs[0], execWithArgs[1:]...)
+
+	return executeTestCommand(originalFilePath, mutationFile, execCommand)
+}
+
+func defaultMutateExec(config *MutationConfig, pkg *types.Package, file string, mutationFile string) (execExitCode int) {
+	log.Debug("Execute default test command.")
+
+//	os.Chdir(file)
+
+	pkgName := pkg.Path()
+
+	testCommand := exec.Command("go", "test", "-timeout", fmt.Sprintf("%ds", config.Test.Timeout), pkgName)
+	return executeTestCommand(file, mutationFile, testCommand)
+}
+
+func executeTestCommand(originalFilePath string, mutationFile string, testCommand *exec.Cmd) int {
 	diff, execExitCode := showDiff(originalFilePath, mutationFile)
 
-	execWithArgs := strings.Split(testCommand, " ")
-
-	test, err := exec.Command(execWithArgs[0], execWithArgs[1:]...).CombinedOutput()
+	test, err := testCommand.CombinedOutput()
 
 	if err == nil {
 		execExitCode = execPassed
@@ -334,34 +360,6 @@ func customTestMutateExec(config *MutationConfig, originalFilePath string, dirPa
 	}
 
 	log.Debug("Test output: ", string(test))
-
-	putFailedTestsInMap(mutationFile, test)
-
-	execExitCode = determinePassOrFail(diff, mutationFile, execExitCode)
-
-	return execExitCode
-}
-
-func customMutateExec(config *MutationConfig, pkg *types.Package, file string, mutationFile string) (execExitCode int) {
-	log.Debug("Execute custom exec command for mutation")
-
-//	os.Chdir(file)
-
-	diff, execExitCode := showDiff(file, mutationFile)
-
-	pkgName := pkg.Path()
-
-	test, err := exec.Command("go", "test", "-timeout", fmt.Sprintf("%ds", config.Test.Timeout), pkgName).CombinedOutput()
-
-	if err == nil {
-		execExitCode = execPassed
-	} else if e, ok := err.(*exec.ExitError); ok {
-		execExitCode = e.Sys().(syscall.WaitStatus).ExitStatus()
-	} else {
-		panic(err)
-	}
-
-	log.Debug(test)
 
 	putFailedTestsInMap(mutationFile, test)
 
@@ -467,7 +465,9 @@ func runCleanUpCommand(config *MutationConfig) {
 	log.WithField("command", config.Commands.CleanUp).Info("Running clean up command.")
 
 	if config.Commands.CleanUp != "" {
-		_, err := exec.Command(config.Commands.CleanUp).CombinedOutput()
+		output, err := exec.Command(config.Commands.CleanUp).CombinedOutput()
+
+		log.Debug(output)
 
 		if err != nil {
 			panic(err)

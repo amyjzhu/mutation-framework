@@ -182,7 +182,7 @@ func execute(config *MutationConfig, operators []mutator.Mutator, files map[stri
 	}
 
 	if !config.Test.Disable {
-		exitCode = runMutants(config, mutantPaths, stats)
+		exitCode = executeAllMutants(config, mutantPaths, stats)
 	} else {
 		exitCode = returnOk
 	}

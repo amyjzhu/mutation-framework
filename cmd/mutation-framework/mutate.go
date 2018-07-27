@@ -8,9 +8,14 @@ import (
 	"go/types"
 	"go/token"
 	"go/ast"
-	"github.com/amyjzhu/mutation-framework/mutator"
 	"github.com/amyjzhu/mutation-framework"
 	log "github.com/sirupsen/logrus"
+	"bytes"
+	"crypto/md5"
+	"go/printer"
+	"io"
+	"go/format"
+	"github.com/spf13/afero"
 )
 
 type MutantInfo struct {
@@ -21,10 +26,10 @@ type MutantInfo struct {
 	checksum                 string
 }
 
-func mutateFiles(config *MutationConfig, files map[string]string, operators []mutator.Mutator) (map[string]*mutationStats, []MutantInfo, int) {
+func mutateFiles(config *MutationConfig, files map[string]string) (map[string]*mutationStats, []MutantInfo, int) {
 	log.Info("Mutating files.")
 	allStats := make(map[string]*mutationStats)
-	var mutantInfos []MutantInfo
+	var allMutantInfo []MutantInfo
 
 	for relativeFileLocation, abs := range files {
 		stats := &mutationStats{}
@@ -50,7 +55,7 @@ func mutateFiles(config *MutationConfig, files map[string]string, operators []mu
 			mutantFolderName = filepath.Base(config.Mutate.MutantFolder)
 		}*/
 
-		mutantFile := config.Mutate.MutantFolder + relativeFileLocation
+		mutantFile := appendFolder(config.Mutate.MutantFolder, relativeFileLocation)
 		createMutantFolderPath(mutantFile)
 
 		mutationID := 0
@@ -59,10 +64,10 @@ func mutateFiles(config *MutationConfig, files map[string]string, operators []mu
 		mutantInfo := mutate(config, mutationID, pkg, info, abs, relativeFileLocation,
 			fset, src, src, stats)
 
-		mutantInfos = append(mutantInfos, mutantInfo...)
+		allMutantInfo = append(allMutantInfo, mutantInfo...)
 	}
 
-	return allStats, mutantInfos, returnOk
+	return allStats, allMutantInfo, returnOk
 }
 
 func createMutantFolderPath(file string) {
@@ -82,7 +87,7 @@ func mutate(config *MutationConfig, mutationID int, pkg *types.Package,
 	var mutantInfos []MutantInfo
 
 	for _, m := range config.Mutate.Operators {
-		mutationID = 0 // reset the mutationid for each operator
+		mutationID = 0
 		log.WithField("mutation_operator", m.Name).Info("Mutating.")
 
 		changed := mutesting.MutateWalk(pkg, info, node, *m.MutationOperator)
@@ -96,8 +101,7 @@ func mutate(config *MutationConfig, mutationID int, pkg *types.Package,
 
 			mutationBlackList := make(map[string]struct{},0) //TODO implement real blacklisting
 
-			safeMutationName := strings.Replace(m.Name, string(os.PathSeparator), "-", -1)
-			mutationFileId := fmt.Sprintf("%s.%s.%d", relativeFilePath, safeMutationName, mutationID)
+			mutationFileId := buildMutantName(m.Name, relativeFilePath, mutationID)
 			log.WithField("name", mutationFileId).Info("Creating mutant.")
 
 			mutantPath, err := copyProject(config, mutationFileId) // TODO verify correctness of absolute file
@@ -105,7 +109,8 @@ func mutate(config *MutationConfig, mutationID int, pkg *types.Package,
 				log.WithField("error", err).Error("Internal error.")
 			}
 
-			mutatedFilePath := filepath.Clean(mutantPath) + string(os.PathSeparator) + relativeFilePath
+			// get the absolute path of the mutated file inside the mutant
+			mutatedFilePath := appendFolder(filepath.Clean(mutantPath), relativeFilePath)
 			checksum, duplicate, err := saveAST(mutationBlackList, mutatedFilePath, fset, src)
 
 			if err != nil {
@@ -118,6 +123,7 @@ func mutate(config *MutationConfig, mutationID int, pkg *types.Package,
 					log.Fields{"mutant": mutatedFilePath, "checksum": checksum}).
 					Debug("Saving mutated file.")
 
+				// Bundle up information about the mutant and send to exec
 				mutantInfo := MutantInfo{pkg, relativeFilePath,
 					filepath.Clean(mutantPath),
 					mutatedFilePath, checksum}
@@ -136,15 +142,53 @@ func mutate(config *MutationConfig, mutationID int, pkg *types.Package,
 	return mutantInfos
 }
 
+func buildMutantName(operatorName string, filePath string, mutationId int) string {
+	// replace slash so "branch/go" becomes "branch-go" and doesn't create new directory
+	safeMutationName := strings.Replace(operatorName, string(os.PathSeparator), "-", -1)
+	return fmt.Sprintf("%s.%s.%d", filePath, safeMutationName, mutationId)
+}
+
 func getAbsoluteMutationFolderPath(config *MutationConfig) (projectName string) {
 	if strings.HasPrefix(config.Mutate.MutantFolder, string(os.PathSeparator)) {
-		// don't add project base path to it thenm
+		// don't add project base path to it then
 		projectName = config.Mutate.MutantFolder
 	} else {
 		projectName = appendFolder(config.FileBasePath, config.Mutate.MutantFolder)
 	}
 
-	log.Info(projectName)
+	//log.Info(projectName)
 	return
 }
+
+func saveAST(mutationBlackList map[string]struct{}, file string, fset *token.FileSet, node ast.Node) (string, bool, error) { // TODO blacklists -- don't currently have this capability
+	var buf bytes.Buffer
+
+	h := md5.New()
+
+	err := printer.Fprint(io.MultiWriter(h, &buf), fset, node)
+	if err != nil {
+		return "", false, err
+	}
+
+	checksum := fmt.Sprintf("%x", h.Sum(nil))
+
+	if _, ok := mutationBlackList[checksum]; ok {
+		return checksum, true, nil
+	}
+
+	mutationBlackList[checksum] = struct{}{}
+
+	src, err := format.Source(buf.Bytes())
+	if err != nil {
+		return "", false, err
+	}
+
+	err = afero.WriteFile(fs, file, src, 0666)
+	if err != nil {
+		return "", false, err
+	}
+
+	return checksum, false, nil
+}
+
 

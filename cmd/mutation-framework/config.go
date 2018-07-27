@@ -54,7 +54,7 @@ type Commands struct {
 	Test    string `json:"test"`
 	Build string `json:"build"`
 	CleanUp string `json:"clean_up"`
-} // todo required group
+}
 
 const DefaultMutationFolder = "mutants/"
 
@@ -194,9 +194,10 @@ func appendMutantFolderSlashOrReplaceWithDefault(config *MutationConfig) {
 
 func appendSlash(path string) string {
 	if path == "" {
-		return "/" // TODO path separator
+		return string(os.PathSeparator)
 	}
 
+	// TODO path.Join
 	if path[len(path)-1:] != string(os.PathSeparator) {
 		return path + string(os.PathSeparator)
 	}
@@ -215,7 +216,6 @@ func (config *MutationConfig) getIncludedFiles() []string {
 		filesToMutate[file] = struct{}{}
 	}
 
-	// TODO exclude is more powerful than include
 	for _, excludeFile := range config.Mutate.FilesToExclude {
 		delete(filesToMutate, excludeFile)
 	}

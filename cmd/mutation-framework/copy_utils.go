@@ -10,7 +10,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func copyProject(config *MutationConfig, name string) (string, error) {
+func copyProject(config *MutationConfig, name string) (absoluteMutantPath string, err error) {
 	log.WithField("mutant", name).Debug("Copying into mutants folder.")
 	dir, err := os.Getwd()
 	if err != nil {
@@ -114,7 +114,6 @@ func getFirstElementInPath(path string) string {
 	}
 }
 
-
 // Copy contents of one folder to another, ignoring mutants folder
 func moveAllContentsExceptMutantFolder(sourceFolder string, dest string, mutantFolder string) error {
 	log.WithFields(log.Fields{"source": sourceFolder, "dest": dest}).Info("Moving contents of folder.")
@@ -122,12 +121,9 @@ func moveAllContentsExceptMutantFolder(sourceFolder string, dest string, mutantF
 		if strings.Contains(filepath.Clean(mutantFolder), string(os.PathSeparator)) {
 			// Get first part of path, which matches what you see in directory
 			// TODO absolute // paths
-			//fmt.Printf("mutantFolder is %s\n", mutantFolder)
 			mutantFolder = strings.Split(mutantFolder, string(os.PathSeparator))[0]
 		}
-		//fmt.Printf("mutantFolder is %s and name is %s\n", mutantFolder, name)
 
-		// TODO
 		return !(strings.Contains(name, mutantFolder) || strings.Contains(mutantFolder, name))
 	}
 

@@ -1,14 +1,7 @@
 package main
 
 import (
-	"bytes"
-	"crypto/md5"
 	"fmt"
-	"go/ast"
-	"go/format"
-	"go/printer"
-	"go/token"
-	"io"
 	"os"
 	"github.com/jessevdk/go-flags"
 
@@ -67,6 +60,27 @@ type mutationStats struct {
 	skipped    int
 }
 
+func exitError(format string, args ...interface{}) (exitCode int) {
+	errorMessage := fmt.Sprintf(format+"\n", args...)
+	log.Error(errorMessage)
+
+	return returnError
+}
+
+func (ms *mutationStats) Score() float64 {
+	total := ms.Total()
+
+	if total == 0 {
+		return 0.0
+	}
+
+	return float64(ms.passed) / float64(total)
+}
+
+func (ms *mutationStats) Total() int {
+	return ms.passed + ms.failed + ms.skipped
+}
+
 func checkArguments(args []string, opts *Args) (bool, int) {
 	p := flags.NewNamedParser("mutation-framework", flags.None)
 
@@ -106,90 +120,7 @@ func checkArguments(args []string, opts *Args) (bool, int) {
 	return false, 0
 }
 
-func exitError(format string, args ...interface{}) (exitCode int) {
-	errorMessage := fmt.Sprintf(format+"\n", args...)
-	log.Error(errorMessage)
-
-	return returnError
-}
-
-func (ms *mutationStats) Score() float64 {
-	total := ms.Total()
-
-	if total == 0 {
-		return 0.0
-	}
-
-	return float64(ms.passed) / float64(total)
-}
-
-func (ms *mutationStats) Total() int {
-	return ms.passed + ms.failed + ms.skipped
-}
-
-
-func mainCmd(args []string) (exitCode int) {
-	config, operators, files, exitCode := setUp(args)
-	if exitCode != returnOk {
-		return exitCode
-	}
-
-	exitCode = execute(config, operators, files)
-
-	return exitCode
-}
-
-func setUp(args []string) (*MutationConfig, []mutator.Mutator, map[string]string, int){
-	var opts= &Args{}
-	if exit, exitCode := checkArguments(args, opts); exit {
-		return nil, nil, nil, exitCode
-	}
-
-	pathToConfig := opts.General.ConfigPath
-	config, err := getConfig(pathToConfig)
-	if err != nil {
-		exitError(err.Error())
-	}
-
-	consolidateArgsIntoConfig(opts, config)
-	setUpLogging(config)
-	operators := retrieveMutationOperators(config)
-	files := config.getRelativeAndAbsoluteFiles()
-
-	return config, operators, files, returnOk
-}
-
-func execute(config *MutationConfig, operators []mutator.Mutator, files map[string]string) (exitCode int) {
-	var mutantPaths []MutantInfo
-	var stats map[string]*mutationStats
-	var err error
-
-	if !config.Mutate.Disable {
-		stats, mutantPaths, exitCode = mutateFiles(config, files, operators)
-		if exitCode == returnError {
-			return exitCode
-		}
-	} else {
-		// TODO refactor this declaration
-		stats = make(map[string]*mutationStats)
-		log.Info("Running tests without mutating.")
-		mutantPaths, err = findAllMutantsInFolder(config, stats, files)
-		if err != nil {
-			log.Error(err)
-			return returnError
-		}
-	}
-
-	if !config.Test.Disable {
-		exitCode = executeAllMutants(config, mutantPaths, stats)
-	} else {
-		exitCode = returnOk
-	}
-
-	return exitCode
-
-}
-
+// TODO variable levels of logging
 func setUpLogging(config *MutationConfig) {
 	if config.Json {
 		log.SetFormatter(&log.JSONFormatter{})
@@ -206,6 +137,8 @@ func setUpLogging(config *MutationConfig) {
 	log.SetOutput(os.Stdout)
 }
 
+// Command-line arguments are higher-priority than config file options
+// TODO environment variables?
 func consolidateArgsIntoConfig(opts *Args, config *MutationConfig) {
 	if strings.TrimSpace(opts.Exec.CustomTest) != "" {
 		config.Commands.Test = opts.Exec.CustomTest
@@ -236,45 +169,66 @@ func consolidateArgsIntoConfig(opts *Args, config *MutationConfig) {
 	}
 }
 
-func retrieveMutationOperators(config *MutationConfig) []mutator.Mutator {
-	var operators []mutator.Mutator
-	for _, operator := range config.Mutate.Operators {
-		operators = append(operators, *operator.MutationOperator)
+func mainCmd(args []string) (exitCode int) {
+	config, files, exitCode := initializeExecution(args)
+	if exitCode != returnOk {
+		return
 	}
-	return operators
+
+	exitCode = performMutationTesting(config, files)
+	return
+}
+
+func initializeExecution(args []string) (*MutationConfig, map[string]string, int){
+	var opts= &Args{}
+	if exit, exitCode := checkArguments(args, opts); exit {
+		return nil, nil, exitCode
+	}
+
+	pathToConfig := opts.General.ConfigPath
+	config, err := getConfig(pathToConfig)
+	if err != nil {
+		exitError(err.Error())
+	}
+
+	consolidateArgsIntoConfig(opts, config)
+	setUpLogging(config)
+	files := config.getRelativeAndAbsoluteFiles()
+
+	return config, files, returnOk
+}
+
+func performMutationTesting(config *MutationConfig, files map[string]string) (exitCode int) {
+	var mutantPaths []MutantInfo
+	var stats map[string]*mutationStats
+	var err error
+
+	if !config.Mutate.Disable {
+		stats, mutantPaths, exitCode = mutateFiles(config, files)
+		if exitCode == returnError {
+			return exitCode
+		}
+	} else {
+		stats = make(map[string]*mutationStats)
+		log.Info("Running tests without mutating.")
+		mutantPaths, err = findAllMutantsInFolder(config, stats, files)
+		if err != nil {
+			log.Error(err)
+			return returnError
+		}
+	}
+
+	// TODO implement listfiles
+	if !config.Test.Disable {
+		exitCode = executeAllMutants(config, mutantPaths, stats)
+	} else {
+		exitCode = returnOk
+	}
+
+	return exitCode
+
 }
 
 func main() {
 	os.Exit(mainCmd(os.Args[1:]))
-}
-
-func saveAST(mutationBlackList map[string]struct{}, file string, fset *token.FileSet, node ast.Node) (string, bool, error) { // TODO blacklists -- don't currently have this capability
-	var buf bytes.Buffer
-
-	h := md5.New()
-
-	err := printer.Fprint(io.MultiWriter(h, &buf), fset, node)
-	if err != nil {
-		return "", false, err
-	}
-
-	checksum := fmt.Sprintf("%x", h.Sum(nil))
-
-	if _, ok := mutationBlackList[checksum]; ok {
-		return checksum, true, nil
-	}
-
-	mutationBlackList[checksum] = struct{}{}
-
-	src, err := format.Source(buf.Bytes())
-	if err != nil {
-		return "", false, err
-	}
-
-	err = afero.WriteFile(fs, file, src, 0666)
-	if err != nil {
-		return "", false, err
-	}
-
-	return checksum, false, nil
 }

@@ -36,7 +36,7 @@ func initialize() {
 		false,
 		false,
 		"/home/",
-		Mutate{false, []Operator{Operator{&expectedMutator, "mutator/mock"}},
+		Mutate{false, []Operator{{&expectedMutator, "mutator/mock"}},
 			[]string{"primary.go", "secondary.go"},
 			//[]string{},
 			nil,"mutants/",
@@ -74,8 +74,7 @@ func TestYamlConfig(t *testing.T) {
 	assert.Equal(t, expectedString, actualString)
 }
 
-// TODO tests are highly dependent on file structure of OS
-// TODO get working directory perhaps
+// TODO convert to afero and make files
 func TestWildcardConfig(t *testing.T) {
 	wildcardConfig, err:= getConfig("../../testdata/config/wildcard_config.json")
 	assert.Nil(t, err)

@@ -35,6 +35,7 @@ func printStats(config *MutationConfig, allStats map[string]*mutationStats) {
 
 }
 
+// TODO doesn;t work for some reason?
 var liveMutants = make([]string, 0)
 
 func findAllMutantsInFolder(config *MutationConfig, allStats map[string]*mutationStats, filesToExec map[string]string) ([]MutantInfo, error) {
@@ -86,6 +87,7 @@ func findAllMutantsInFolder(config *MutationConfig, allStats map[string]*mutatio
 	return mutants, nil
 }
 
+// TODO make configurable mutant patterns
 func isMutant(candidate string) bool {
 	mutantPattern := regexp.MustCompile(`([\w\-. ]+.go)[\w\-. ]*.[\d]+`)
 	return mutantPattern.MatchString(filepath.Clean(candidate))
@@ -122,6 +124,7 @@ func createNewMutantInfo(acceptableFiles map[string]string, pathSoFar string, fi
 	return &mutantInfo, nil
 }
 
+// TODO replace with path.Join
 func appendFolder(original string, folder string) string {
 	if original == "" || original == "."{
 		return folder
@@ -197,6 +200,7 @@ func executeAllMutants(config *MutationConfig, mutantFiles []MutantInfo, allStat
 	return exitCode
 }
 
+// Run an execution for one mutant
 func executeForMutant(config *MutationConfig, mutantInfo MutantInfo, stats *mutationStats) int {
 	log.WithField("mutant", mutantInfo.mutationFileAbsPath).Debug("Running tests.")
 
@@ -326,7 +330,7 @@ func showDiff(file string, mutationFile string) (diff []byte, execExitCode int) 
 	if execExitCode != execPassed && execExitCode != execFailed {
 		log.Info(diff)
 
-		panic("Could not execute diff on mutation file")
+		panic("Could not performMutationTesting diff on mutation file")
 	}
 
 	return
@@ -370,7 +374,6 @@ func getFailedTests(output []byte) []string {
 	}
 
 	return failedTests
-
 }
 
 var testsToMutants = make(map[string][]string)

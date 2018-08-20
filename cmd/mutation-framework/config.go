@@ -143,10 +143,13 @@ func (config *MutationConfig) toString() (string, error) {
 }
 
 func validateImportantConfigFields(config *MutationConfig) error {
-	if !config.Mutate.Disable &&
-		(len(config.Mutate.FilesToExclude) == 0 &&
-			len(config.Mutate.FilesToInclude) == 0) {
-				log.Info("Mutate files are empty. Is your config correct?")
+	noFilesSpecified := func(config *MutationConfig) bool {
+		return !config.Mutate.Disable &&
+			(len(config.Mutate.FilesToExclude) == 0 &&
+				len(config.Mutate.FilesToInclude) == 0)}
+
+	if noFilesSpecified(config) {
+		log.Info("Mutate files are empty. Is your config correct?")
 	}
 
 	if config.FileBasePath == "" {
@@ -283,7 +286,7 @@ func removeWildCardPaths(paths []string) []string {
 }
 
 // TODO refactor
-// TODO replace with filepath.Glob?
+// TODO replace with filepath.Glob? facepalm
 // Move through a string with wildcards to find all possible files
 // Keep a "pathPieces" arg as a context accumulator for the paths we've visited
 // thus far

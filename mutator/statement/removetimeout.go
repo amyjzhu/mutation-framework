@@ -6,7 +6,7 @@ import (
 
 	"github.com/amyjzhu/mutation-framework/mutator"
 	"go/token"
-	"fmt"
+	"github.com/amyjzhu/mutation-framework/astutil"
 )
 
 func init() {
@@ -20,7 +20,7 @@ func MutatorTimeout(pkg *types.Package, info *types.Info, node ast.Node) []mutat
 		return nil
 	}
 
-	if (!isThisATimeoutFunction(n)) {
+	if !astutil.IsTimeoutCall(n) {
 		return nil
 	}
 
@@ -39,15 +39,4 @@ func MutatorTimeout(pkg *types.Package, info *types.Info, node ast.Node) []mutat
 	}
 }
 
-func isThisATimeoutFunction(call *ast.CallExpr) bool {
-	if fun, ok := call.Fun.(*ast.SelectorExpr); ok {
-		funcName := fun.Sel.Name
-		// TODO this is disgusting. can't I just retrieve the name?
-		funcLibrary := fmt.Sprintf("%s", fun.X)
 
-		if funcName == "Sleep" && funcLibrary == "time" {
-			return true
-		}
-	}
-	return false
-}

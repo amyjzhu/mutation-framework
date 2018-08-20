@@ -23,6 +23,57 @@ func captureInstances() {
 	//capture.GetCommNodes()
 }
 
+func IsErrorHandlingCode(n ast.Node) bool {
+	ret, ok := n.(*ast.IfStmt)
+	if ok {
+
+		//fmt.Printf("if statement found on line %d:\n\t", fset.Position(ret.Pos()).Line)
+		testCond, ok := ret.Cond.(*ast.BinaryExpr)
+		// TODO does not cover every error-handling case, but covers most common
+		// err != nil or err == nil
+		// another tactic could be dataflow following where errors are raised
+		if ok {
+			xId, ok := testCond.X.(*ast.Ident)
+			if !ok {
+				return false
+			}
+			yId, ok := testCond.Y.(*ast.Ident)
+			if !ok {
+				return false
+			}
+			x := xId.Name
+			y := yId.Name
+
+			if (x == "err" && y == "nil") || (y == "err" && x == "nil") {
+				if testCond.Op == token.NEQ {
+					// return the body
+					fmt.Println("Found error handle")
+					return true
+				} else if testCond.Op == token.EQL {
+					if ret.Else != nil {
+						ifst, ok := ret.Else.(*ast.IfStmt)
+						if ok {
+							return IsErrorHandlingCode(ifst)
+						} else {
+							// the else block actually has error handling
+							if _, ok := ret.Else.(*ast.BlockStmt); ok {
+								fmt.Println("Found error handle")
+								return true
+							}
+						}
+					}
+				}
+			}
+
+		}
+	}
+
+	return false
+}
+
+// TODO not sure which one is necessary.
+// should rework this one to use one above
+// handle by adding if is, ignoring if isn;t
 func getErrorBlockNodes(node *ast.File, fset *token.FileSet) []*ast.BlockStmt {
 
 	bodies := []*ast.BlockStmt{}
@@ -111,5 +162,18 @@ func getServiceStartupCode() {
 
 func getServiceShutdownCode() {
 
+}
+
+func IsTimeoutCall(call *ast.CallExpr) bool {
+	if fun, ok := call.Fun.(*ast.SelectorExpr); ok {
+		funcName := fun.Sel.Name
+		// TODO this is disgusting. can't I just retrieve the name?
+		funcLibrary := fmt.Sprintf("%s", fun.X)
+
+		if funcName == "Sleep" && funcLibrary == "time" {
+			return true
+		}
+	}
+	return false
 }
 

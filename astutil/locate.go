@@ -4,6 +4,9 @@ import (
 	"go/ast"
 	"fmt"
 	"go/token"
+	"go/types"
+	"regexp"
+	"strings"
 )
 
 // find network calls
@@ -23,7 +26,12 @@ func captureInstances() {
 	//capture.GetCommNodes()
 }
 
-func IsErrorHandlingCode(n ast.Node) bool {
+
+func IsSendingMessageNode() {
+
+}
+
+func IsErrorHandlingCode(n ast.Node) (bool, *ast.BlockStmt) {
 	ret, ok := n.(*ast.IfStmt)
 	if ok {
 
@@ -35,11 +43,11 @@ func IsErrorHandlingCode(n ast.Node) bool {
 		if ok {
 			xId, ok := testCond.X.(*ast.Ident)
 			if !ok {
-				return false
+				return false, nil
 			}
 			yId, ok := testCond.Y.(*ast.Ident)
 			if !ok {
-				return false
+				return false, nil
 			}
 			x := xId.Name
 			y := yId.Name
@@ -48,7 +56,7 @@ func IsErrorHandlingCode(n ast.Node) bool {
 				if testCond.Op == token.NEQ {
 					// return the body
 					fmt.Println("Found error handle")
-					return true
+					return true, ret.Body
 				} else if testCond.Op == token.EQL {
 					if ret.Else != nil {
 						ifst, ok := ret.Else.(*ast.IfStmt)
@@ -56,76 +64,26 @@ func IsErrorHandlingCode(n ast.Node) bool {
 							return IsErrorHandlingCode(ifst)
 						} else {
 							// the else block actually has error handling
-							if _, ok := ret.Else.(*ast.BlockStmt); ok {
+							if block, ok := ret.Else.(*ast.BlockStmt); ok {
 								fmt.Println("Found error handle")
-								return true
+								return true, block
 							}
 						}
 					}
 				}
 			}
-
 		}
 	}
 
-	return false
+	return false, nil
 }
 
 // TODO not sure which one is necessary.
 // should rework this one to use one above
 // handle by adding if is, ignoring if isn;t
-func getErrorBlockNodes(node *ast.File, fset *token.FileSet) []*ast.BlockStmt {
+func getErrorBlockNodes(node *ast.File) []*ast.BlockStmt {
 
 	bodies := []*ast.BlockStmt{}
-
-	var getErrorHandlingBodyFromIf func(ret *ast.IfStmt) bool
-
-	getErrorHandlingBodyFromIf = func(ret *ast.IfStmt) bool {
-		fmt.Printf("if statement found on line %d:\n\t", fset.Position(ret.Pos()).Line)
-		testCond, ok := ret.Cond.(*ast.BinaryExpr)
-		// TODO does not cover every error-handling case, but covers most common
-		// err != nil or err == nil
-		// another tactic could be dataflow following where errors are raised
-		if ok {
-			xId, ok := testCond.X.(*ast.Ident)
-			if !ok {
-				return true
-			}
-			yId, ok := testCond.Y.(*ast.Ident)
-			if !ok {
-				return true
-			}
-			x := xId.Name
-			y := yId.Name
-
-			if (x == "err" && y == "nil") || (y == "err" && x == "nil") {
-				if testCond.Op == token.NEQ {
-					// return the body
-					fmt.Println("Found error handle")
-					bodies = append(bodies, ret.Body)
-				} else if testCond.Op == token.EQL {
-					if ret.Else != nil {
-						ifst, ok := ret.Else.(*ast.IfStmt)
-						if ok {
-							return getErrorHandlingBodyFromIf(ifst)
-						} else {
-							// the else block actually has error handling
-							if block, ok := ret.Else.(*ast.BlockStmt); ok {
-								fmt.Println("Found error handle")
-								bodies = append(bodies, block)
-							}
-						}
-					}
-				}
-			}
-
-		}
-
-
-		//printer.Fprint(os.Stdout, fset, ret)
-		return true
-	}
-
 
 	ast.Inspect(node, func(n ast.Node) bool {
 		// TODO necessary?
@@ -133,11 +91,12 @@ func getErrorBlockNodes(node *ast.File, fset *token.FileSet) []*ast.BlockStmt {
 			return false
 		}
 
-		ret, ok := n.(*ast.IfStmt)
-		if ok {
-			getErrorHandlingBodyFromIf(ret)
+		errorHandling, block := IsErrorHandlingCode(n)
+		if errorHandling && block != nil {
+			bodies = append(bodies, block)
 			return true
 		}
+
 		return true
 	})
 
@@ -164,16 +123,71 @@ func getServiceShutdownCode() {
 
 }
 
-func IsTimeoutCall(call *ast.CallExpr) bool {
+// check if a call is a time.Sleep
+func IsTimeoutCall(call *ast.CallExpr, info *types.Info) bool {
+	// don't waste time computing if selector doesn't match
 	if fun, ok := call.Fun.(*ast.SelectorExpr); ok {
 		funcName := fun.Sel.Name
-		// TODO this is disgusting. can't I just retrieve the name?
-		funcLibrary := fmt.Sprintf("%s", fun.X)
+		if !strings.EqualFold(funcName, "Sleep") {
+			return false
+		} else {
+			return selectorMatchesTimeLibrary(fun, info)
+		}
+	} else {
+		// not a selector expression
+		return false
+	}
 
-		if funcName == "Sleep" && funcLibrary == "time" {
+}
+
+func selectorMatchesTimeLibrary(fun *ast.SelectorExpr, info *types.Info) bool {
+	const TimePackagePath = "time"
+	timeLibraryName := "time"
+
+	// implicits is where you find non-renamed package imports
+	for ident, obj := range info.Implicits {
+		// if there are any imports here
+		if dependency, ok := ident.(*ast.ImportSpec); ok {
+			// check that they correspond to path of time package "time"
+			objName := obj.Name()
+			if dependency.Path.Value == TimePackagePath {
+				timeLibraryName = objName
+			}
+		}
+	}
+
+	// otherwise, maybe package was renamed
+	for identifiers, obj := range info.Defs {
+		if obj != nil {
+			if isTimeLibrary(obj.String()) {
+				// ideally interchangeable
+				timeLibraryName = identifiers.Name
+				// timeLibraryName = obj.Name()
+			}
+		}
+	}
+
+	// find the libraryName of the library
+	// assuming it's an ident and not another expression
+	libraryName, ok := fun.X.(*ast.Ident)
+	if ok {
+		funcLibrary := libraryName.Name
+
+		// then we compare the library and function call
+		if funcLibrary == timeLibraryName {
 			return true
 		}
 	}
 	return false
 }
+
+// object string apparently resembles "package alias ("time")"
+// where alias is user-defined variable
+func isTimeLibrary(testString string) bool {
+	const timeLibraryObjString = `package ([\w]*) \("time"\)`
+	timeLibraryRegex := regexp.MustCompile(timeLibraryObjString)
+
+	return timeLibraryRegex.MatchString(testString)
+}
+
 

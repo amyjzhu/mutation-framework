@@ -23,7 +23,7 @@ func foo() bool {
 
 	if 1 != 2 {
 		return false
-	} else if err != nil {
+	} else if nil != err {
 		fmt.Println("An error handling block!")
 	}
 

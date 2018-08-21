@@ -76,7 +76,7 @@ func TestMatchTimeLibrary(t *testing.T) {
 	assert.False(t, IsTimeoutCall(call, info))
 
 	_, _ = f, fset
-	// easy way to get package aliases, but mutants don't have access to
+	// easy/proper way to get package aliases, but mutants don't have access to
 	// fset and ast.File
 	/*imports := astutil.Imports(fset,f)
 	fmt.Println(imports)

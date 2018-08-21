@@ -27,7 +27,7 @@ const (
 	execSkipped = 2
 )
 
-var fs = afero.NewOsFs()
+var FS = afero.NewOsFs()
 
 type Args struct {
 	General struct {

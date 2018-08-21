@@ -18,7 +18,7 @@ func foo() int {
 			n += 2
 		} else {
 			n += 3
-			time.Sleep(12)
+			time.Sleep(0)
 		}
 
 		n++

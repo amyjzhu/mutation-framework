@@ -49,7 +49,7 @@ func foo() int {
 
 	var x = 0
 	x++
-	time.Sleep(time.Duration(5) * time.Nanosecond)
+	time.Sleep(0)
 
 	return n
 }

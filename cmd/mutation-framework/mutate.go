@@ -44,7 +44,7 @@ func mutateFiles(config *MutationConfig, files map[string]string) (map[string]*m
 		}
 
 		mutantFolderName := config.Mutate.MutantFolder
-		err = fs.MkdirAll(mutantFolderName, 0755)
+		err = FS.MkdirAll(mutantFolderName, 0755)
 		if err != nil {
 			panic(err)
 		}
@@ -73,7 +73,7 @@ func mutateFiles(config *MutationConfig, files map[string]string) (map[string]*m
 func createMutantFolderPath(file string) {
 	if strings.Contains(file, string(os.PathSeparator)) {
 		parentPath := filepath.Dir(file)
-		err := fs.MkdirAll(parentPath, 0755)
+		err := FS.MkdirAll(parentPath, 0755)
 		if err != nil {
 			panic(err)
 		}
@@ -183,7 +183,7 @@ func saveAST(mutationBlackList map[string]struct{}, file string, fset *token.Fil
 		return "", false, err
 	}
 
-	err = afero.WriteFile(fs, file, src, 0666)
+	err = afero.WriteFile(FS, file, src, 0666)
 	if err != nil {
 		return "", false, err
 	}

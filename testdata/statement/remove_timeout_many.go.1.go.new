@@ -44,7 +44,7 @@ func foo() int {
 		n = 0
 		fmt.Println(n)
 		func() {}()
-		func() { time.Sleep(90) }()
+		func() { time.Sleep(0) }()
 	}
 
 	var x = 0

@@ -24,7 +24,7 @@ func copyProject(config *MutationConfig, name string) (absoluteMutantPath string
 }
 
 func copyRecursive(overwrite bool, source string, dest string, mutantFolder string) error {
-	destFile, err := fs.Open(dest)
+	destFile, err := FS.Open(dest)
 	// did we get an error opening destination file?
 	if err != nil {
 		// we got an error, but not the expected one
@@ -46,20 +46,20 @@ func copyRecursive(overwrite bool, source string, dest string, mutantFolder stri
 	}
 
 	// source file must exist
-	file, err := fs.Stat(source)
+	file, err := FS.Stat(source)
 	if err != nil {
 		// TODO is this right?
 		return err
 	}
 
 	if file.IsDir() {
-		err = fs.MkdirAll(dest, file.Mode())
+		err = FS.MkdirAll(dest, file.Mode())
 		if err != nil {
 			return err
 		}
 
 		// get all files in source directory
-		files, err := afero.ReadDir(fs,source)
+		files, err := afero.ReadDir(FS,source)
 		if err != nil {
 			return err
 		}
@@ -79,7 +79,7 @@ func copyRecursive(overwrite bool, source string, dest string, mutantFolder stri
 					return err
 				}
 			} else {
-				err = osutil.AferoCopyFile(fs, newSource, newDest)
+				err = osutil.AferoCopyFile(FS, newSource, newDest)
 				if err != nil {
 					return err
 				}
@@ -133,14 +133,14 @@ func moveAllContentsExceptMutantFolder(sourceFolder string, dest string, mutantF
 // Copy all the contents of one folder to another folder i.e. cp src/* dest/
 // Creates destination if doesn't exist
 func copyFolderContents(sourceFolder string, destFolder string, pred func(name string) bool) error {
-	itemsToMove, err := afero.ReadDir(fs, sourceFolder)
+	itemsToMove, err := afero.ReadDir(FS, sourceFolder)
 	if err != nil {
 		log.Error(err)
 		return err
 	}
 
 	// TODO not sure what permissions
-	err = fs.MkdirAll(destFolder, os.FileMode(0700))
+	err = FS.MkdirAll(destFolder, os.FileMode(0700))
 	if err != nil {
 		log.Error(err)
 		return err
@@ -153,7 +153,7 @@ func copyFolderContents(sourceFolder string, destFolder string, pred func(name s
 			if item.IsDir() {
 				copyFolderContents(itemPath, newItemPath, pred)
 			} else {
-				err = osutil.AferoCopyFile(fs, itemPath, newItemPath)
+				err = osutil.AferoCopyFile(FS, itemPath, newItemPath)
 				if err != nil {
 					return err
 				}

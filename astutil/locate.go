@@ -2,7 +2,6 @@ package astutil
 
 import (
 	"go/ast"
-	"fmt"
 	"go/token"
 	"go/types"
 	"regexp"
@@ -55,7 +54,6 @@ func IsErrorHandlingCode(n ast.Node) (bool, *ast.BlockStmt) {
 			if (x == "err" && y == "nil") || (y == "err" && x == "nil") {
 				if testCond.Op == token.NEQ {
 					// return the body
-					fmt.Println("Found error handle")
 					return true, ret.Body
 				} else if testCond.Op == token.EQL {
 					if ret.Else != nil {
@@ -65,7 +63,6 @@ func IsErrorHandlingCode(n ast.Node) (bool, *ast.BlockStmt) {
 						} else {
 							// the else block actually has error handling
 							if block, ok := ret.Else.(*ast.BlockStmt); ok {
-								fmt.Println("Found error handle")
 								return true, block
 							}
 						}

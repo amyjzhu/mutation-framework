@@ -47,7 +47,7 @@ func findAllMutantsInFolder(config *MutationConfig, allStats map[string]*mutatio
 
 	// look for all mutant directories
 	findMutantsRecursive = func(absolutePath string, pathSoFar string) error {
-		directoryContents, err := afero.ReadDir(fs, absolutePath)
+		directoryContents, err := afero.ReadDir(FS, absolutePath)
 		if err != nil {
 			return err
 		}
@@ -141,7 +141,7 @@ func getMutatedFileRelativePath(pathSoFar string, mutantFolder string) string {
 }
 
 func getChecksum(path string) (string, error) {
-	data, err := afero.ReadFile(fs, path)
+	data, err := afero.ReadFile(FS, path)
 	if err != nil {
 		return "", err
 	}

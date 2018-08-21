@@ -20,7 +20,7 @@ func MutatorTimeout(pkg *types.Package, info *types.Info, node ast.Node) []mutat
 		return nil
 	}
 
-	if !astutil.IsTimeoutCall(n, pkg) {
+	if !astutil.IsTimeoutCall(n, info) {
 		return nil
 	}
 

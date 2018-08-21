@@ -28,30 +28,30 @@ func TestGetFirstElementInPath(t *testing.T) {
 }
 
 func TestCopy(t *testing.T) {
-	fs = afero.NewMemMapFs()
+	FS = afero.NewMemMapFs()
 
 	testFileParent := "/tmp/mutation-testing/"
 	testFile := appendFolder(testFileParent, "testcopy/")
 	// No idea what permission mode this is
-	err := fs.MkdirAll(testFile, os.FileMode(700))
+	err := FS.MkdirAll(testFile, os.FileMode(700))
 	assert.Nil(t, err)
 
 	mutationFolder := "copied-mutants/"
 	mutationPath := appendFolder(testFileParent, mutationFolder)
-	defer fs.RemoveAll(testFileParent)
+	defer FS.RemoveAll(testFileParent)
 
 	// original file is /tmp/mutation-testing/testcopy/sample.txt
 	// new file is /tmp/mutation-testing/copied-mutatns/testcopy/sample.txt
-	sample, err := fs.Create(testFile + "sample.txt")
+	sample, err := FS.Create(testFile + "sample.txt")
 	assert.Nil(t, err)
-	fs.Mkdir(testFile + ".git", os.FileMode(700))
+	FS.Mkdir(testFile + ".git", os.FileMode(700))
 	defer sample.Close()
 
 	err = copyRecursive(true, testFileParent, mutationPath, mutationFolder)
 	assert.Nil(t, err)
 
 	// read from /tmp/mutation-testing/copied-mutants
-	entries, err := afero.ReadDir(fs, mutationPath)
+	entries, err := afero.ReadDir(FS, mutationPath)
 	assert.Nil(t, err)
 
 	testFolderExists := false
@@ -71,7 +71,7 @@ func TestCopy(t *testing.T) {
 		}
 
 		if entry.Name() == "testcopy" {
-			moreEntries, err := afero.ReadDir(fs, mutationPath + "testcopy")
+			moreEntries, err := afero.ReadDir(FS, mutationPath + "testcopy")
 			assert.Nil(t, err)
 			assert.Equal(t, "sample.txt", moreEntries[0].Name())
 		}
@@ -87,12 +87,12 @@ func TestCopy(t *testing.T) {
 }
 
 func TestCopyWithoutOverwrite(t *testing.T) {
-	fs = afero.NewMemMapFs()
+	FS = afero.NewMemMapFs()
 	testFileParent := "/tmp/mutation-testing/"
 
 	destination := appendFolder(testFileParent, "mutant")
 
-	err := fs.MkdirAll(destination, os.FileMode(777)) // live dangerously
+	err := FS.MkdirAll(destination, os.FileMode(777)) // live dangerously
 	assert.Nil(t, err)
 
 	err = copyRecursive(false, testFileParent, destination, "mutant")
@@ -100,20 +100,20 @@ func TestCopyWithoutOverwrite(t *testing.T) {
 }
 
 func TestSimpleCopyFolderContents(t *testing.T) {
-	fs = afero.NewMemMapFs()
+	FS = afero.NewMemMapFs()
 	files := []string{"soba", "passionfruit", "udon", "vermicelli", "mango"}
 	newFolder := "/newFolder"
 	oldFolder := "/oldFolder/innerFolder/"
 
 	// Need to make old folder, but function should handle new folder
-	fs.MkdirAll(oldFolder, os.FileMode(700))
+	FS.MkdirAll(oldFolder, os.FileMode(700))
 	for _, file := range files {
-		reiFiled, err := fs.Create(oldFolder + file)
+		reiFiled, err := FS.Create(oldFolder + file)
 		assert.Nil(t, err)
 		reiFiled.Close()
 	}
 
-	_, err := fs.Stat(oldFolder)
+	_, err := FS.Stat(oldFolder)
 	assert.Nil(t, err)
 
 
@@ -125,7 +125,7 @@ func TestSimpleCopyFolderContents(t *testing.T) {
 	expectedCopiedFiles := []string{"soba", "udon", "vermicelli"}
 
 	var actualCopiedFiles []string
-	copiedFiles, err := afero.ReadDir(fs, newFolder)
+	copiedFiles, err := afero.ReadDir(FS, newFolder)
 	assert.Nil(t, err)
 
 	for _, info := range copiedFiles {

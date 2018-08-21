@@ -300,7 +300,7 @@ func expandWildCardRecursive(pathIndex int, pathPieces []string, basepath string
 			// TODO I suppose this could cause everything to break
 		}
 
-		currentFile, err := fs.Stat(basepath + path)
+		currentFile, err := FS.Stat(basepath + path)
 		if err != nil {
 			return false
 		}
@@ -309,11 +309,11 @@ func expandWildCardRecursive(pathIndex int, pathPieces []string, basepath string
 	}
 
 	exists := func(path string) bool {
-		_, err := fs.Stat(basepath + path)
+		_, err := FS.Stat(basepath + path)
 
 		if err != nil && len(path) != 0 {
 			// Try opening the absolute path we have so far, ignoring last slash
-			_, err = fs.Stat(basepath + filepath.Clean(path))
+			_, err = FS.Stat(basepath + filepath.Clean(path))
 			if err != nil && os.IsNotExist(err) {
 				// eg. mutator/branch/remove.go does not exist
 				return false
@@ -324,7 +324,7 @@ func expandWildCardRecursive(pathIndex int, pathPieces []string, basepath string
 	}
 
 	getAllFilesAndFoldersInPath := func(path string) (fileNames []string, dirNames []string) {
-		fileInfo, err := afero.ReadDir(fs, basepath + path)
+		fileInfo, err := afero.ReadDir(FS, basepath + path)
 		if err != nil {
 			panic(err)
 		}

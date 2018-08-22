@@ -30,7 +30,42 @@ func IsSendingMessageNode() {
 
 }
 
-func IsErrorHandlingCode(n ast.Node) (bool, *ast.BlockStmt) {
+func isConditionalErrorHandling(testCond *ast.BinaryExpr, info *types.Info) bool {
+	xId, ok := testCond.X.(*ast.Ident)
+	if !ok {
+		return false
+	}
+	yId, ok := testCond.Y.(*ast.Ident)
+	if !ok {
+		return false
+	}
+
+	xObj := info.Uses[xId]
+	yObj := info.Uses[yId]
+
+	if xObj != nil && yObj != nil {
+		if xObj.Type().String() == "error" &&
+			isUntypedNil(yObj) ||
+			yObj.Type().String() == "error" &&
+				isUntypedNil(xObj) {
+			return true
+		}
+	}
+	return false
+}
+
+func isUntypedNil(candidate types.Object) bool {
+	// TODO can candidate.Type() return nil?
+	basicType, ok := candidate.Type().(*types.Basic)
+	if ok {
+		if basicType.Kind() == types.UntypedNil {
+			return true
+		}
+	}
+	return false
+}
+
+func IsErrorHandlingCode(n ast.Node, info *types.Info) (bool, *ast.BlockStmt) {
 	ret, ok := n.(*ast.IfStmt)
 	if ok {
 
@@ -40,28 +75,23 @@ func IsErrorHandlingCode(n ast.Node) (bool, *ast.BlockStmt) {
 		// err != nil or err == nil
 		// another tactic could be dataflow following where errors are raised
 		if ok {
-			xId, ok := testCond.X.(*ast.Ident)
-			if !ok {
-				return false, nil
-			}
-			yId, ok := testCond.Y.(*ast.Ident)
-			if !ok {
-				return false, nil
-			}
-			x := xId.Name
-			y := yId.Name
+			if isConditionalErrorHandling(testCond, info) {
 
-			if (x == "err" && y == "nil") || (y == "err" && x == "nil") {
+				// err != nil
 				if testCond.Op == token.NEQ {
 					// return the body
 					return true, ret.Body
+
+				// err == nil
 				} else if testCond.Op == token.EQL {
 					if ret.Else != nil {
 						ifst, ok := ret.Else.(*ast.IfStmt)
 						if ok {
-							return IsErrorHandlingCode(ifst)
+							// err == nil {} else if { ... }
+							return IsErrorHandlingCode(ifst, info)
 						} else {
 							// the else block actually has error handling
+							// err == nil {} else { ... }
 							if block, ok := ret.Else.(*ast.BlockStmt); ok {
 								return true, block
 							}
@@ -78,7 +108,7 @@ func IsErrorHandlingCode(n ast.Node) (bool, *ast.BlockStmt) {
 // TODO not sure which one is necessary.
 // should rework this one to use one above
 // handle by adding if is, ignoring if isn;t
-func getErrorBlockNodes(node *ast.File) []*ast.BlockStmt {
+func getErrorBlockNodes(node *ast.File, info *types.Info) []*ast.BlockStmt {
 
 	bodies := []*ast.BlockStmt{}
 
@@ -88,7 +118,7 @@ func getErrorBlockNodes(node *ast.File) []*ast.BlockStmt {
 			return false
 		}
 
-		errorHandling, block := IsErrorHandlingCode(n)
+		errorHandling, block := IsErrorHandlingCode(n, info)
 		if errorHandling && block != nil {
 			bodies = append(bodies, block)
 			return true

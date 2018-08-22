@@ -11,6 +11,6 @@ func TestMutatorRemoveBlock(t *testing.T) {
 		t,
 		MutatorRemoveBlock,
 		"../../testdata/statement/removeblock.go",
-		4,
+		5,
 	)
 }

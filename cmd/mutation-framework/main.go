@@ -50,6 +50,7 @@ type Args struct {
 		Timeout    uint   `long:"exec-timeout" description:"Sets a timeout for the command execution (in seconds)" default:"10"`
 		ExecOnly   bool   `long:"no-mutate" description:"Does not mutate the files, only executes existing mutations"`
 		CustomTest string   `string:"custom-test" description:"Specifies location of test script"`
+		Overwrite bool `long:"overwrite" description:"True if want to overwrite existing mutants in name clash"`
 	} `group:"Exec Args"`
 }
 
@@ -97,12 +98,11 @@ func checkArguments(args []string, opts *Args) (bool, int) {
 		p.WriteHelp(os.Stdout)
 
 		return true, returnHelp
-	} else if opts.General.ListMutators {
-		for _, name := range mutator.List() {
-			log.Debug(name)
-		}
 
-		return true, returnOk
+	} else if opts.General.ListMutators {
+		fmt.Println(mutator.List())
+
+		return true, returnHelp
 	}
 
 	if err != nil {
@@ -166,6 +166,10 @@ func consolidateArgsIntoConfig(opts *Args, config *MutationConfig) {
 
 	if opts.General.Json {
 		config.Json = true
+	}
+
+	if opts.Exec.Overwrite {
+		config.Mutate.Overwrite = true
 	}
 }
 

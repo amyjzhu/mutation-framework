@@ -41,6 +41,15 @@ func foo() bool {
 		fmt.Println("An error handling block!")
 	}
 
+	dogErr := err
+	if 1 != 2 {
+		return false
+	} else if dogErr == nil {
+		return true
+	} else {
+		fmt.Println("An error handling block!")
+	}
+
 	if 1 == 2 {
 		return true
 	} else if 1 == 3 {

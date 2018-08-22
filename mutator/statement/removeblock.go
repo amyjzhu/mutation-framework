@@ -17,7 +17,7 @@ func MutatorRemoveBlock(pkg *types.Package, info *types.Info, node ast.Node) []m
 
 	var mutations []mutator.Mutation
 
-	delete, stmts := astutil.IsErrorHandlingCode(node)
+	delete, stmts := astutil.IsErrorHandlingCode(node, info)
 	if delete {
 		mutations = MutatorRemoveStatement(pkg, info, stmts)
 	}

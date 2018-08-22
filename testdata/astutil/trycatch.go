@@ -6,6 +6,12 @@ import (
 )
 
 func foo() bool {
+
+	error1 := fmt.Errorf("fjlsdsf")
+	if error1 != nil {
+		fmt.Println("An error handling block!")
+	}
+
 	baz := func() (bool, error) {
 		return false, errors.New("error")
 	}

@@ -18,7 +18,7 @@ func foo() bool {
 	if err == nil {
 		return true
 	} else {
-		_ = fmt.Println
+		fmt.Println("An error handling block!")
 	}
 
 	if 1 != 2 {
@@ -47,7 +47,7 @@ func foo() bool {
 	} else if dogErr == nil {
 		return true
 	} else {
-		fmt.Println("An error handling block!")
+		_ = fmt.Println
 	}
 
 	if 1 == 2 {

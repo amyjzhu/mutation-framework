@@ -17,6 +17,8 @@ import (
 	"github.com/spf13/afero"
 )
 
+
+// TODO count statistics per mutant
 func printStats(config *MutationConfig, allStats map[string]*mutationStats) {
 	if !config.Test.Disable {
 		getRedundantCandidates()

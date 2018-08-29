@@ -9,6 +9,7 @@ import (
 	_ "github.com/amyjzhu/mutation-framework/mutator/branch"
 	_ "github.com/amyjzhu/mutation-framework/mutator/expression"
 	_ "github.com/amyjzhu/mutation-framework/mutator/statement"
+	_ "github.com/amyjzhu/mutation-framework/mutator/distributed"
 	"github.com/spf13/afero"
 	"strings"
 	log "github.com/sirupsen/logrus"

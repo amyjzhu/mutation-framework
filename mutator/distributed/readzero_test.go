@@ -10,6 +10,6 @@ func TestMutatorReadZero(t *testing.T) {
 		t,
 		MutatorReadZero,
 		"../../testdata/astutil/assign.go",
-		1,
+		2,
 	)
 }

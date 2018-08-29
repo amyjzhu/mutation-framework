@@ -8,11 +8,11 @@ import (
 )
 
 func init() {
-	mutator.Register("statement/timeout", MutatorTimeout)
+	mutator.Register("distributed/protocols", MutatorSwap)
 }
 
 // Doesn't have to be inspect; we can wholesale mutate
-func MutatorTimeout(pkg *types.Package, info *types.Info, node ast.Node) []mutator.Mutation {
+func MutatorSwap(pkg *types.Package, info *types.Info, node ast.Node) []mutator.Mutation {
 
 	// is this node a communication node
 	// what type of node is it?

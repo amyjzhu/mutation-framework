@@ -37,6 +37,80 @@ const (
 	NOT
 )
 
+
+func IsReadAssignment(node ast.Node, info *types.Info) *ast.AssignStmt {
+	if assign, ok := node.(*ast.AssignStmt); ok {
+		lhs := assign.Lhs
+		rhs := assign.Rhs
+		for _, expr := range rhs {
+			if isReadOperation(expr, info) {
+				return createZeroAssignment(lhs, assign.End(), info)
+			}
+		}
+	}
+	return nil
+}
+
+// TODO handle nil
+func createZeroAssignment(assigns []ast.Expr, endPos token.Pos, info *types.Info) *ast.AssignStmt {
+	for _, assign := range assigns {
+		if identifier, ok := assign.(*ast.Ident); ok {
+			possibleReadBytes := info.Uses[identifier]
+			if possibleReadBytes == nil {
+				possibleReadBytes = info.Defs[identifier]
+			}
+			if possibleReadBytes != nil {
+				if possibleReadBytes.Type().String() != "error" {
+					assignLhs := []ast.Expr{identifier}
+					assignRhs := []ast.Expr{&ast.BasicLit{Kind: token.INT, Value: "0"}}
+					// TODO unclear what position should be
+					newZeroAssign := &ast.AssignStmt{Rhs: assignRhs, Lhs: assignLhs, TokPos: endPos + 1, Tok:token.ASSIGN}
+					return newZeroAssign
+				}
+			}
+		}
+	}
+
+	return nil
+}
+
+func isReadOperation(node ast.Node, info *types.Info) bool {
+	// check if it's read
+	if callExpr, ok := node.(*ast.CallExpr); ok {
+		callFun := callExpr.Fun
+		if selectorExpr, ok := callFun.(*ast.SelectorExpr); ok {
+			connectionObject := selectorExpr.X
+			connectionFun := selectorExpr.Sel
+			if strings.EqualFold(connectionFun.Name, "read") {
+				// TODO check if X type is Conn
+				_ = connectionObject
+				return true
+			}
+		}
+	}
+
+	return false
+}
+
+
+func setReadBytesToZero() {
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 // don't need tcp/udp library?
 
 func IsSendingMessageNode() error {
@@ -72,6 +146,8 @@ func getCallExpressionFromNode(node ast.Node) *ast.CallExpr {
 	return callExpr
 }
 
+
+// TODO not sure how to finish this
 func replaceCommunicationNode(node ast.Node, info *types.Info)  {
 	// need the types.Object to find the actual type unfortunately
 	// need to be ast.Ident?
@@ -118,8 +194,8 @@ func replaceCommunicationNode(node ast.Node, info *types.Info)  {
 				// replacing connection object?
 				newLibIdent := ast.NewIdent(newLib.NetType)
 				newSelectIdent := ast.NewIdent(newCall.Name)
-				newSelectorExpr := &ast.SelectorExpr{X:newLibIdent}
-
+				newSelectorExpr := &ast.SelectorExpr{X:newLibIdent, Sel:newSelectIdent}
+				callExpr.Fun = newSelectorExpr
 			}
 
 			fmt.Print(netConn)
@@ -127,7 +203,6 @@ func replaceCommunicationNode(node ast.Node, info *types.Info)  {
 
 	}
 
-	return nil
 
 }
 
@@ -137,7 +212,7 @@ func findSubstitutableNetworkCall(lib *types.Object, sel *ast.Ident) (*capture.N
 		return nil, nil, errors.New("database not initialized")
 	}
 
-	originalNetConn := database[lib]
+	originalNetConn := database[*lib]
 	originalType := getCallType(sel, *originalNetConn)
 
 	var replacementFunc *capture.NetFunc
@@ -145,7 +220,7 @@ func findSubstitutableNetworkCall(lib *types.Object, sel *ast.Ident) (*capture.N
 	var err error
 	//random := rand.Int() % (len(database) - 1)
 	for name, netConn := range database {
-		if lib == name {
+		if *lib == name {
 			continue
 		}
 		replacementLib = netConn

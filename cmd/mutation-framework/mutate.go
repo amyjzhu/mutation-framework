@@ -184,6 +184,7 @@ func saveAST(mutationBlackList map[string]struct{}, file string, fset *token.Fil
 	}
 
 	err = afero.WriteFile(FS, file, src, 0666)
+	fmt.Println("Made change: ", src)
 	if err != nil {
 		return "", false, err
 	}

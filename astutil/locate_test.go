@@ -7,12 +7,14 @@ import (
 	"go/ast"
 	"github.com/stretchr/testify/assert"
 	"github.com/amyjzhu/mutation-framework"
+	"fmt"
 )
 
 var tryCatchDataPath = "../testdata/astutil/trycatch.go"
 var messageSendDataPath = "../testdata/astutil/trycatch.go"
 var timeoutDataPath = "../testdata/astutil/timeout.go"
 var loggingDataPath = "../testdata/astutil/trycatch.go"
+var zeroRead = "../testdata/astutil/assign.go"
 
 func loadAST(t *testing.T, path string) (*token.FileSet, *ast.File){
 	fset := token.NewFileSet()
@@ -22,6 +24,20 @@ func loadAST(t *testing.T, path string) (*token.FileSet, *ast.File){
 	}
 
 	return fset, node
+}
+
+func TestInsertZeroAssignment(t *testing.T) {
+	node, _, _, info, err := mutesting.ParseAndTypeCheckFile(zeroRead)
+	assert.Nil(t, err)
+	ast.Inspect(node, func (node ast.Node) bool {
+		newAssign := IsReadAssignment(node, info)
+		if newAssign != nil {
+			fmt.Println(newAssign)
+		} else {
+			fmt.Println("not read")
+		}
+		return true
+	})
 }
 
 func TestGetErrorBlockCode(t *testing.T) {

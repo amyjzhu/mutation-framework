@@ -5,6 +5,7 @@ import (
 	"go/types"
 
 	"github.com/amyjzhu/mutation-framework/mutator"
+	"github.com/amyjzhu/mutation-framework/astutil"
 )
 
 func init() {
@@ -18,12 +19,12 @@ func MutatorSwap(pkg *types.Package, info *types.Info, node ast.Node) []mutator.
 	// what type of node is it?
 	// swap it with another type
 
+	vert, revert := astutil.SwapProtocolVersion(node, info)
+
 	return []mutator.Mutation{
 		mutator.Mutation{
-			Change: func() {
-			},
-			Reset: func() {
-			},
+			Change: vert,
+			Reset: revert,
 		},
 	}
 }

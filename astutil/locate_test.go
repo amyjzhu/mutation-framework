@@ -55,6 +55,22 @@ func TestGetErrorBlockCode(t *testing.T) {
 	}
 }
 
+func TestGetNetworkVersion(t *testing.T) {
+	assert.Equal(t, PLAIN, getNetworkVersionWrapper("udp", t))
+	assert.Equal(t, PLAIN, getNetworkVersionWrapper("tcp", t))
+	assert.Equal(t, FOUR, getNetworkVersionWrapper("tcp4", t))
+	assert.Equal(t, FOUR, getNetworkVersionWrapper("udp4", t))
+	assert.Equal(t, SIX, getNetworkVersionWrapper("tcp6", t))
+	assert.Equal(t, SIX, getNetworkVersionWrapper("udp6", t))
+	// TODO add some false tests
+}
+
+func getNetworkVersionWrapper(version string, t *testing.T) NetworkVersion {
+	ver, err := getNetworkVersion(version)
+	assert.Nil(t, err)
+	return ver
+}
+
 /*
 func TestIsThisErrorBlock(t *testing.T) {
 	x := &ast.Ident{Name:"nil"}

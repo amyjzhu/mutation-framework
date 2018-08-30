@@ -11,6 +11,8 @@ import (
 	"bitbucket.org/bestchai/dinv/programslicer"
 	"errors"
 	"fmt"
+	"math/rand"
+	"strconv"
 )
 
 // find network calls
@@ -63,7 +65,6 @@ func createZeroAssignment(assigns []ast.Expr, endPos token.Pos, info *types.Info
 				if possibleReadBytes.Type().String() != "error" {
 					assignLhs := []ast.Expr{identifier}
 					assignRhs := []ast.Expr{&ast.BasicLit{Kind: token.INT, Value: "0"}}
-					// TODO unclear what position should be
 					newZeroAssign := &ast.AssignStmt{Rhs: assignRhs, Lhs: assignLhs, TokPos: endPos + 1, Tok:token.ASSIGN}
 					return newZeroAssign
 				}
@@ -93,7 +94,89 @@ func isReadOperation(node ast.Node, info *types.Info) bool {
 }
 
 
-func setReadBytesToZero() {
+func SwapProtocolVersion(node ast.Node, info *types.Info) (func(), func()) {
+	// if it's a udp4, udp6, etc. switch for another type
+	// TODO handle nil objects
+	if call, ok := node.(*ast.CallExpr); ok {
+		if selector, ok := call.Fun.(*ast.SelectorExpr); ok {
+			originalArg := call.Args[0]
+			switch strings.ToLower(selector.Sel.Name) {
+			case "listentcp":
+				// TODO return a function that performs the change?
+				return func() { swapTcpVersion(call) },
+				func() { call.Args[0] = originalArg }
+			case "listenudp":
+				return func() { swapUdpVersion(call) },
+					func() { call.Args[0] = originalArg }
+			default:
+				// do nothing
+			}
+			//if strings.EqualFold(selector.Sel.Name, "listentcp") {}
+		}
+	}
+
+	return nil, nil
+}
+
+type NetworkVersion int
+
+const (
+	PLAIN NetworkVersion = iota
+	FOUR
+	SIX
+)
+
+var NetworkVersionMap = map[NetworkVersion]string{
+	PLAIN: "",
+	FOUR: "4",
+	SIX: "6",
+}
+
+func (version NetworkVersion) getStringRepresentation() string {
+	return NetworkVersionMap[version]
+}
+
+func (version NetworkVersion) getOtherVersion() NetworkVersion {
+	randomQuantity := rand.Int()
+	return NetworkVersion((int(version) + randomQuantity) % 3)
+}
+
+func getNetworkVersion(versionString string) (NetworkVersion, error) {
+	versionRegex := `^[\a-zA-Z]*([\d]?)$`
+	versionMatcher := regexp.MustCompile(versionRegex)
+	matches := versionMatcher.FindAllStringSubmatch(versionString, -1)
+	matchIndex := 0
+	capturingGroup := 1
+	numericVersion := matches[matchIndex][capturingGroup]
+	int, err := strconv.Atoi(numericVersion)
+	return NetworkVersion(int), err
+}
+
+func swapTcpVersion(call *ast.CallExpr) {
+	swapNetworkVersion("tcp", call)
+}
+
+func swapUdpVersion(call *ast.CallExpr) {
+	swapNetworkVersion("udp", call)
+}
+
+func swapNetworkVersion(protocol string, call *ast.CallExpr) {
+	arguments := call.Args
+	networkArgument := arguments[0]
+	if arg, ok := networkArgument.(*ast.Ident); ok {
+		networkVersion, err := getNetworkVersion(arg.Name)
+		if err != nil {
+			return
+		}
+		newVersion := networkVersion.getOtherVersion()
+		newString := protocol + newVersion.getStringRepresentation()
+		newIdent := ast.NewIdent(newString)
+		call.Args[0] = newIdent
+	}
+}
+
+
+func swapUnderlyingProtocol() {
 
 }
 
@@ -105,11 +188,7 @@ func setReadBytesToZero() {
 
 
 
-
-
-
-
-
+// TODO ================================
 
 // don't need tcp/udp library?
 
@@ -295,7 +374,6 @@ func contains(name string, funcs []*capture.NetFunc) bool {
 	return false
 }
 
-
 func getImportObject(ident *ast.Ident, info *types.Info) types.Object {
 	for node, obj := range info.Implicits {
 		if importSpec, ok := node.(*ast.ImportSpec); ok {
@@ -332,6 +410,8 @@ func initializeNetworkDb(path string) error {
 
 	return nil
 }
+
+// ====================
 
 func isConditionalErrorHandling(testCond *ast.BinaryExpr, info *types.Info) bool {
 	xId, ok := testCond.X.(*ast.Ident)

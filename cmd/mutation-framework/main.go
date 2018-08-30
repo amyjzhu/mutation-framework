@@ -62,13 +62,6 @@ type mutationStats struct {
 	skipped    int
 }
 
-func exitError(format string, args ...interface{}) (exitCode int) {
-	errorMessage := fmt.Sprintf(format+"\n", args...)
-	log.Error(errorMessage)
-
-	return returnError
-}
-
 func (ms *mutationStats) Score() float64 {
 	total := ms.Total()
 
@@ -81,97 +74,6 @@ func (ms *mutationStats) Score() float64 {
 
 func (ms *mutationStats) Total() int {
 	return ms.passed + ms.failed + ms.skipped
-}
-
-func checkArguments(args []string, opts *Args) (bool, int) {
-	p := flags.NewNamedParser("mutation-framework", flags.None)
-
-	p.ShortDescription = "Mutation testing for Go source code"
-
-	if _, err := p.AddGroup("mutation-framework", "mutation-framework arguments", opts); err != nil {
-		return true, exitError(err.Error())
-	}
-
-	completion := len(os.Getenv("GO_FLAGS_COMPLETION")) > 0
-
-	_, err := p.ParseArgs(args)
-	if (opts.General.Help || len(args) == 0) && !completion {
-		p.WriteHelp(os.Stdout)
-
-		return true, returnHelp
-
-	} else if opts.General.ListMutators {
-		fmt.Println(mutator.List())
-
-		return true, returnHelp
-	}
-
-	if err != nil {
-		return true, exitError(err.Error())
-	}
-
-	if completion {
-		return true, returnBashCompletion
-	}
-
-	if opts.General.Debug {
-		opts.General.Verbose = true
-	}
-
-	return false, 0
-}
-
-// TODO variable levels of logging
-func setUpLogging(config *MutationConfig) {
-	if config.Json {
-		log.SetFormatter(&log.JSONFormatter{})
-	} else {
-		log.SetFormatter(&log.TextFormatter{})
-	}
-
-	if config.Verbose {
-		log.SetLevel(log.DebugLevel)
-	} else {
-		log.SetLevel(log.InfoLevel)
-	}
-
-	log.SetOutput(os.Stdout)
-}
-
-// Command-line arguments are higher-priority than config file options
-// TODO environment variables?
-func consolidateArgsIntoConfig(opts *Args, config *MutationConfig) {
-	if strings.TrimSpace(opts.Exec.CustomTest) != "" {
-		config.Commands.Test = opts.Exec.CustomTest
-	}
-
-	if opts.Exec.ExecOnly {
-		config.Mutate.Disable = true
-	}
-
-	if opts.Exec.MutateOnly {
-		config.Test.Disable = true
-	}
-
-	if opts.General.Verbose {
-		config.Verbose = true
-	}
-
-	if opts.Exec.Composition != 0 {
-		config.Test.Composition = opts.Exec.Composition
-	}
-
-	if opts.Exec.Timeout != 0 {
-		config.Test.Timeout = opts.Exec.Timeout
-	}
-
-	if opts.General.Json {
-		config.Json = true
-	}
-
-	if opts.Exec.Overwrite {
-		config.Mutate.Overwrite = true
-	}
 }
 
 func mainCmd(args []string) (exitCode int) {
@@ -232,6 +134,104 @@ func performMutationTesting(config *MutationConfig, files map[string]string) (ex
 
 	return exitCode
 
+}
+
+func exitError(format string, args ...interface{}) (exitCode int) {
+	errorMessage := fmt.Sprintf(format+"\n", args...)
+	log.Error(errorMessage)
+
+	return returnError
+}
+
+// TODO variable levels of logging
+func setUpLogging(config *MutationConfig) {
+	if config.Json {
+		log.SetFormatter(&log.JSONFormatter{})
+	} else {
+		log.SetFormatter(&log.TextFormatter{})
+	}
+
+	if config.Verbose {
+		log.SetLevel(log.DebugLevel)
+	} else {
+		log.SetLevel(log.InfoLevel)
+	}
+
+	log.SetOutput(os.Stdout)
+}
+
+func checkArguments(args []string, opts *Args) (bool, int) {
+	p := flags.NewNamedParser("mutation-framework", flags.None)
+
+	p.ShortDescription = "Mutation testing for Go source code"
+
+	if _, err := p.AddGroup("mutation-framework", "mutation-framework arguments", opts); err != nil {
+		return true, exitError(err.Error())
+	}
+
+	completion := len(os.Getenv("GO_FLAGS_COMPLETION")) > 0
+
+	_, err := p.ParseArgs(args)
+	if (opts.General.Help || len(args) == 0) && !completion {
+		p.WriteHelp(os.Stdout)
+
+		return true, returnHelp
+
+	} else if opts.General.ListMutators {
+		fmt.Println(mutator.List())
+
+		return true, returnHelp
+	}
+
+	if err != nil {
+		return true, exitError(err.Error())
+	}
+
+	if completion {
+		return true, returnBashCompletion
+	}
+
+	if opts.General.Debug {
+		opts.General.Verbose = true
+	}
+
+	return false, 0
+}
+
+// Command-line arguments are higher-priority than config file options
+// TODO environment variables?
+func consolidateArgsIntoConfig(opts *Args, config *MutationConfig) {
+	if strings.TrimSpace(opts.Exec.CustomTest) != "" {
+		config.Commands.Test = opts.Exec.CustomTest
+	}
+
+	if opts.Exec.ExecOnly {
+		config.Mutate.Disable = true
+	}
+
+	if opts.Exec.MutateOnly {
+		config.Test.Disable = true
+	}
+
+	if opts.General.Verbose {
+		config.Verbose = true
+	}
+
+	if opts.Exec.Composition != 0 {
+		config.Test.Composition = opts.Exec.Composition
+	}
+
+	if opts.Exec.Timeout != 0 {
+		config.Test.Timeout = opts.Exec.Timeout
+	}
+
+	if opts.General.Json {
+		config.Json = true
+	}
+
+	if opts.Exec.Overwrite {
+		config.Mutate.Overwrite = true
+	}
 }
 
 func main() {

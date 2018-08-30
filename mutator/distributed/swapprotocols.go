@@ -12,13 +12,8 @@ func init() {
 	mutator.Register("distributed/protocols", MutatorSwap)
 }
 
-// Doesn't have to be inspect; we can wholesale mutate
 func MutatorSwap(pkg *types.Package, info *types.Info, node ast.Node) []mutator.Mutation {
-
-	// is this node a communication node
-	// what type of node is it?
-	// swap it with another type
-
+	// TODO better separation of concerns
 	vert, revert := astutil.SwapProtocolVersion(node, info)
 
 	return []mutator.Mutation{

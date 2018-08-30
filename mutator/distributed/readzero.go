@@ -11,14 +11,12 @@ func init() {
 	mutator.Register("distributed/readzero", MutatorReadZero)
 }
 
-// Doesn't have to be inspect; we can wholesale mutate
 func MutatorReadZero(pkg *types.Package, info *types.Info, node ast.Node) []mutator.Mutation {
-
 	var mutationList []mutator.Mutation
 
 	if blocks, ok := node.(*ast.BlockStmt); ok {
 		for i, block := range blocks.List {
-			newAssign := astutil.IsReadAssignment(block, info)
+			newAssign := astutil.CreateReadZeroAssignment(block, info)
 			if newAssign != nil {
 				mutation := createMutant(blocks, blocks.List, newAssign, i+1)
 				mutationList = append(mutationList, mutation)
@@ -29,7 +27,6 @@ func MutatorReadZero(pkg *types.Package, info *types.Info, node ast.Node) []muta
 	return mutationList
 }
 
-// after adding multiple mutants, now trying to write to closed channel...
 func createMutant(blockToAugment *ast.BlockStmt, oldStmtList []ast.Stmt, newAssign *ast.AssignStmt, index int) mutator.Mutation {
 	return mutator.Mutation{
 		Change: func() {
@@ -39,10 +36,8 @@ func createMutant(blockToAugment *ast.BlockStmt, oldStmtList []ast.Stmt, newAssi
 			newList = append(newList, newAssign)
 			// was the initial statement the last one?
 			if len(newList) != (index + 1) {
-				// if it's in the middle, we need to move things over
-				// do I need to move the positions of all subsequent pieces...
+				// if it's in the middle, we need to shift the list
 				copy(newList[index+1:], newList[index:])
-				// put the assignment in the open space, after the
 				newList[index] = newAssign
 			}
 			blockToAugment.List = newList

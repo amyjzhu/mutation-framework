@@ -22,12 +22,12 @@ type Operator struct {
 }
 
 type MutationConfig struct {
-	Verbose      bool   `json:"verbose"`
-	Json bool `json:"json"`
-	FileBasePath   string     `json:"project_root"` // the root of project and appended to file paths
-	Mutate Mutate `json:"mutate"`
-	Test Test `json:"test"`
-	Commands       Commands   `json:"commands"`
+	Verbose     bool     `json:"verbose"`
+	Json        bool     `json:"json"`
+	ProjectRoot string   `json:"project_root"` // the root of project and appended to file paths
+	Mutate      Mutate   `json:"mutate"`
+	Test        Test     `json:"test"`
+	Commands    Commands `json:"commands"`
 }
 
 type Test struct {
@@ -110,7 +110,6 @@ func (config *MutationConfig) UnmarshalJSON(data []byte) error {
 	type unfurlConfig MutationConfig
 
 	err := json.Unmarshal(data, (*unfurlConfig)(config))
-
 	if err != nil {
 		return err
 	}
@@ -122,16 +121,18 @@ func (config *MutationConfig) UnmarshalJSON(data []byte) error {
 
 	appendMutantFolderSlashOrReplaceWithDefault(config)
 	expandWildCards(config)
-	config.FileBasePath = appendSlash(config.FileBasePath)
-
-	configString, err := config.toString()
-	if err != nil {
-		return err
-	}
-
-	log.WithField("config", configString).Info("Finished parsing config.")
+	config.ProjectRoot = appendSlash(config.ProjectRoot)
+	logConfig(config)
 
 	return nil
+}
+
+func logConfig(config *MutationConfig) {
+	configString, err := config.toString()
+	if err != nil {
+		log.WithError(err)
+	}
+	log.WithField("config", configString).Info("Finished parsing config.")
 }
 
 func (config *MutationConfig) toString() (string, error) {
@@ -152,7 +153,7 @@ func validateImportantConfigFields(config *MutationConfig) error {
 		log.Info("Mutate files are empty. Is your config correct?")
 	}
 
-	if config.FileBasePath == "" {
+	if config.ProjectRoot == "" {
 		return fmt.Errorf("project root is not set")
 	}
 
@@ -239,7 +240,7 @@ func (config *MutationConfig) getRelativeAndAbsoluteFiles() (fileMap map[string]
 	fileMap = make(map[string]string)
 	files := config.getIncludedFiles()
 	for _, file := range files {
-		fileMap[file] = concatAddingSlashIfNeeded(config.FileBasePath, file)
+		fileMap[file] = concatAddingSlashIfNeeded(config.ProjectRoot, file)
 	}
 
 	return
@@ -252,7 +253,7 @@ func expandWildCards(config *MutationConfig) {
 	for _, filePath := range config.Mutate.FilesToInclude {
 		if strings.Contains(filePath, "*") {
 			expandedPaths = append(expandedPaths,
-				expandWildCard(filePath, config.FileBasePath)...)
+				expandWildCard(filePath, config.ProjectRoot)...)
 		}
 	}
 	revisedFilesToInclude := removeWildCardPaths(config.Mutate.FilesToInclude)
@@ -262,7 +263,7 @@ func expandWildCards(config *MutationConfig) {
 	for _, filePath := range config.Mutate.FilesToExclude {
 		if strings.Contains(filePath, "*") {
 			expandedPaths = append(expandedPaths,
-				expandWildCard(filePath, config.FileBasePath)...)
+				expandWildCard(filePath, config.ProjectRoot)...)
 		}
 	}
 	revisedFilesToExclude := removeWildCardPaths(config.Mutate.FilesToExclude)

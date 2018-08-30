@@ -108,7 +108,7 @@ func TestMinimalParseConfig(t *testing.T) {
 	actualConfig, err := parseConfig([]byte(configString))
 	assert.Nil(t, err)
 
-	expectedConfig = MutationConfig{FileBasePath:"home/",
+	expectedConfig = MutationConfig{ProjectRoot:"home/",
 	Mutate:Mutate{MutantFolder:"mutants/"}}
 	assert.EqualValues(t, *actualConfig, expectedConfig)
 }

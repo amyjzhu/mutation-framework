@@ -49,18 +49,11 @@ func mutateFiles(config *MutationConfig, files map[string]string) (map[string]*m
 			panic(err)
 		}
 
-		/*
-		// if the path specified is multiple folders deep, we should only use last one for name
-		if strings.Contains(mutantFolderName, string(os.PathSeparator)) {
-			mutantFolderName = filepath.Base(config.Mutate.MutantFolder)
-		}*/
-
 		mutantFile := appendFolder(config.Mutate.MutantFolder, relativeFileLocation)
 		createMutantFolderPath(mutantFile)
 
 		mutationID := 0
 
-		// TODO match function names instead
 		mutantInfo := mutate(config, mutationID, pkg, info, abs, relativeFileLocation,
 			fset, src, src, stats)
 
@@ -153,10 +146,9 @@ func getAbsoluteMutationFolderPath(config *MutationConfig) (projectName string) 
 		// don't add project base path to it then
 		projectName = config.Mutate.MutantFolder
 	} else {
-		projectName = appendFolder(config.FileBasePath, config.Mutate.MutantFolder)
+		projectName = appendFolder(config.ProjectRoot, config.Mutate.MutantFolder)
 	}
 
-	//log.Info(projectName)
 	return
 }
 

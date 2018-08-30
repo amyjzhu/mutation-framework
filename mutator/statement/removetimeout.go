@@ -3,9 +3,9 @@ package statement
 import (
 	"go/ast"
 	"go/types"
+	"go/token"
 
 	"github.com/amyjzhu/mutation-framework/mutator"
-	"go/token"
 	"github.com/amyjzhu/mutation-framework/astutil"
 )
 
@@ -13,7 +13,6 @@ func init() {
 	mutator.Register("statement/timeout", MutatorTimeout)
 }
 
-// Doesn't have to be inspect; we can wholesale mutate
 func MutatorTimeout(pkg *types.Package, info *types.Info, node ast.Node) []mutator.Mutation {
 	n, ok := node.(*ast.CallExpr)
 	if !ok {

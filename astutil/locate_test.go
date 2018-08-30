@@ -7,6 +7,7 @@ import (
 	"go/ast"
 	"github.com/stretchr/testify/assert"
 	"github.com/amyjzhu/mutation-framework"
+	"go/types"
 	"fmt"
 )
 
@@ -26,11 +27,61 @@ func loadAST(t *testing.T, path string) (*token.FileSet, *ast.File){
 	return fset, node
 }
 
+func TestIsReadOperation(t *testing.T) {
+	expr, err := parser.ParseExpr("conn.Read(b)")
+	assert.Nil(t, err)
+	assert.True(t, isReadOperation(expr))
+
+	expr, err = parser.ParseExpr("conn.read(b)")
+	assert.Nil(t, err)
+	assert.True(t, isReadOperation(expr))
+
+	expr, err = parser.ParseExpr("conn.readDir(b)")
+	assert.Nil(t, err)
+	assert.False(t, isReadOperation(expr))
+
+	expr, err = parser.ParseExpr("conn.Dial(b)")
+	assert.Nil(t, err)
+	assert.False(t, isReadOperation(expr))
+
+	expr, err = parser.ParseExpr("sdfkjsd.read()")
+	assert.Nil(t, err)
+	assert.True(t, isReadOperation(expr))
+}
+
+/*
+func TestCreateReadZeroAssignment(t *testing.T) {
+	node, fset, _, info, err := mutesting.ParseAndTypeCheckFile(zeroRead)
+	assert.Nil(t, err)
+
+	actualAssign := createReadZeroAssignmentWrapper(node, info)
+
+	assert.Equal(t, "n = 0", ast.Print(fset, actualAssign))
+}
+*/
+
+func createReadZeroAssignmentWrapper(node ast.Node, info *types.Info) *ast.AssignStmt {
+	var assignment *ast.AssignStmt
+	ast.Inspect(node, func (node ast.Node) bool {
+		if _, ok := node.(*ast.AssignStmt); ok {
+			if assignment == nil {
+				assignment = CreateReadZeroAssignment(node, info)
+				if assignment != nil {
+					return false
+				}
+			}
+		}
+		return true
+	})
+
+	return assignment
+}
+
 func TestInsertZeroAssignment(t *testing.T) {
 	node, _, _, info, err := mutesting.ParseAndTypeCheckFile(zeroRead)
 	assert.Nil(t, err)
 	ast.Inspect(node, func (node ast.Node) bool {
-		newAssign := IsReadAssignment(node, info)
+		newAssign := CreateReadZeroAssignment(node, info)
 		if newAssign != nil {
 			fmt.Println(newAssign)
 		} else {

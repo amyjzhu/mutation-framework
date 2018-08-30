@@ -46,20 +46,13 @@ func Mutator(t *testing.T, m mutator.Mutator, testFile string, count int) {
 		assert.Nil(t, err)
 
 		// If this file isn't written, it breaks somehow
+		// and it doesn't work currently
 		changedFilename := fmt.Sprintf("%s.%d.go", testFile, i)
 		_, err := os.Stat(changedFilename)
 		assert.Nil(t, err)
 
 		changedFile, err := ioutil.ReadFile(changedFilename)
 		assert.Nil(t, err)
-
-		// TODO where is this file disappearing to?
-	//	err = ioutil.WriteFile(fmt.Sprintf(changedFilename), []byte(changedFile), 0644)
-	//	assert.Nil(t, err)
-
-		fmt.Println("changedfilename is ", changedFilename)
-		fmt.Println("buf is ", buf.String())
-		fmt.Println("changedfile is ", changedFile)
 
 		if !assert.Equal(t, string(changedFile), buf.String(), fmt.Sprintf("For change file %q", changedFilename)) {
 			err = ioutil.WriteFile(fmt.Sprintf("%s.%d.go.new", testFile, i), []byte(buf.String()), 0644)

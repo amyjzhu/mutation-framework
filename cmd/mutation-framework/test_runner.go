@@ -161,7 +161,7 @@ func executeAllMutants(config *MutationConfig, mutantFiles []MutantInfo, allStat
 	// move all contents into temp file
 	// maybe in the future can use go move
 	mutantFolder := config.Mutate.MutantFolder
-	//mutantFolder := appendFolder(config.FileBasePath, config.Mutate.MutantFolder)
+	//mutantFolder := appendFolder(config.ProjectRoot, config.Mutate.MutantFolder)
 	originalArtifactFolder := appendFolder(mutantFolder, "original")
 	err := moveAllContentsExceptMutantFolder(".", originalArtifactFolder, mutantFolder)
 	if err != nil {

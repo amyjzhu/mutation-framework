@@ -7,45 +7,20 @@ import (
 	"regexp"
 	"strings"
 
+	"math/rand"
+	"strconv"
 	"bitbucket.org/bestchai/dinv/capture"
 	"bitbucket.org/bestchai/dinv/programslicer"
 	"errors"
 	"fmt"
-	"math/rand"
-	"strconv"
 )
 
-// find network calls
-// I think we need a better interface since I want to be able to do different things
-// with each type of networking function
-
-// instrumenting multiple directories at a time?
-
-
-// I think i should just do a for-each run function thing
-// and then if you want to collect them, pass in your own thing by reference
-
-// TODO probably consume an entire AST
-// as well as functions to change/modify
-// should it return, or simply map?
-func captureInstances() {
-	//capture.GetCommNodes()
-}
-
-const (
-	SEND = iota
-	RECEIVE
-	BOTH
-	NOT
-)
-
-
-func IsReadAssignment(node ast.Node, info *types.Info) *ast.AssignStmt {
+func CreateReadZeroAssignment(node ast.Node, info *types.Info) *ast.AssignStmt {
 	if assign, ok := node.(*ast.AssignStmt); ok {
 		lhs := assign.Lhs
 		rhs := assign.Rhs
 		for _, expr := range rhs {
-			if isReadOperation(expr, info) {
+			if isReadOperation(expr) {
 				return createZeroAssignment(lhs, assign.End(), info)
 			}
 		}
@@ -53,36 +28,15 @@ func IsReadAssignment(node ast.Node, info *types.Info) *ast.AssignStmt {
 	return nil
 }
 
-// TODO handle nil
-func createZeroAssignment(assigns []ast.Expr, endPos token.Pos, info *types.Info) *ast.AssignStmt {
-	for _, assign := range assigns {
-		if identifier, ok := assign.(*ast.Ident); ok {
-			possibleReadBytes := info.Uses[identifier]
-			if possibleReadBytes == nil {
-				possibleReadBytes = info.Defs[identifier]
-			}
-			if possibleReadBytes != nil {
-				if possibleReadBytes.Type().String() != "error" {
-					assignLhs := []ast.Expr{identifier}
-					assignRhs := []ast.Expr{&ast.BasicLit{Kind: token.INT, Value: "0"}}
-					newZeroAssign := &ast.AssignStmt{Rhs: assignRhs, Lhs: assignLhs, TokPos: endPos + 1, Tok:token.ASSIGN}
-					return newZeroAssign
-				}
-			}
-		}
-	}
 
-	return nil
-}
-
-func isReadOperation(node ast.Node, info *types.Info) bool {
+func isReadOperation(node ast.Node) bool {
 	// check if it's read
 	if callExpr, ok := node.(*ast.CallExpr); ok {
 		callFun := callExpr.Fun
 		if selectorExpr, ok := callFun.(*ast.SelectorExpr); ok {
 			connectionObject := selectorExpr.X
-			connectionFun := selectorExpr.Sel
-			if strings.EqualFold(connectionFun.Name, "read") {
+			connectionFn := selectorExpr.Sel
+			if strings.EqualFold(connectionFn.Name, "read") {
 				// TODO check if X type is Conn
 				_ = connectionObject
 				return true
@@ -93,6 +47,38 @@ func isReadOperation(node ast.Node, info *types.Info) bool {
 	return false
 }
 
+// TODO handle nil
+func createZeroAssignment(assigns []ast.Expr, endPos token.Pos, info *types.Info) *ast.AssignStmt {
+	for _, assign := range assigns {
+		if identifier, ok := assign.(*ast.Ident); ok {
+
+			possibleReadBytesVar := findReadBytesVariable(identifier, info)
+			if possibleReadBytesVar != nil {
+				if possibleReadBytesVar.Type().String() != "error" {
+
+					return constructZeroAssignment(identifier, endPos+1)
+				}
+			}
+		}
+	}
+
+	return nil
+}
+
+func findReadBytesVariable(identifier *ast.Ident, info *types.Info) types.Object {
+	possibleReadBytesVar := info.Uses[identifier]
+	if possibleReadBytesVar == nil {
+		possibleReadBytesVar = info.Defs[identifier]
+	}
+
+	return possibleReadBytesVar
+}
+
+func constructZeroAssignment(identifier *ast.Ident, endPos token.Pos) *ast.AssignStmt {
+	assignLhs := []ast.Expr{identifier}
+	assignRhs := []ast.Expr{&ast.BasicLit{Kind: token.INT, Value: "0"}}
+	return &ast.AssignStmt{Rhs: assignRhs, Lhs: assignLhs, TokPos: endPos + 1, Tok:token.ASSIGN}
+}
 
 func SwapProtocolVersion(node ast.Node, info *types.Info) (func(), func()) {
 	// if it's a udp4, udp6, etc. switch for another type
@@ -102,7 +88,6 @@ func SwapProtocolVersion(node ast.Node, info *types.Info) (func(), func()) {
 			originalArg := call.Args[0]
 			switch strings.ToLower(selector.Sel.Name) {
 			case "listentcp":
-				// TODO return a function that performs the change?
 				return func() { swapTcpVersion(call) },
 				func() { call.Args[0] = originalArg }
 			case "listenudp":
@@ -141,17 +126,6 @@ func (version NetworkVersion) getOtherVersion() NetworkVersion {
 	return NetworkVersion((int(version) + randomQuantity) % 3)
 }
 
-func getNetworkVersion(versionString string) (NetworkVersion, error) {
-	versionRegex := `^[\a-zA-Z]*([\d]?)$`
-	versionMatcher := regexp.MustCompile(versionRegex)
-	matches := versionMatcher.FindAllStringSubmatch(versionString, -1)
-	matchIndex := 0
-	capturingGroup := 1
-	numericVersion := matches[matchIndex][capturingGroup]
-	int, err := strconv.Atoi(numericVersion)
-	return NetworkVersion(int), err
-}
-
 func swapTcpVersion(call *ast.CallExpr) {
 	swapNetworkVersion("tcp", call)
 }
@@ -175,12 +149,183 @@ func swapNetworkVersion(protocol string, call *ast.CallExpr) {
 	}
 }
 
+func getNetworkVersion(versionString string) (NetworkVersion, error) {
+	versionRegex := `^[\a-zA-Z]*([\d]?)$`
+	versionMatcher := regexp.MustCompile(versionRegex)
+	matches := versionMatcher.FindAllStringSubmatch(versionString, -1)
+	matchIndex := 0
+	capturingGroup := 1
+	numericVersion := matches[matchIndex][capturingGroup]
+	int, err := strconv.Atoi(numericVersion)
+	return NetworkVersion(int), err
+}
 
-func swapUnderlyingProtocol() {
+func SwapUnderlyingProtocol() {
 
 }
 
 
+func IsErrorHandlingCode(n ast.Node, info *types.Info) (bool, *ast.BlockStmt) {
+	ret, ok := n.(*ast.IfStmt)
+	if ok {
+		testCond, ok := ret.Cond.(*ast.BinaryExpr)
+		// does not cover every error-handling case, but covers most common
+		// i.e. err != nil or err == nil
+		// another tactic could be dataflow following where errors are raised (TODO)
+		if ok {
+			if isConditionalErrorHandling(testCond, info) {
+
+				// err != nil
+				if testCond.Op == token.NEQ {
+					// return the body
+					return true, ret.Body
+
+				// err == nil
+				} else if testCond.Op == token.EQL {
+					if ret.Else != nil {
+						ifst, ok := ret.Else.(*ast.IfStmt)
+						if ok {
+							// i.e. err == nil {} else if { ... }
+							return IsErrorHandlingCode(ifst, info)
+						} else {
+							// the else block actually has error handling
+							// i.e. err == nil {} else { ... }
+							if block, ok := ret.Else.(*ast.BlockStmt); ok {
+								return true, block
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	return false, nil
+}
+
+func isConditionalErrorHandling(testCond *ast.BinaryExpr, info *types.Info) bool {
+	xId, ok := testCond.X.(*ast.Ident)
+	if !ok {
+		return false
+	}
+	yId, ok := testCond.Y.(*ast.Ident)
+	if !ok {
+		return false
+	}
+
+	xObj := info.Uses[xId]
+	yObj := info.Uses[yId]
+
+	if xObj != nil && yObj != nil {
+		if xObj.Type().String() == "error" &&
+			isUntypedNil(yObj) ||
+			yObj.Type().String() == "error" &&
+				isUntypedNil(xObj) {
+			return true
+		}
+	}
+	return false
+}
+
+func isUntypedNil(candidate types.Object) bool {
+	// TODO can candidate.Type() return nil?
+	basicType, ok := candidate.Type().(*types.Basic)
+	if ok {
+		if basicType.Kind() == types.UntypedNil {
+			return true
+		}
+	}
+	return false
+}
+
+func getErrorBlockNodes(node *ast.File, info *types.Info) []*ast.BlockStmt {
+
+	var bodies []*ast.BlockStmt
+
+	ast.Inspect(node, func(n ast.Node) bool {
+		// TODO necessary?
+		if n == nil {
+			return false
+		}
+
+		errorHandling, block := IsErrorHandlingCode(n, info)
+		if errorHandling && block != nil {
+			bodies = append(bodies, block)
+			return true
+		}
+
+		return true
+	})
+
+	return bodies
+}
+
+// check if a call is a time.Sleep
+func IsTimeoutCall(call *ast.CallExpr, info *types.Info) bool {
+	// don't waste time computing if selector doesn't match
+	if fun, ok := call.Fun.(*ast.SelectorExpr); ok {
+		funcName := fun.Sel.Name
+		if !strings.EqualFold(funcName, "Sleep") {
+			return false
+		} else {
+			return selectorMatchesTimeLibrary(fun, info)
+		}
+	} else {
+		// not a selector expression
+		return false
+	}
+
+}
+
+func selectorMatchesTimeLibrary(fun *ast.SelectorExpr, info *types.Info) bool {
+	const TimePackagePath = "time"
+	timeLibraryName := "time"
+
+	// implicits is where you find non-renamed package imports
+	for ident, obj := range info.Implicits {
+		// if there are any imports here
+		if dependency, ok := ident.(*ast.ImportSpec); ok {
+			// check that they correspond to path of time package "time"
+			objName := obj.Name()
+			if dependency.Path.Value == TimePackagePath {
+				timeLibraryName = objName
+			}
+		}
+	}
+
+	// otherwise, maybe package was renamed
+	for identifiers, obj := range info.Defs {
+		if obj != nil {
+			if isTimeLibrary(obj.String()) {
+				// ideally interchangeable
+				timeLibraryName = identifiers.Name
+				// timeLibraryName = obj.Name()
+			}
+		}
+	}
+
+	// find the libraryName of the library
+	// assuming it's an ident and not another expression
+	libraryName, ok := fun.X.(*ast.Ident)
+	if ok {
+		funcLibrary := libraryName.Name
+
+		// then we compare the library and function call
+		if funcLibrary == timeLibraryName {
+			return true
+		}
+	}
+	return false
+}
+
+// object string apparently resembles "package alias ("time")"
+// where alias is user-defined variable
+func isTimeLibrary(testString string) bool {
+	const timeLibraryObjString = `package ([\w]*) \("time"\)`
+	timeLibraryRegex := regexp.MustCompile(timeLibraryObjString)
+
+	return timeLibraryRegex.MatchString(testString)
+}
 
 
 
@@ -190,7 +335,35 @@ func swapUnderlyingProtocol() {
 
 // TODO ================================
 
+
+
+func getLoggingDenseAreas() {
+
+}
+
+// TODO perhaps specified by test administrator, since
+// this could be difficult to automatically find
+func getServiceStartupCode() {
+
+}
+
+func getServiceShutdownCode() {
+
+}
+
+
+// =====================================
 // don't need tcp/udp library?
+
+
+
+const (
+	SEND = iota
+	RECEIVE
+	BOTH
+	NOT
+)
+
 
 func IsSendingMessageNode() error {
 	// get the library of network calls in a package
@@ -334,7 +507,7 @@ func getReplacementCall(original *capture.NetFunc, candidates []*capture.NetFunc
 	for _, netFunc := range candidates {
 		if numArgs == netFunc.Args &&
 			returnVals == netFunc.Returns {
-				return netFunc, nil
+			return netFunc, nil
 		}
 	}
 
@@ -412,192 +585,3 @@ func initializeNetworkDb(path string) error {
 }
 
 // ====================
-
-func isConditionalErrorHandling(testCond *ast.BinaryExpr, info *types.Info) bool {
-	xId, ok := testCond.X.(*ast.Ident)
-	if !ok {
-		return false
-	}
-	yId, ok := testCond.Y.(*ast.Ident)
-	if !ok {
-		return false
-	}
-
-	xObj := info.Uses[xId]
-	yObj := info.Uses[yId]
-
-	if xObj != nil && yObj != nil {
-		if xObj.Type().String() == "error" &&
-			isUntypedNil(yObj) ||
-			yObj.Type().String() == "error" &&
-				isUntypedNil(xObj) {
-			return true
-		}
-	}
-	return false
-}
-
-func isUntypedNil(candidate types.Object) bool {
-	// TODO can candidate.Type() return nil?
-	basicType, ok := candidate.Type().(*types.Basic)
-	if ok {
-		if basicType.Kind() == types.UntypedNil {
-			return true
-		}
-	}
-	return false
-}
-
-func IsErrorHandlingCode(n ast.Node, info *types.Info) (bool, *ast.BlockStmt) {
-	ret, ok := n.(*ast.IfStmt)
-	if ok {
-
-		//fmt.Printf("if statement found on line %d:\n\t", fset.Position(ret.Pos()).Line)
-		testCond, ok := ret.Cond.(*ast.BinaryExpr)
-		// TODO does not cover every error-handling case, but covers most common
-		// err != nil or err == nil
-		// another tactic could be dataflow following where errors are raised
-		if ok {
-			if isConditionalErrorHandling(testCond, info) {
-
-				// err != nil
-				if testCond.Op == token.NEQ {
-					// return the body
-					return true, ret.Body
-
-				// err == nil
-				} else if testCond.Op == token.EQL {
-					if ret.Else != nil {
-						ifst, ok := ret.Else.(*ast.IfStmt)
-						if ok {
-							// err == nil {} else if { ... }
-							return IsErrorHandlingCode(ifst, info)
-						} else {
-							// the else block actually has error handling
-							// err == nil {} else { ... }
-							if block, ok := ret.Else.(*ast.BlockStmt); ok {
-								return true, block
-							}
-						}
-					}
-				}
-			}
-		}
-	}
-
-	return false, nil
-}
-
-// TODO not sure which one is necessary.
-// should rework this one to use one above
-// handle by adding if is, ignoring if isn;t
-func getErrorBlockNodes(node *ast.File, info *types.Info) []*ast.BlockStmt {
-
-	bodies := []*ast.BlockStmt{}
-
-	ast.Inspect(node, func(n ast.Node) bool {
-		// TODO necessary?
-		if n == nil {
-			return false
-		}
-
-		errorHandling, block := IsErrorHandlingCode(n, info)
-		if errorHandling && block != nil {
-			bodies = append(bodies, block)
-			return true
-		}
-
-		return true
-	})
-
-	return bodies
-}
-
-
-
-func getTryBlockNodes() []*ast.Node {
-	return nil
-}
-
-func getLoggingDenseAreas() {
-
-}
-
-// TODO perhaps specified by test administrator, since
-// this could be difficult to automatically find
-func getServiceStartupCode() {
-
-}
-
-func getServiceShutdownCode() {
-
-}
-
-// check if a call is a time.Sleep
-func IsTimeoutCall(call *ast.CallExpr, info *types.Info) bool {
-	// don't waste time computing if selector doesn't match
-	if fun, ok := call.Fun.(*ast.SelectorExpr); ok {
-		funcName := fun.Sel.Name
-		if !strings.EqualFold(funcName, "Sleep") {
-			return false
-		} else {
-			return selectorMatchesTimeLibrary(fun, info)
-		}
-	} else {
-		// not a selector expression
-		return false
-	}
-
-}
-
-func selectorMatchesTimeLibrary(fun *ast.SelectorExpr, info *types.Info) bool {
-	const TimePackagePath = "time"
-	timeLibraryName := "time"
-
-	// implicits is where you find non-renamed package imports
-	for ident, obj := range info.Implicits {
-		// if there are any imports here
-		if dependency, ok := ident.(*ast.ImportSpec); ok {
-			// check that they correspond to path of time package "time"
-			objName := obj.Name()
-			if dependency.Path.Value == TimePackagePath {
-				timeLibraryName = objName
-			}
-		}
-	}
-
-	// otherwise, maybe package was renamed
-	for identifiers, obj := range info.Defs {
-		if obj != nil {
-			if isTimeLibrary(obj.String()) {
-				// ideally interchangeable
-				timeLibraryName = identifiers.Name
-				// timeLibraryName = obj.Name()
-			}
-		}
-	}
-
-	// find the libraryName of the library
-	// assuming it's an ident and not another expression
-	libraryName, ok := fun.X.(*ast.Ident)
-	if ok {
-		funcLibrary := libraryName.Name
-
-		// then we compare the library and function call
-		if funcLibrary == timeLibraryName {
-			return true
-		}
-	}
-	return false
-}
-
-// object string apparently resembles "package alias ("time")"
-// where alias is user-defined variable
-func isTimeLibrary(testString string) bool {
-	const timeLibraryObjString = `package ([\w]*) \("time"\)`
-	timeLibraryRegex := regexp.MustCompile(timeLibraryObjString)
-
-	return timeLibraryRegex.MatchString(testString)
-}
-
-

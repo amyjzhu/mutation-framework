@@ -87,11 +87,13 @@ func mainCmd(args []string) (exitCode int) {
 }
 
 func initializeExecution(args []string) (*MutationConfig, map[string]string, int){
+	// Parse command-line options
 	var opts= &Args{}
 	if exit, exitCode := checkArguments(args, opts); exit {
 		return nil, nil, exitCode
 	}
 
+	// Parse config options
 	pathToConfig := opts.General.ConfigPath
 	config, err := getConfig(pathToConfig)
 	if err != nil {

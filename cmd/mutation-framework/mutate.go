@@ -3,13 +3,13 @@ package main
 import (
 	"os"
 	"path/filepath"
-	"fmt"
 	"strings"
 	"go/types"
-	"go/token"
-	"go/ast"
 	"github.com/amyjzhu/mutation-framework"
 	log "github.com/sirupsen/logrus"
+	"go/token"
+	"go/ast"
+	"fmt"
 	"bytes"
 	"crypto/md5"
 	"go/printer"
@@ -26,6 +26,7 @@ type MutantInfo struct {
 	checksum                 string
 }
 
+// Creates the mutant folder, checks each file, and feeds them into mutate()
 func mutateFiles(config *MutationConfig, files map[string]string) (map[string]*mutationStats, []MutantInfo, int) {
 	log.Info("Mutating files.")
 	allStats := make(map[string]*mutationStats)
@@ -43,6 +44,7 @@ func mutateFiles(config *MutationConfig, files map[string]string) (map[string]*m
 			return nil, nil, exitError(err.Error())
 		}
 
+		// TODO why is this here
 		mutantFolderName := config.Mutate.MutantFolder
 		err = FS.MkdirAll(mutantFolderName, 0755)
 		if err != nil {
@@ -73,19 +75,31 @@ func createMutantFolderPath(file string) {
 	}
 }
 
+/*
+ * For a given file, this function iterates through all the mutation operators
+ * and walks them along the AST with mutesting.MutateWalk.
+ * When MutateWalk finds a mutation to make, it applies the mutation to the AST,
+ * then sends a message through the channel "changed" so this function
+ * can write the new AST into the mutant. mutate then passes control
+ * back to MutateWalk, which resets the change, and continues traversal.
+ */
 func mutate(config *MutationConfig, mutationID int, pkg *types.Package,
 	info *types.Info, file string, relativeFilePath string, fset *token.FileSet,
 	src ast.Node, node ast.Node, stats *mutationStats) []MutantInfo {
 
+	// Save information about mutant paths in order to
+	// pass them to the execution stage
 	var mutantInfos []MutantInfo
 
 	for _, m := range config.Mutate.Operators {
 		mutationID = 0
 		log.WithField("mutation_operator", m.Name).Info("Mutating.")
 
+		// Walk the AST for this mutation operator
 		changed := mutesting.MutateWalk(pkg, info, node, *m.MutationOperator)
 
 		for {
+			// Has the AST been changed by a mutation?
 			_, ok := <-changed
 
 			if !ok {
@@ -94,6 +108,7 @@ func mutate(config *MutationConfig, mutationID int, pkg *types.Package,
 
 			mutationBlackList := make(map[string]struct{},0) //TODO implement real blacklisting
 
+			// set up new folder for mutant
 			mutationFileId := buildMutantName(m.Name, relativeFilePath, mutationID)
 			log.WithField("name", mutationFileId).Info("Creating mutant.")
 
@@ -106,6 +121,7 @@ func mutate(config *MutationConfig, mutationID int, pkg *types.Package,
 			mutatedFilePath := appendFolder(filepath.Clean(mutantPath), relativeFilePath)
 			checksum, duplicate, err := saveAST(mutationBlackList, mutatedFilePath, fset, src)
 
+			// save the AST with mutation to mutant
 			if err != nil {
 				log.WithField("error", err).Error("Internal error.")
 			} else if duplicate {

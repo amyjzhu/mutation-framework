@@ -1,6 +1,6 @@
 # go-mutesting [![GoDoc](https://godoc.org/github.com/zimmski/go-mutesting?status.png)](https://godoc.org/github.com/zimmski/go-mutesting) [![Build Status](https://travis-ci.org/zimmski/go-mutesting.svg?branch=master)](https://travis-ci.org/zimmski/go-mutesting) [![Coverage Status](https://coveralls.io/repos/amyjzhu/mutation-framework/badge.png?branch=master)](https://coveralls.io/r/zimmski/go-mutesting?branch=master)
 
-go-mutesting is a framework for performing mutation testing on Go source code. Its main purpose is to find source code, which is not covered by any tests.
+This framework performs mutation testing, focusing specifically on distributed systems.
 
 ## Quick example
 
@@ -39,7 +39,7 @@ The next mutation shows code from the `removeNode` method of a [linked list](htt
 
 We know that the code originates from a remove method which means that the mutation introduces a leak by ignoring the removal of a reference. This can be [tested](https://github.com/zimmski/container/commit/142c3e16a249095b0d63f2b41055d17cf059f045) with [go-leaks](https://github.com/zimmski/go-leak).
 
-## <a name="table-of-content"></a>Table of content
+## <a name="table-of-content"></a>Table of contents
 
 - [What is mutation testing?](#what-is-mutation-testing)
 - [How do I use go-mutesting?](#how-do-i-use-go-mutesting)

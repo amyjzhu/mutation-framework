@@ -9,6 +9,7 @@ import (
 	"github.com/amyjzhu/mutation-framework/mutator"
 )
 
+
 func init() {
 	mutator.Register("statement/remove", MutatorRemoveStatement)
 }

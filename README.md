@@ -4,13 +4,42 @@ This framework performs mutation testing, focusing specifically on distributed s
 
 ## Quick example
 
-The following command mutates the go-mutesting project with all available mutators.
+If we have a config file `config.json`, we only need to run
 
 ```bash
-go-mutesting github.com/amyjzhu/mutation-framework/...
+mutation-framework --config config.json
+``` 
+
+A sample config:
+```json
+{
+  "test": {
+    "disable": false,
+    "timeout":10,
+    "commands":{
+      "test": "go test",
+      "clean_up":""
+    }
+  },
+  "mutate": {
+    "disable": false,
+    "operators": [
+      "branch/case", "branch/else", "branch/if", "expression/remove", "statement/remove", "statement/timeout", "statement/removeblock"
+    ],
+    "files_to_include": [
+      "primary.go", "secondary.go"
+    ]
+  },
+  "verbose": false,
+  "project_root":"/home/"
+}
 ```
 
-The execution of this command prints for every mutation if it was successfully tested or not. If not, the source code patch is printed out, so the mutation can be investigated. The following shows an example for a patch of a mutation.
+The framework can also be invoked with different overriding flags, such as `debug` or `list-mutators` (which prints mutators and exits). For a full list of flags, run `mutation-framework --help`.
+
+If mutation is disabled, then all the mutants in the specified `mutant_folder` are used for execution.
+
+If the mutant is still live after being run against the tests, the source code of the mutated file is printed out. 
 
 ```diff
 for _, d := range opts.Mutator.DisableMutators {
@@ -50,17 +79,10 @@ We know that the code originates from a remove method which means that the mutat
 
 ## <a name="what-is-mutation-testing"></a>What is mutation testing?
 
-The definition of mutation testing is best quoted from Wikipedia:
+Mutation testing is a form of error seeding used in order to evaluate the quality (i.e. efficacy) of test suites. A mutation operator generates a number of *mutants* from some initial artifact, and each mutant is executed against a set of tests. If 
+any of the tests fail, then the mutant is *killed*; otherwise, the mutant is still *live*. This indicates that a similar bug would not be uncovered by the test suite.
 
-> Mutation testing (or Mutation analysis or Program mutation) is used to design new software tests and evaluate the quality of existing software tests. Mutation testing involves modifying a program in small ways. Each mutated version is called a mutant and tests detect and reject mutants by causing the behavior of the original version to differ from the mutant. This is called killing the mutant. Test suites are measured by the percentage of mutants that they kill. New tests can be designed to kill additional mutants.
-> <br/>-- <cite>[https://en.wikipedia.org/wiki/Mutation_testing](https://en.wikipedia.org/wiki/Mutation_testing)</cite>
-
-> Tests can be created to verify the correctness of the implementation of a given software system, but the creation of tests still poses the question whether the tests are correct and sufficiently cover the requirements that have originated the implementation.
-> <br/>-- <cite>[https://en.wikipedia.org/wiki/Mutation_testing](https://en.wikipedia.org/wiki/Mutation_testing)</cite>
-
-Although the definition states that the main purpose of mutation testing is finding implementation cases which are not covered by tests, other implementation flaws can be found too. Mutation testing can for example uncover dead and unneeded code.
-
-Mutation testing is also especially interesting for comparing automatically generated test suites with manually written test suites. This was the original intention of go-mutesting which is used to evaluate the generic fuzzing and delta-debugging framework [Tavor](https://github.com/zimmski/tavor).
+The process may also be used in an auxiliary sense for fault localization as well as finding dead or duplicated code. 
 
 ## <a name="how-do-i-use-go-mutesting"></a>How do I use go-mutesting?
 
@@ -68,12 +90,6 @@ go-mutesting includes a binary which is go-getable.
 
 ```bash
 go get -t -v github.com/amyjzhu/mutation-framework/...
-```
-
-The binary's help can be invoked by executing the binary without arguments or with the `--help` argument.
-
-```bash
-go-mutesting --help
 ```
 
 > **Note**: This README describes only a few of the available arguments. It is therefore advisable to examine the output of the `--help` argument.
@@ -86,58 +102,9 @@ The following example gathers all Go files which are defined by the targets and 
 go-mutesting parse.go example/ github.com/amyjzhu/mutation-framework/mutator/...
 ```
 
-Every mutation has to be tested using an [exec command](#write-mutation-exec-commands). By default the built-in exec command is used, which tests a mutation using the following steps:
+If no test command is specified, 
 
-- Replace the original file with the mutation.
-- Execute all tests of the package of the mutated file.
-- Report if the mutation was killed.
-
-Alternatively the `--exec` argument can be used to invoke an external exec command. The [/scripts/exec](/scripts/exec) directory holds basic exec commands for Go projects. The [test-mutated-package.sh](/scripts/exec/test-mutated-package.sh) script implements all steps and almost all features of the built-in exec command. It can be for example used to test the [github.com/amyjzhu/mutation-framework/example](/example) package.
-
-```bash
-go-mutesting --exec "$GOPATH/src/github.com/amyjzhu/mutation-framework/scripts/exec/test-mutated-package.sh" github.com/amyjzhu/mutation-framework/example
-```
-
-The execution will print the following output.
-
-> **Note**: This output is from an older version of go-mutesting. Up to date versions of go-mutesting will have different mutations.
-
-```diff
-PASS "/tmp/go-mutesting-422402775//home/zimmski/go/src/github.com/amyjzhu/mutation-framework/example/example.go.0" with checksum b705f4c99e6d572de509609eb0a625be
-PASS "/tmp/go-mutesting-422402775//home/zimmski/go/src/github.com/amyjzhu/mutation-framework/example/example.go.1" with checksum eb54efffc5edfc7eba2b276371b29836
-PASS "/tmp/go-mutesting-422402775//home/zimmski/go/src/github.com/amyjzhu/mutation-framework/example/example.go.2" with checksum 011df9567e5fee9bf75cbe5d5dc1c81f
---- /home/zimmski/go/src/github.com/amyjzhu/mutation-framework/example/example.go
-+++ /tmp/go-mutesting-422402775//home/zimmski/go/src/github.com/amyjzhu/mutation-framework/example/example.go.3
-@@ -16,7 +16,7 @@
-        }
-
-        if n < 0 {
--               n = 0
-+
-        }
-
-        n++
-FAIL "/tmp/go-mutesting-422402775//home/zimmski/go/src/github.com/amyjzhu/mutation-framework/example/example.go.3" with checksum 82fc14acf7b561598bfce25bf3a162a2
-PASS "/tmp/go-mutesting-422402775//home/zimmski/go/src/github.com/amyjzhu/mutation-framework/example/example.go.4" with checksum 5720f1bf404abea121feb5a50caf672c
-PASS "/tmp/go-mutesting-422402775//home/zimmski/go/src/github.com/amyjzhu/mutation-framework/example/example.go.5" with checksum d6c1b5e25241453128f9f3bf1b9e7741
---- /home/zimmski/go/src/github.com/amyjzhu/mutation-framework/example/example.go
-+++ /tmp/go-mutesting-422402775//home/zimmski/go/src/github.com/amyjzhu/mutation-framework/example/example.go.6
-@@ -24,7 +24,6 @@
-        n += bar()
-
-        bar()
--       bar()
-
-        return n
- }
-FAIL "/tmp/go-mutesting-422402775//home/zimmski/go/src/github.com/amyjzhu/mutation-framework/example/example.go.6" with checksum 5b1ca0cfedd786d9df136a0e042df23a
-PASS "/tmp/go-mutesting-422402775//home/zimmski/go/src/github.com/amyjzhu/mutation-framework/example/example.go.8" with checksum 6928f4458787c7042c8b4505888300a6
-The mutation score is 0.750000 (6 passed, 2 failed, 0 skipped, total is 8)
-```
-
-The output shows that eight mutations have been found and tested. Six of them passed which means that the test suite failed for these mutations and the mutations were therefore killed. However, two mutations did not fail the test suite. Their source code patches are shown in the output which can be used to investigate these mutations.
-
-The summary also shows the **mutation score** which is a metric on how many mutations are killed by the test suite and therefore states the quality of the test suite. The mutation score is calculated by dividing the number of passed mutations by the number of total mutations, for the example above this would be 6/8=0.75. A score of 1.0 means that all mutations have been killed.
+Mutation score
 
 ### <a name="black-list-false-positives"></a>Blacklist false positives
 

@@ -246,13 +246,13 @@ func runTestsForMutant(config *MutationConfig, pkg *types.Package, originalFileP
 	}*/
 
 	// TODO probably want to put the whole thing in a docker container because you're gonna mess up your commands
-	runBuildCommand(config.Commands.Build)
+	runBuildCommand(config.Test.Commands.Build)
 	defer func() {
 		runCleanUpCommand(config)
 	}()
 
-	if config.Commands.Test != "" {
-		return customTestMutateExec(originalFilePath, absMutationFile, config.Commands.Test)
+	if config.Test.Commands.Test != "" {
+		return customTestMutateExec(originalFilePath, absMutationFile, config.Test.Commands.Test)
 	}
 
 	return defaultMutateExec(config, pkg, file, absMutationFile)
@@ -413,10 +413,10 @@ func getTestKey(tests []string) string {
 }
 
 func runCleanUpCommand(config *MutationConfig) {
-	log.WithField("command", config.Commands.CleanUp).Info("Running clean up command.")
+	log.WithField("command", config.Test.Commands.CleanUp).Info("Running clean up command.")
 
-	if config.Commands.CleanUp != "" {
-		output, err := exec.Command(config.Commands.CleanUp).CombinedOutput()
+	if config.Test.Commands.CleanUp != "" {
+		output, err := exec.Command(config.Test.Commands.CleanUp).CombinedOutput()
 
 		log.Debug(output)
 

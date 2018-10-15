@@ -4,6 +4,8 @@ test:
   composition: 1
   disable: false
   timeout: 10
+  commands:
+    test: go test
 mutate:
   disable: false
   operators:
@@ -13,6 +15,4 @@ mutate:
     - secondary.go
   files_to_exclude: []
 verbose: false
-commands:
-  test: go test
 ...

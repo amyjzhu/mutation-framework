@@ -41,8 +41,8 @@ func initialize() {
 			//[]string{},
 			nil,"mutants/",
 			false},
-		Test{false, 10, 1},
-		Commands{"go test", "", ""}}
+		Test{false, 10, 1,
+		Commands{"go test", "", ""}}}
 }
 
 func TestJsonConfig(t *testing.T) {

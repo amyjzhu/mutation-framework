@@ -27,13 +27,13 @@ type MutationConfig struct {
 	ProjectRoot string   `json:"project_root"` // the root of project and appended to file paths
 	Mutate      Mutate   `json:"mutate"`
 	Test        Test     `json:"test"`
-	Commands    Commands `json:"commands"`
 }
 
 type Test struct {
 	Disable bool `json:"disable"`
 	Timeout      uint   `json:"timeout"`
 	Composition  int    `json:"composition"`
+	Commands    Commands `json:"commands"`
 }
 
 type Mutate struct {
@@ -167,7 +167,7 @@ func validateImportantConfigFields(config *MutationConfig) error {
 		log.Debug( "Did you intend for mutant folder to have path separator prefix?\n")
 	}
 
-	if config.Commands == (Commands{}) {
+	if config.Test.Commands == (Commands{}) {
 		log.Debug("Did you mean for Commands to be empty?")
 	}
 

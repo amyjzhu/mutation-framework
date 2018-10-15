@@ -37,13 +37,15 @@ type Args struct {
 		Verbose              bool `long:"verbose" description:"Verbose log output"`
 		ConfigPath 		string `long:"config" descriptionL:"Path to mutation config file" required:"true"`
 		ListMutators    bool     `long:"list-mutators" description:"List all available mutators"`
-		Json bool `long:"json" description:"Log events in json format"`
+		Json bool `long:"json-output" description:"Log events in json format"`
 	} `group:"General Args"`
 
+	/*
 	Files struct {
 		Blacklist []string `long:"blacklist" description:"List of MD5 checksums of mutations which should be ignored. Each checksum must end with a new line character."`
 		ListFiles bool     `long:"list-files" description:"List found files"`
 	} `group:"File Args"`
+*/
 
 	Exec struct {
 		Composition int `long:"composition" description:"Describe how many nodes should contain the mutation"`
@@ -204,7 +206,7 @@ func checkArguments(args []string, opts *Args) (bool, int) {
 // TODO environment variables?
 func consolidateArgsIntoConfig(opts *Args, config *MutationConfig) {
 	if strings.TrimSpace(opts.Exec.CustomTest) != "" {
-		config.Commands.Test = opts.Exec.CustomTest
+		config.Test.Commands.Test = opts.Exec.CustomTest
 	}
 
 	if opts.Exec.ExecOnly {

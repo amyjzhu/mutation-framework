@@ -2,7 +2,11 @@
   "test": {
     "disable": false,
     "composition": 1,
-    "timeout":10
+    "timeout":10,
+    "commands":{
+      "test": "go test",
+      "clean_up":""
+    }
   },
   "mutate": {
     "disable": false,
@@ -14,9 +18,6 @@
     ]
   },
   "verbose": false,
-  "commands":{
-    "test": "go test",
-    "clean_up":""
-  },
+
   "project_root":"/home/"
 }

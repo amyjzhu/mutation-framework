@@ -1,0 +1,5 @@
+{
+	"device" : "lo",
+	"snapshot_len" : 1024,
+	"promiscuous" : false 
+}

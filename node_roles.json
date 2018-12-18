@@ -1,0 +1,36 @@
+{
+    "Role" : [
+        {
+            "IP" : "127.0.0.1",
+            "Port" : "8080",
+            "SourceCode" : [
+                {
+                    "Path" : "hello/2.go",
+                    "StartLine" : 0,
+                    "EndLine" : 49
+                },
+                {
+                    "Path" : "hello/2.go",
+                    "StartLine" : 124,
+                    "EndLine" : 350
+                }
+            ]
+        },
+        {
+            "IP" : "127.0.0.1",
+            "Port" : "8081",
+            "SourceCode" : [
+                {
+                    "Path" : "hello/1.go",
+                    "StartLine" : 0,
+                    "EndLine" : 350
+                },
+                {
+                    "Path" : "hello/2.go",
+                    "StartLine" : 50,
+                    "EndLine" : 123
+                }
+            ]
+        }
+    ]
+}

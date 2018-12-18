@@ -5,14 +5,26 @@ import (
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
 	"github.com/google/gopacket/pcap"
+	"io/ioutil"
 	"log"
 	"os"
 	"time"
 )
 
-type Node struct {
-	IP string
-	Port string
+type FileInfo struct {
+	Path string `json:"Path"`
+	StartLine int `json:"StartLine"`
+	EndLine int `json:"EndLine`
+}
+
+type NodeRole struct {
+	IP string `json:"IP"`
+	Port string `json:"Port"`
+	SourceCode []FileInfo `json:"SourceCode"`
+}
+
+type Roles struct {
+	R []NodeRole `json:"Role"`
 }
 
 type NodeStats struct {
@@ -31,29 +43,6 @@ type NetCapture struct {
 	config NetCaptureConfig
 	capture_channel chan int
 	Stats map[string]NodeStats
-}
-
-func InitializeCapture(config_file string, timeout time.Duration) (*NetCapture, error) {
-	file, err := os.Open(config_file)
-	if err != nil {
-		return nil, err
-	}
-	defer file.Close()
-
-	decoder := json.NewDecoder(file)
-	config := NetCaptureConfig{}
-	err = decoder.Decode(&config)
-	if err != nil {
-		return nil, err
-	}
-
-	handle, err := pcap.OpenLive(config.Device, int32(config.Snapshot_len), config.Promiscuous, timeout)
-	if err != nil {
-		return nil, err
-	}
-
-	n := &NetCapture{handle, config, make(chan int), map[string]NodeStats{}}
-	return n, nil
 }
 
 func getNodeString(ip string, port string) string {
@@ -125,4 +114,44 @@ func (n *NetCapture) StartCapture() {
 func (n *NetCapture) StopCapture() {
 	n.capture_channel <- 0
 	n.handle.Close()
+}
+
+func InitializeCapture(config_file string, timeout time.Duration) (*NetCapture, error) {
+	file, err := os.Open(config_file)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+
+	decoder := json.NewDecoder(file)
+	config := NetCaptureConfig{}
+	err = decoder.Decode(&config)
+	if err != nil {
+		return nil, err
+	}
+
+	handle, err := pcap.OpenLive(config.Device, int32(config.Snapshot_len), config.Promiscuous, timeout)
+	if err != nil {
+		return nil, err
+	}
+
+	n := &NetCapture{handle, config, make(chan int), map[string]NodeStats{}}
+	return n, nil
+}
+
+func InitializeNodeRoles(config_file string) (*Roles, error) {
+	file, err := os.Open(config_file)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+
+	data, err := ioutil.ReadAll(file)
+	if err != nil {
+		return nil, err
+	}
+
+	var result Roles
+	json.Unmarshal(data, &result)
+	return &result, nil
 }

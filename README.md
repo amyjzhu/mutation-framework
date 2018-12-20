@@ -18,7 +18,8 @@ A sample config:
     "timeout":10,
     "commands":{
       "test": "go test",
-      "clean_up":""
+      "clean_up":"",
+      "build": ""
     }
   },
   "mutate": {

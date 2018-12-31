@@ -1,8 +1,17 @@
 {
     "Role" : [
         {
-            "IP" : "127.0.0.1",
-            "Port" : "8080",
+            "Name" : "Role A",
+            "Address" : [
+                {
+                    "IP" : "127.0.0.1",
+                    "Port" : "8080"
+                },
+                {
+                    "IP" : "127.0.0.1",
+                    "Port" : "4999"
+                }
+            ],
             "SourceCode" : [
                 {
                     "Path" : "hello/2.go",
@@ -17,8 +26,13 @@
             ]
         },
         {
-            "IP" : "127.0.0.1",
-            "Port" : "8081",
+            "Name" : "Role B",
+            "Address" : [
+                {
+                    "IP" : "127.0.0.1",
+                    "Port" : "8081"
+                }
+            ],
             "SourceCode" : [
                 {
                     "Path" : "hello/1.go",

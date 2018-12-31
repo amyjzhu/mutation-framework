@@ -1,6 +1,9 @@
 package compositions
 
 import (
+	//"bitbucket.org/bestchai/dinv/programslicer"
+	//"bitbucket.org/bestchai/dinv/programslicer/cfg"
+	//"bitbucket.org/bestchai/dinv/programslicer/dataflow"
 	"encoding/json"
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
@@ -17,9 +20,14 @@ type FileInfo struct {
 	EndLine int `json:"EndLine`
 }
 
-type NodeRole struct {
+type Address struct {
 	IP string `json:"IP"`
 	Port string `json:"Port"`
+}
+
+type NodeRole struct {
+	Name string `json:"Name"`
+	Addresses []Address `json:"Address"`
 	SourceCode []FileInfo `json:"SourceCode"`
 }
 

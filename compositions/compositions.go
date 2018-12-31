@@ -1,18 +1,42 @@
 package compositions
 
 import (
-	//"bitbucket.org/bestchai/dinv/programslicer"
-	//"bitbucket.org/bestchai/dinv/programslicer/cfg"
-	//"bitbucket.org/bestchai/dinv/programslicer/dataflow"
 	"encoding/json"
+	"errors"
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
 	"github.com/google/gopacket/pcap"
+	"go/ast"
+	"go/parser"
+	"go/token"
 	"io/ioutil"
 	"log"
 	"os"
+	"path"
 	"time"
 )
+
+var NetworkLibraryDatabase map[string]bool = map[string]bool{
+	"net": true,
+	"http": true,
+	"rpc": true,
+	"jsonrpc": true,
+	"cgi": true,
+	"cookiejar": true,
+	"fcgi": true,
+	"httptest": true,
+	"httptrace": true,
+	"httputil": true,
+	"pprof": true,
+	"mail": true,
+	"smtp": true,
+	"url": true,
+	"textproto": true,
+	"iptables": true,
+	"ipvs": true,
+	"utilnet": true,
+	"utiliptables": true,
+}
 
 type FileInfo struct {
 	Path string `json:"Path"`
@@ -29,6 +53,13 @@ type NodeRole struct {
 	Name string `json:"Name"`
 	Addresses []Address `json:"Address"`
 	SourceCode []FileInfo `json:"SourceCode"`
+}
+
+type RoleInfo struct {
+	NumFiles int
+	NumLines int
+	NumAddresses int
+	NetworkRatio float64
 }
 
 type Roles struct {
@@ -51,6 +82,65 @@ type NetCapture struct {
 	config NetCaptureConfig
 	capture_channel chan int
 	Stats map[string]NodeStats
+}
+
+func (nr *NodeRole) GetTotalLines() int {
+	num_lines := 0
+	for _, source_code := range nr.SourceCode {
+		num_lines = num_lines + (source_code.EndLine - source_code.StartLine)
+	}
+	return num_lines
+}
+
+func (nr *NodeRole) GetTotalFiles() int {
+	m := make(map[string]bool)
+	for _, source_code := range nr.SourceCode {
+		if _, ok := m[source_code.Path]; !ok {
+			m[source_code.Path] = true
+		}
+	}
+	return len(m)
+}
+
+func (nr *NodeRole) CalculateNetworkRatio() float64 {
+	fset := token.NewFileSet()
+	m := make(map[string]bool)	
+	count := 0
+	callCount := 0
+	networkCount := 0
+	for _, source_code := range nr.SourceCode {
+		filepath := source_code.Path
+		gopath := os.Getenv("GOPATH")
+		full_path := path.Join(gopath, "src", filepath)
+		file_node, err := parser.ParseFile(fset, full_path, nil, parser.ParseComments)
+		if err != nil {
+			log.Println("Something went wrong trying to parse file", full_path)
+			continue
+		}
+		ast.Inspect(file_node, func(n ast.Node) bool {
+			count += 1
+			exp, ok := n.(*ast.CallExpr)
+			if ok {
+				if fun, ok := exp.Fun.(*ast.SelectorExpr); ok {
+					switch fun.X.(type) {
+					case *ast.Ident:
+						if pack, ok := fun.X.(*ast.Ident); ok {
+							funcName := pack.Name
+							m[funcName] = true
+							if _, ok := NetworkLibraryDatabase[funcName]; ok {
+								networkCount += 1
+							}
+						}
+					}
+                }
+				callCount += 1
+			}
+			return true
+		})
+	}
+	var net_ratio float64
+	net_ratio = float64(networkCount) / float64(callCount)
+	return net_ratio
 }
 
 func getNodeString(ip string, port string) string {
@@ -162,4 +252,31 @@ func InitializeNodeRoles(config_file string) (*Roles, error) {
 	var result Roles
 	json.Unmarshal(data, &result)
 	return &result, nil
+}
+
+func (nr *Roles) GetNumNodeRoles() int {
+	return len(nr.R)
+}
+
+func (nr *Roles) GetNodeRoleNames() []string {
+	var names []string
+	for _ , r := range nr.R {
+		names = append(names, r.Name)
+	}
+	return names
+}
+
+func (nr *Roles) GetNodeStaticAnalysisInfo(role_name string) (*RoleInfo, error) {
+	for _, r := range nr.R {
+		if r.Name == role_name {
+			num_files := r.GetTotalFiles()
+			num_lines := r.GetTotalLines()
+			num_addresses := len(r.Addresses)
+			var static_analysis_score float64
+			static_analysis_score = r.CalculateNetworkRatio()
+			info := &RoleInfo{num_files, num_lines, num_addresses, static_analysis_score}			
+			return info, nil
+		}
+	}
+	return nil, errors.New("Role doesn't exist")
 }

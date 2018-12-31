@@ -14,7 +14,6 @@ func main() {
 	}
 	if nr != nil {
 		fmt.Println(nr)
-		return
 	}
 	nc, err := compositions.InitializeCapture("./net_config.json", 30 * time.Second)
 	if err != nil {
